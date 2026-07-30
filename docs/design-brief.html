@@ -1,0 +1,961 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*,*::before,*::after{box-sizing:border-box}body,h1,h2,h3,p,ul{margin:0}</style></head><body><title>Interstice</title>
+<style>
+  :root {
+    --ground: #EEF0F2;
+    --raised: #FFFFFF;
+    --sunk:   #E4E8EC;
+    --ink:    #12161C;
+    --muted:  #5A6673;
+    --faint:  #8B96A3;
+    --rule:   #CFD6DD;
+    --accent: #2440E8;
+    --accent-soft: rgba(36, 64, 232, 0.10);
+    --ok:   #1B7A4B;
+    --warn: #9A6A12;
+    --crit: #A82B22;
+
+    --display: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", sans-serif;
+    --body: Charter, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+
+    --measure: 66ch;
+    --pad: clamp(1.1rem, 4vw, 2.5rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0E1116;
+      --raised: #161A21;
+      --sunk:   #11151B;
+      --ink:    #E4E8EE;
+      --muted:  #939EAC;
+      --faint:  #6C7784;
+      --rule:   #262D37;
+      --accent: #8296FF;
+      --accent-soft: rgba(130, 150, 255, 0.13);
+      --ok:   #4FBF8B;
+      --warn: #D6A44A;
+      --crit: #E0736A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0E1116;
+    --raised: #161A21;
+    --sunk:   #11151B;
+    --ink:    #E4E8EE;
+    --muted:  #939EAC;
+    --faint:  #6C7784;
+    --rule:   #262D37;
+    --accent: #8296FF;
+    --accent-soft: rgba(130, 150, 255, 0.13);
+    --ok:   #4FBF8B;
+    --warn: #D6A44A;
+    --crit: #E0736A;
+  }
+  :root[data-theme="light"] {
+    --ground: #EEF0F2;
+    --raised: #FFFFFF;
+    --sunk:   #E4E8EC;
+    --ink:    #12161C;
+    --muted:  #5A6673;
+    --faint:  #8B96A3;
+    --rule:   #CFD6DD;
+    --accent: #2440E8;
+    --accent-soft: rgba(36, 64, 232, 0.10);
+    --ok:   #1B7A4B;
+    --warn: #9A6A12;
+    --crit: #A82B22;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .wrap { max-width: calc(var(--measure) + 2 * var(--pad)); margin: 0 auto; padding: 0 var(--pad); }
+  .wide { max-width: 1080px; margin: 0 auto; padding: 0 var(--pad); }
+
+  /* ---------- type ---------- */
+  h1, h2, h3 { text-wrap: balance; font-weight: 600; }
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(3.2rem, 11vw, 6.5rem);
+    line-height: 0.92;
+    letter-spacing: -0.015em;
+    margin: 0;
+    font-weight: 600;
+  }
+  h2 {
+    font-family: var(--display);
+    font-size: clamp(1.55rem, 3.6vw, 2.15rem);
+    line-height: 1.12;
+    letter-spacing: -0.005em;
+    margin: 0;
+  }
+  h3 {
+    font-family: var(--display);
+    font-size: 1.12rem;
+    letter-spacing: 0.02em;
+    margin: 0 0 0.35rem;
+  }
+  p { margin: 0; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px;
+  }
+  strong { font-weight: 600; }
+  code, .mono { font-family: var(--mono); font-size: 0.83em; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .eyebrow {
+    font-family: var(--display);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  /* ---------- rhythm ---------- */
+  .stack { display: flex; flex-direction: column; gap: 1.15rem; }
+  .stack-sm { display: flex; flex-direction: column; gap: 0.55rem; }
+  section { padding-block: clamp(3rem, 7vw, 5rem); }
+  section + section { border-top: 1px solid var(--rule); }
+
+  .sec-head { display: flex; gap: 1.1rem; align-items: baseline; margin-bottom: 1.7rem; }
+  .sec-num {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    padding-top: 0.35rem;
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+
+  /* ---------- hero ---------- */
+  .hero { padding-top: clamp(2.5rem, 8vw, 5rem); padding-bottom: clamp(2rem, 5vw, 3rem); }
+  .hero-sub {
+    font-size: clamp(1.15rem, 2.6vw, 1.42rem);
+    line-height: 1.42;
+    color: var(--muted);
+    max-width: 34ch;
+    margin-top: 1.3rem;
+  }
+  .hero-meta {
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem;
+    margin-top: 1.9rem; padding-top: 1.1rem; border-top: 1px solid var(--rule);
+  }
+
+  /* ---------- instrument ---------- */
+  .instrument {
+    background: var(--raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: clamp(1.1rem, 3vw, 1.8rem);
+    display: flex; flex-direction: column; gap: 1.1rem;
+  }
+  .inst-top { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  .inst-clock { font-family: var(--mono); font-size: 1.6rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+  .track { position: relative; height: 46px; }
+  .track-line {
+    position: absolute; left: 0; right: 0; top: 21px; height: 3px;
+    background: var(--sunk); border-radius: 2px; overflow: hidden;
+  }
+  .track-fill {
+    position: absolute; inset: 0 auto 0 0; width: 0%;
+    background: var(--accent); transition: width 0.28s linear;
+  }
+  .track-head {
+    position: absolute; top: 13px; left: 0; width: 3px; height: 19px;
+    background: var(--ink); transition: left 0.28s linear;
+  }
+  .tick { position: absolute; top: 28px; transform: translateX(-50%); font-family: var(--mono); font-size: 0.63rem; color: var(--faint); }
+  .tick::before {
+    content: ""; position: absolute; left: 50%; top: -10px; width: 1px; height: 6px; background: var(--rule);
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 0.66rem; font-weight: 600;
+    padding: 0.3rem 0.6rem; border: 1px solid var(--rule); border-radius: 2px;
+    color: var(--faint); background: transparent;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .chip.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .chip.done { color: var(--muted); border-color: var(--rule); }
+
+  .readout {
+    font-family: var(--mono); font-size: 0.79rem; line-height: 1.55;
+    color: var(--muted); min-height: 3.1em;
+    border-left: 2px solid var(--accent); padding-left: 0.8rem;
+  }
+  .readout b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- cards / grids ---------- */
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .grid2 > div { background: var(--ground); padding: 1.15rem; }
+
+  .stage {
+    display: grid; grid-template-columns: 2.6rem 1fr; gap: 0 1.1rem;
+    padding: 1.35rem 0; border-top: 1px solid var(--rule);
+  }
+  .stage:last-child { border-bottom: 1px solid var(--rule); }
+  .stage-n {
+    font-family: var(--mono); font-size: 0.78rem; color: var(--accent);
+    padding-top: 0.28rem; font-variant-numeric: tabular-nums;
+  }
+  .stage-body { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  /* ---------- tables ---------- */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--rule); background: var(--raised); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.66rem 0.85rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.11em;
+    font-size: 0.66rem; color: var(--muted); font-weight: 600; white-space: nowrap;
+    background: var(--sunk);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num, th.num { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 0.79rem; white-space: nowrap; }
+
+  .verdict { font-family: var(--display); text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.68rem; font-weight: 600; white-space: nowrap; }
+  .v-ok { color: var(--ok); }
+  .v-warn { color: var(--warn); }
+  .v-crit { color: var(--crit); }
+
+  /* ---------- evidence ---------- */
+  pre.ev {
+    background: var(--sunk); border: 1px solid var(--rule); border-left: 2px solid var(--accent);
+    padding: 0.85rem 1rem; overflow-x: auto; font-family: var(--mono);
+    font-size: 0.74rem; line-height: 1.55; color: var(--muted); margin: 0;
+  }
+  pre.ev b { color: var(--ink); font-weight: 600; }
+  .cap { font-family: var(--mono); font-size: 0.7rem; color: var(--faint); }
+
+  /* ---------- simulator ---------- */
+  .sim { background: var(--raised); border: 1px solid var(--rule); padding: clamp(1.1rem, 3vw, 1.6rem); display: flex; flex-direction: column; gap: 1.3rem; }
+  .sim-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1.2rem; }
+  .ctl { display: flex; flex-direction: column; gap: 0.4rem; }
+  .ctl-label { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
+  .ctl-label span:first-child {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.11em;
+    font-size: 0.66rem; color: var(--muted); font-weight: 600;
+  }
+  .ctl-val { font-family: var(--mono); font-size: 0.86rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+  .sim-out { display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--rule); }
+  .sim-row { display: grid; grid-template-columns: 4.4rem 1fr; gap: 0.9rem; padding: 0.62rem 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+  .sim-t { font-family: var(--mono); font-size: 0.78rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .sim-act { font-family: var(--display); font-size: 1rem; letter-spacing: 0.01em; }
+  .sim-why { font-size: 0.84rem; color: var(--muted); display: block; font-family: var(--body); letter-spacing: 0; }
+  .sim-row.quiet .sim-act { color: var(--faint); }
+
+  /* ---------- histogram ---------- */
+  .hist { display: flex; flex-direction: column; gap: 0.42rem; }
+  .hrow { display: grid; grid-template-columns: 4.6rem 1fr 3.6rem; gap: 0.75rem; align-items: center; }
+  .hlab { font-family: var(--mono); font-size: 0.74rem; color: var(--muted); text-align: right; }
+  .hbar { height: 15px; background: var(--sunk); position: relative; }
+  .hbar > i { display: block; height: 100%; background: var(--accent); }
+  .hbar.dim > i { background: var(--faint); }
+  .hpct { font-family: var(--mono); font-size: 0.74rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .hkey { display: flex; gap: 1.1rem; flex-wrap: wrap; margin-top: 0.3rem; }
+  .hkey span { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); display: flex; align-items: center; gap: 0.35rem; }
+  .sw { width: 10px; height: 10px; display: inline-block; }
+
+  .bignum { display: flex; flex-wrap: wrap; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .bignum > div { background: var(--ground); padding: 1rem 1.15rem; flex: 1 1 150px; display: flex; flex-direction: column; gap: 0.2rem; }
+  .bignum .n { font-family: var(--mono); font-size: 1.55rem; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--accent); }
+  .bignum .l { font-family: var(--display); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.63rem; color: var(--muted); font-weight: 600; }
+
+  /* ---------- decisions ---------- */
+  .q { border-left: 2px solid var(--accent); padding: 0.1rem 0 0.1rem 1.1rem; display: flex; flex-direction: column; gap: 0.45rem; }
+  .q-opts { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.9rem; color: var(--muted); }
+  .q-opts b { color: var(--ink); }
+  .q.settled { border-left-color: var(--ok); }
+  .q-head { display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap; }
+  .tag {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: 0.11em;
+    font-size: 0.62rem; font-weight: 600; padding: 0.16rem 0.42rem;
+    border: 1px solid currentColor; border-radius: 2px; white-space: nowrap;
+  }
+  .tag-done { color: var(--ok); }
+  .tag-open { color: var(--muted); }
+  .chosen { color: var(--ok); }
+
+  .lede { font-size: 1.13rem; line-height: 1.55; }
+  .muted { color: var(--muted); }
+  .hr { height: 1px; background: var(--rule); border: 0; }
+
+  ul.tight { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: 0.4rem; }
+  ul.tight li::marker { color: var(--faint); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+</style>
+
+<main>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="wide">
+      <p class="eyebrow">Design brief, version 5, nothing built yet</p>
+      <h1>Interstice</h1>
+      <p class="hero-sub">The gap between pressing enter and getting an answer is where the habit loop gets in. This closes it before you can decide anything.</p>
+      <div class="hero-meta">
+        <span class="eyebrow">Target: Cowork and Claude Code</span>
+        <span class="eyebrow">Host: macOS</span>
+        <span class="eyebrow">Status: 5 of 6 decisions settled</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INSTRUMENT ============ -->
+  <section style="padding-top:0; border-top:0;">
+    <div class="wide">
+      <div class="instrument">
+        <div class="inst-top">
+          <span class="eyebrow">Live trace of one captured gap</span>
+          <span class="inst-clock num" id="clock">0:00</span>
+        </div>
+        <div class="track">
+          <div class="track-line"><div class="track-fill" id="fill"></div></div>
+          <div class="track-head" id="head"></div>
+          <span class="tick" style="left:0%">0s</span>
+          <span class="tick" style="left:25%">25s</span>
+          <span class="tick" style="left:55%">3m</span>
+          <span class="tick" style="left:85%">12m</span>
+        </div>
+        <div class="chips" id="chips">
+          <span class="chip" data-k="submit">Prompt submitted</span>
+          <span class="chip" data-k="armed">Gap armed</span>
+          <span class="chip" data-k="routed">Routed to Anki</span>
+          <span class="chip" data-k="working">Agent working</span>
+          <span class="chip" data-k="reclaim">Reclaimed</span>
+        </div>
+        <p class="readout" id="readout">Waiting.</p>
+      </div>
+      <p class="cap" style="margin-top:0.6rem;">Simulated trace of the proposed state machine, not a recording of a running system. Nothing is built yet.</p>
+    </div>
+  </section>
+
+  <!-- ============ 00 PROBLEM ============ -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-num">00</span>
+        <h2>The problem is a trigger, not a tab</h2>
+      </div>
+      <div class="stack">
+        <p class="lede">You press enter. The agent starts. For the next forty seconds to twelve minutes you have no task, and crucially, you have <em>a decision to make</em> about what to do with that time. Boredom plus an open decision is the exact entry condition for the habit loop. YouTube wins because it is the cheapest answer to an unwanted question.</p>
+        <p>So the fix cannot be a better menu, a better inbox, or a nicer session list. Any of those still asks you the question. The fix has to answer the question for you, automatically, on the dispatch event itself, before the question can form.</p>
+        <p>That framing came from your earlier conversation and it is correct. Everything below takes it as the requirement and asks a narrower engineering question: what is the most reliable way to detect the gap, and what happens on the way back.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 01 EVIDENCE ============ -->
+  <section>
+    <div class="wide">
+      <div class="sec-head">
+        <span class="sec-num">01</span>
+        <h2>What I checked on your Mac before designing anything</h2>
+      </div>
+      <p class="lede" style="max-width:var(--measure); margin-bottom:1.6rem;">The earlier design rests on two claims that decide the whole architecture. I verified both against your actual machine rather than repeating them. One held, one held for a reason that changes the plan.</p>
+
+      <div class="tablewrap" style="margin-bottom:1.6rem;">
+        <table>
+          <thead>
+            <tr><th>Claim or dependency</th><th>Result</th><th>Evidence on your machine</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>AnkiConnect is installed, so Anki can be driven into a review with no clicks</td>
+              <td><span class="verdict v-ok">Confirmed</span></td>
+              <td><code>Anki2/addons21/2055492159</code> reports <code>{"name": "AnkiConnect"}</code> and exposes <code>guiDeckReview</code></td>
+            </tr>
+            <tr>
+              <td>Kindle can be opened programmatically to a specific book</td>
+              <td><span class="verdict v-ok">Confirmed</span></td>
+              <td><code>Kindle.app</code> registers the <code>kindle</code> URL scheme in its Info.plist</td>
+            </tr>
+            <tr>
+              <td>A to do surface exists that can be opened by URL</td>
+              <td><span class="verdict v-ok">Confirmed</span></td>
+              <td>One Obsidian vault, currently open, at <code>~/Documents/Obsidian Vault</code>, reachable via <code>obsidian://</code></td>
+            </tr>
+            <tr>
+              <td>The OS can tell whether you are physically idle</td>
+              <td><span class="verdict v-ok">Confirmed</span></td>
+              <td><code>ioreg -c IOHIDSystem</code> returns a live <code>HIDIdleTime</code> in nanoseconds</td>
+            </tr>
+            <tr>
+              <td>Claude Code fires <code>UserPromptSubmit</code> and <code>Stop</code> hooks you can attach to</td>
+              <td><span class="verdict v-ok">Confirmed</span></td>
+              <td>CLI is <code>2.1.220</code>; your <code>~/.claude/settings.json</code> already runs a working <code>PreToolUse</code> hook</td>
+            </tr>
+            <tr>
+              <td>Those hooks do <em>not</em> fire in Cowork</td>
+              <td><span class="verdict v-warn">Confirmed, and now explained</span></td>
+              <td>Cowork gives every session its own private <code>.claude</code> home, which contains no <code>settings.json</code> at all</td>
+            </tr>
+            <tr>
+              <td>Cowork state is only observable by guessing from the outside</td>
+              <td><span class="verdict v-crit">False</span></td>
+              <td>Every Cowork session writes a standard append only Claude Code transcript, with a typed <code>user</code> line stamped at submit</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="stack" style="max-width:var(--measure);">
+        <h3>The finding that changes the design</h3>
+        <p>Your hooks never fire in Cowork because Cowork does not use your home config. It creates a fresh, session scoped <code>.claude</code> directory per session and points the bundled CLI at that. Here is the actual directory listing from your most recent Cowork session:</p>
+      </div>
+
+      <pre class="ev" style="margin-top:1rem;">$ ls -a ".../local-agent-mode-sessions/&lt;space&gt;/&lt;project&gt;/local_5781c1f0.../.claude"
+
+.claude.json    backups     plugins             projects
+CLAUDE.md       policy-limits.json  sessions    tasks
+
+<b>No settings.json. That file is where hooks live, so no hooks are registered.</b></pre>
+
+      <div class="stack" style="max-width:var(--measure); margin-top:1.6rem;">
+        <p>But that same private home contains the ordinary transcript, and the transcript is exactly the event stream we want:</p>
+      </div>
+
+      <pre class="ev" style="margin-top:1rem;">$ head .../.claude/projects/&lt;slug&gt;/f5c52995-....jsonl
+
+0 | type= queue-operation  ts= 2026-07-30T19:35:05.414Z
+1 | type= queue-operation  ts= 2026-07-30T19:35:05.531Z
+<b>2 | type= user            ts= 2026-07-30T19:35:05.551Z   keys= [cwd, entrypoint,
+      gitBranch, message, origin, parentUuid, permissionMode, promptId,
+      promptSource, sessionId, timestamp]</b>
+3 | type= attachment       ts= 2026-07-30T19:35:05.550Z</pre>
+
+      <p class="cap" style="margin-top:0.6rem;">Read structurally, keys only. No message content was opened.</p>
+
+      <div class="stack" style="max-width:var(--measure); margin-top:1.6rem;">
+        <p>A line of <code>type: "user"</code> carrying a <code>promptId</code> and a millisecond timestamp appears the instant you submit. That is the dispatch event, in Cowork, on disk, with no cooperation from Anthropic required. It is not a heuristic and it is not a guess. It is the same event the hook would have given us, arriving a fraction of a second later.</p>
+        <p>This matters because the earlier design, having concluded Cowork was closed, fell back to inferring the gap from your behaviour: frontmost application plus keyboard idle time. That inference is the weakest part of that plan, and we do not need it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 MEASURED ============ -->
+  <section>
+    <div class="wide">
+      <div class="sec-head">
+        <span class="sec-num">02</span>
+        <h2>Would it even fire? Measured on your own history</h2>
+      </div>
+      <p class="lede" style="max-width:var(--measure); margin-bottom:1.6rem;">Before you agree to any of this, the premise deserves a number. I parsed every transcript already sitting on your disk and measured how long your turns actually take. Timestamps only, no message content was read.</p>
+
+      <div class="bignum" style="margin-bottom:1.7rem;">
+        <div><span class="n num">4,731</span><span class="l">Cowork prompts measured</span></div>
+        <div><span class="n num">3m 54s</span><span class="l">Median Cowork turn</span></div>
+        <div><span class="n num">92.4%</span><span class="l">Would qualify for delivery</span></div>
+        <div><span class="n num">678 h</span><span class="l">Total time inside qualifying gaps</span></div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:1.7rem;">
+        <div>
+          <h3 style="margin-bottom:0.9rem;">Cowork turn length</h3>
+          <div class="hist">
+            <div class="hrow"><span class="hlab">0 to 10s</span><span class="hbar dim"><i style="width:7.3%"></i></span><span class="hpct">2.4%</span></div>
+            <div class="hrow"><span class="hlab">10 to 25s</span><span class="hbar dim"><i style="width:15.7%"></i></span><span class="hpct">5.2%</span></div>
+            <div class="hrow"><span class="hlab">25 to 60s</span><span class="hbar"><i style="width:36.6%"></i></span><span class="hpct">12.1%</span></div>
+            <div class="hrow"><span class="hlab">1 to 3m</span><span class="hbar"><i style="width:72.5%"></i></span><span class="hpct">24.0%</span></div>
+            <div class="hrow"><span class="hlab">3 to 12m</span><span class="hbar"><i style="width:100%"></i></span><span class="hpct">33.1%</span></div>
+            <div class="hrow"><span class="hlab">12 to 30m</span><span class="hbar"><i style="width:49.5%"></i></span><span class="hpct">16.4%</span></div>
+            <div class="hrow"><span class="hlab">30 to 60m</span><span class="hbar"><i style="width:20.5%"></i></span><span class="hpct">6.8%</span></div>
+          </div>
+        </div>
+        <div>
+          <h3 style="margin-bottom:0.9rem;">Claude Code turn length</h3>
+          <div class="hist">
+            <div class="hrow"><span class="hlab">0 to 10s</span><span class="hbar dim"><i style="width:56.8%"></i></span><span class="hpct">18.8%</span></div>
+            <div class="hrow"><span class="hlab">10 to 25s</span><span class="hbar dim"><i style="width:52.6%"></i></span><span class="hpct">17.4%</span></div>
+            <div class="hrow"><span class="hlab">25 to 60s</span><span class="hbar"><i style="width:46.8%"></i></span><span class="hpct">15.5%</span></div>
+            <div class="hrow"><span class="hlab">1 to 3m</span><span class="hbar"><i style="width:56.5%"></i></span><span class="hpct">18.7%</span></div>
+            <div class="hrow"><span class="hlab">3 to 12m</span><span class="hbar"><i style="width:53.2%"></i></span><span class="hpct">17.6%</span></div>
+            <div class="hrow"><span class="hlab">12 to 30m</span><span class="hbar"><i style="width:27.5%"></i></span><span class="hpct">9.1%</span></div>
+            <div class="hrow"><span class="hlab">30 to 60m</span><span class="hbar"><i style="width:8.5%"></i></span><span class="hpct">2.8%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="hkey" style="margin-bottom:1.7rem;">
+        <span><i class="sw" style="background:var(--accent)"></i> would deliver an activity</span>
+        <span><i class="sw" style="background:var(--faint)"></i> below threshold, correctly ignored</span>
+        <span>both charts share one scale, so the two are directly comparable</span>
+      </div>
+
+      <div class="stack" style="max-width:var(--measure);">
+        <h3>What the numbers say</h3>
+        <ul class="tight">
+          <li><strong>The premise holds, and then some.</strong> Your median Cowork turn is just under four minutes. This is not a system that will fire twice a day.</li>
+          <li><strong>The 25 second threshold barely matters in Cowork</strong>, where only 7.6% of turns fall below it. It earns its keep in Claude Code, where it correctly ignores 36%.</li>
+          <li><strong>The second rung is not an edge case.</strong> 56% of Cowork turns run past three minutes and 23% past twelve, so reading gets real use rather than being decorative.</li>
+          <li><strong>It answers decision 4 for you.</strong> Your CLI history holds 1,883 real prompts and 139 hours of qualifying gap time. That is not a rounding error, so building both surfaces is justified on evidence rather than on tidiness.</li>
+        </ul>
+        <h3 style="margin-top:0.7rem;">How to read this honestly</h3>
+        <p class="muted" style="font-size:0.93rem;">This is your entire history on disk, not a representative week. A turn is measured from a genuine human prompt to the last event before your next one, which tracks how long the agent was actually working. Tool results are recorded as user messages in these transcripts and my first pass wrongly counted them as prompts, which put the median at 7 seconds. Filtering to real submits moved it to 234. Subagent traffic is excluded, and turns over an hour are dropped as walked away.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 COMPARISON ============ -->
+  <section>
+    <div class="wide">
+      <div class="sec-head">
+        <span class="sec-num">03</span>
+        <h2>Where the earlier plan is right, and where it breaks</h2>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th style="width:26%">Element</th><th style="width:37%">Earlier plan</th><th>What I would change and why</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Framing</td>
+              <td>Trigger substitution, fire on the dispatch event, no input from you</td>
+              <td><span class="verdict v-ok">Keep, unchanged.</span> This is the whole insight and everything else serves it.</td>
+            </tr>
+            <tr>
+              <td>Delay before routing</td>
+              <td>Roughly 40 seconds, so short turns never trigger a switch</td>
+              <td><span class="verdict v-ok">Keep the idea.</span> Start at 25 seconds and let the log tune it, since the right number is measurable rather than guessable.</td>
+            </tr>
+            <tr>
+              <td>App Nap warning</td>
+              <td>macOS suspends background Anki, which silently kills AnkiConnect</td>
+              <td><span class="verdict v-ok">Keep.</span> Real, and the highest value single line in that plan. It becomes an install time preflight check that fails loudly.</td>
+            </tr>
+            <tr>
+              <td>Cowork trigger</td>
+              <td>Poll the frontmost app plus <code>HIDIdleTime</code>, and infer that you are waiting</td>
+              <td><span class="verdict v-crit">Replace.</span> That signal cannot tell waiting apart from reading, thinking, or being on a call. It will pull you into flashcards mid sentence, and two of those is enough to make you distrust and disable the system. Watch the transcript instead and use idle time only as a secondary confirmation.</td>
+            </tr>
+            <tr>
+              <td>The way back</td>
+              <td>A <code>reclaim.sh</code>, mentioned but not developed</td>
+              <td><span class="verdict v-crit">Promote to a first class stage.</span> If you do not trust being pulled back you will keep checking, and checking is the decision you were trying to delete. The return path is load bearing.</td>
+            </tr>
+            <tr>
+              <td>Activity choice</td>
+              <td>A fixed ladder of rungs, ordered once by hand</td>
+              <td><span class="verdict v-warn">Extend.</span> Make each rung state aware, so it never routes you to an empty deck, and make the ladder escalate as the gap lengthens instead of choosing once.</td>
+            </tr>
+            <tr>
+              <td>Measurement</td>
+              <td>A stderr log, plus your own sense of it over a week</td>
+              <td><span class="verdict v-warn">Extend.</span> Log every gap as a structured record and show it. Its own closing question, whether boredom really was the trigger, is only answerable with that data.</td>
+            </tr>
+            <tr>
+              <td>Do not rebuild Cowork</td>
+              <td>Rebuilding parity costs the sandbox, connectors and permission model for one feature</td>
+              <td><span class="verdict v-ok">Keep, emphatically.</span> Nothing here touches Cowork. It reads files Cowork already writes.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 ARCHITECTURE ============ -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-num">04</span>
+        <h2>How it works</h2>
+      </div>
+      <p class="lede" style="margin-bottom:1.5rem;">One small background daemon, five stages. The stages are numbered because they really are a sequence: each one hands a fact to the next.</p>
+
+      <div class="stage">
+        <span class="stage-n">01</span>
+        <div class="stage-body">
+          <h3>Detect</h3>
+          <p>Two push sources, one queue, and no polling in either. In Claude Code, a <code>UserPromptSubmit</code> hook fires synchronously the moment you submit. In Cowork, where hooks are unavailable, a single recursive FSEvents watch on the sessions root has the kernel wake the process on write; a gap starts on any new <code>type: "user"</code> line. The gap ends on the matching assistant completion, on a <code>Stop</code> hook, or on a permission prompt, whichever lands first.</p>
+          <p class="muted" style="font-size:0.92rem;">Measured on this machine: a recursive watch fired 13ms after an append to a file six levels deep in a directory tree that did not exist when the watch started, which is exactly what a brand new Cowork session looks like. Between events the daemon does nothing at all.</p>
+          <p class="muted" style="font-size:0.92rem;">Idle time stays in the design, demoted. It never starts a gap on its own. It only vetoes one, so that a gap opened while you are clearly still typing does not route you anywhere.</p>
+        </div>
+      </div>
+
+      <div class="stage">
+        <span class="stage-n">02</span>
+        <div class="stage-body">
+          <h3>Decide</h3>
+          <p>At 25 seconds the gap is real. The router picks exactly one activity and never presents a list, because a list at this moment is the decision fatigue you asked to remove, with extra steps. It picks from a ladder you wrote in advance, filtered by live state: how many Anki cards are actually due, whether a book is open, whether you already did this rung in the last gap.</p>
+          <p class="muted" style="font-size:0.92rem;">If the agent is still working later, the router escalates rather than re-deciding. A rung that is exhausted, for example a deck you have emptied, hands off to the next one down.</p>
+        </div>
+      </div>
+
+      <div class="stage">
+        <span class="stage-n">03</span>
+        <div class="stage-body">
+          <h3>Deliver</h3>
+          <p>Put the activity in front of you with no further input. Anki gets launched and driven straight into a review through AnkiConnect, landing on a card rather than a deck list. Kindle opens by URL to the book you are reading. The to do list opens the vault to one specific note. The queue rung raises a small capture window that is already focused and accepting text.</p>
+          <p class="muted" style="font-size:0.92rem;">Nothing is closed, hidden or quit. Your Cowork window keeps its exact state and stays one keystroke behind.</p>
+        </div>
+      </div>
+
+      <div class="stage">
+        <span class="stage-n">04</span>
+        <div class="stage-body">
+          <h3>Reclaim</h3>
+          <p>The moment the agent finishes or needs you, the system pulls you back: Cowork comes forward, the activity drops behind, and the notification says which session wants you and what it wants. This is the stage the earlier plan leaves as a stub and it is the one that decides whether you trust the whole thing.</p>
+          <p class="muted" style="font-size:0.92rem;">Trust is the actual product here. If you believe you will be fetched, you can let go. If you do not, you will check, and checking reintroduces exactly the moment we deleted.</p>
+        </div>
+      </div>
+
+      <div class="stage">
+        <span class="stage-n">05</span>
+        <div class="stage-body">
+          <h3>Learn and show</h3>
+          <p>Every gap is written down: when it opened, how long it ran, which rung fired, whether you stayed, and what you were doing when it closed. A local page renders the record. That gives the 25 second threshold a real number instead of a guess, and it answers the question your earlier conversation ended on: whether the boredom was ever the trigger, or whether the vice arrives anyway.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 05 LADDER + SIM ============ -->
+  <section>
+    <div class="wide">
+      <div class="sec-head">
+        <span class="sec-num">05</span>
+        <h2>The ladder, and what it would actually do</h2>
+      </div>
+      <p class="lede" style="max-width:var(--measure); margin-bottom:1.5rem;">You cannot know at submit time how long a turn will take, so the router does not try to predict. It escalates. Move the sliders and watch the rungs fire against a gap of a given length.</p>
+
+      <div class="sim">
+        <div class="sim-controls">
+          <div class="ctl">
+            <label class="ctl-label" for="s-gap"><span>Agent ends up taking</span><span class="ctl-val" id="v-gap">4m 00s</span></label>
+            <input type="range" id="s-gap" min="5" max="1500" step="5" value="240">
+          </div>
+          <div class="ctl">
+            <label class="ctl-label" for="s-anki"><span>Anki cards due now</span><span class="ctl-val" id="v-anki">32</span></label>
+            <input type="range" id="s-anki" min="0" max="120" step="1" value="32">
+          </div>
+          <div class="ctl">
+            <label class="ctl-label" for="s-book"><span>Book in progress</span><span class="ctl-val" id="v-book">Yes</span></label>
+            <input type="range" id="s-book" min="0" max="1" step="1" value="1">
+          </div>
+        </div>
+        <div class="sim-out" id="sim-out"></div>
+      </div>
+      <p class="cap" style="margin-top:0.6rem;">Thresholds shown are opening values. Stage 05 replaces them with numbers measured from your own gaps.</p>
+
+      <div class="tablewrap" style="margin-top:2rem;">
+        <table>
+          <thead>
+            <tr><th class="num">Elapsed</th><th style="width:20%">Rung</th><th>Fires when</th><th>Delivered by</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="num">0 to 25s</td><td>Nothing</td><td>Always. Below this a switch costs more attention than it saves.</td><td class="muted">No action</td></tr>
+            <tr><td class="num">25s</td><td>Flashcards</td><td>Any card is due</td><td><code>guiDeckReview</code> plus activate</td></tr>
+            <tr><td class="num">25s</td><td>Queue next prompt</td><td>Deck is empty</td><td>Focused capture window</td></tr>
+            <tr><td class="num">3m</td><td>Flashcards, continued</td><td>Fifteen or more cards still due</td><td>Already there, no switch</td></tr>
+            <tr><td class="num">3m</td><td>Reading</td><td>Fewer than fifteen due, book in progress</td><td><code>kindle://</code> to last book</td></tr>
+            <tr><td class="num">12m</td><td>Reading</td><td>Always, unless already reading</td><td><code>kindle://</code> to last book</td></tr>
+            <tr><td class="num">Any</td><td>Next rung</td><td>You press the advance key</td><td>Delivers the rung below, in order, wrapping at the end</td></tr>
+            <tr><td class="num">Any</td><td>Stand down</td><td>Agent finished, or asked for you</td><td>Reclaim, stage 04</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid2" style="margin-top:2rem;">
+        <div class="stack-sm">
+          <h3>Never route into nothing</h3>
+          <p class="muted" style="font-size:0.93rem;">A rung that opens an empty deck teaches you the system is noise. Every rung checks live state first and falls through if it has no work for you.</p>
+        </div>
+        <div class="stack-sm">
+          <h3>One key moves you down the ladder</h3>
+          <p class="muted" style="font-size:0.93rem;">Landed on cards but want the book instead? One key advances to the next rung. It is a next, not a menu, so there is still nothing to choose between. Hold it and you walk the ladder in order.</p>
+        </div>
+        <div class="stack-sm">
+          <h3>One escape, always the same</h3>
+          <p class="muted" style="font-size:0.93rem;">A different single key stands the router down for the rest of that gap. Leaving is cheap on purpose. What gets deleted is the choosing, not your control.</p>
+        </div>
+        <div class="stack-sm">
+          <h3>Cooldown</h3>
+          <p class="muted" style="font-size:0.93rem;">After a reclaim, the router stays quiet for 90 seconds. Rapid fire prompts should not throw you between windows.</p>
+        </div>
+        <div class="stack-sm">
+          <h3>No blackout by default</h3>
+          <p class="muted" style="font-size:0.93rem;">Your last session ran at 2:20 in the morning. Quiet hours are available and off unless you ask for them.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 06 FAILURE MODES ============ -->
+  <section>
+    <div class="wide">
+      <div class="sec-head">
+        <span class="sec-num">06</span>
+        <h2>What will go wrong, and the answer for each</h2>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th style="width:30%">Failure</th><th>Consequence</th><th style="width:34%">Handled by</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>App Nap suspends background Anki, so AnkiConnect stops answering</td>
+              <td>The single most likely reason nothing happens on first run</td>
+              <td>Install time preflight that disables App Nap for Anki and then proves the socket answers, refusing to arm until it does</td>
+            </tr>
+            <tr>
+              <td>A gap opens while you are reading the last answer, not waiting</td>
+              <td>Flashcards land on top of what you are reading, which is the failure that gets the system deleted</td>
+              <td>Idle time veto: the router will not deliver if you touched the keyboard in the last few seconds</td>
+            </tr>
+            <tr>
+              <td>Focus is taken while you are mid keystroke elsewhere</td>
+              <td>Lost text, real irritation</td>
+              <td>Deliver only when the frontmost app is Claude, Cowork or a terminal. Otherwise you already left, so do nothing</td>
+            </tr>
+            <tr>
+              <td>Cowork changes where it writes sessions</td>
+              <td>Detection goes silent, and silent failure is the worst kind</td>
+              <td>A heartbeat: if no gap is detected across a day of use, the system says so instead of doing nothing quietly</td>
+            </tr>
+            <tr>
+              <td>Agent finishes while you are mid card</td>
+              <td>Either you lose the card or you ignore the agent</td>
+              <td>Anki keeps its own state, so the card survives being backgrounded. Reclaim never types into Anki, it only changes which window is in front</td>
+            </tr>
+            <tr>
+              <td>You start resenting it</td>
+              <td>You disable the whole thing, and the good part goes with it</td>
+              <td>One key stands it down for the gap. Another disarms it for the day. Both are logged, so the record shows whether you are escaping the router or escaping the work</td>
+            </tr>
+            <tr>
+              <td>The vice arrives anyway, right after the flashcards</td>
+              <td>The premise was wrong and the router cannot fix it</td>
+              <td>Stage 05 measures precisely this. A design that can be proven wrong beats one that cannot</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 07 DECISIONS ============ -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-num">07</span>
+        <h2>The decisions</h2>
+      </div>
+      <p class="lede" style="margin-bottom:1.7rem;">Five are settled and written into the loop. One is still open. Answer them in any form and I will fold them in before writing a line of code.</p>
+
+      <div class="stack" style="gap:1.6rem;">
+        <div class="q settled">
+          <div class="q-head"><h3>1. Does it take focus, or offer it?</h3><span class="tag tag-done">Settled</span></div>
+          <div class="q-opts">
+            <span class="chosen"><b class="chosen">Take it.</b> No countdown, no confirmation. Anki simply appears in front of you.</span>
+            <span>The consequence: misfires are now expensive, so the idle veto and the frontmost app guard become load bearing rather than nice to have. Both are already in Phase 1 and Phase 3 of the loop.</span>
+          </div>
+        </div>
+
+        <div class="q settled">
+          <div class="q-head"><h3>2. What is on the ladder, in your order?</h3><span class="tag tag-done">Settled</span></div>
+          <div class="q-opts">
+            <span class="chosen"><b class="chosen">Flashcards, then reading, then queue the next prompt, then the to do list.</b> Plus the ability to switch between them.</span>
+            <span>Switching is one key that advances to the next rung, wrapping at the end. Deliberately a <em>next</em> rather than a menu: a menu at that moment is the decision fatigue you asked to delete, wearing a different hat. One key changes what you are doing without ever asking you what you would like to be doing.</span>
+            <span>Holding the key walks the ladder in order, so getting from cards to your book is two presses and no thought.</span>
+          </div>
+        </div>
+
+        <div class="q settled">
+          <div class="q-head"><h3>3. Is the to do list a real rung, or the fallback?</h3><span class="tag tag-done">Settled by 2</span></div>
+          <p class="muted" style="font-size:0.93rem;">Last on the ladder, so it fires only when everything above it is empty. That matches my read of it: writing a to do list is itself a decision heavy activity, which makes it a poor thing to be dropped into when the goal is fewer decisions. It is still always reachable by pressing the advance key.</p>
+        </div>
+
+        <div class="q settled">
+          <div class="q-head"><h3>4. Both surfaces, or Cowork first?</h3><span class="tag tag-done">Settled by the data</span></div>
+          <p class="muted" style="font-size:0.93rem;"><strong class="chosen">Both.</strong> Your CLI history holds 1,883 real prompts and 139 hours of qualifying gap time, so this stopped being a judgement call once it was measured. Cowork uses the transcript watcher, Claude Code uses a hook, and both feed one queue.</p>
+        </div>
+
+        <div class="q settled">
+          <div class="q-head"><h3>5. Should distraction cost something during a gap?</h3><span class="tag tag-done">Wrong question</span></div>
+          <p class="muted" style="font-size:0.93rem;"><strong class="chosen">No. Nothing is blocked, delayed, or policed.</strong> I raised this and I was wrong to. This project <em>is</em> the answer to distraction: drop you into something productive before the temptation has a moment to form. Bolting a blocker onto it would be solving the same problem twice, the second time with a cage. The router competes by being there first, and that is the entire mechanism.</p>
+        </div>
+
+        <div class="q">
+          <div class="q-head"><h3>6. The name and the home</h3><span class="tag tag-open">Open</span></div>
+          <p class="muted" style="font-size:0.93rem;">I have called it Interstice and would put it at <code>~/Developer/interstice</code>, per your rule that anything that runs lives under Developer. Both are trivial to change now and annoying to change later.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 08 LOOP ============ -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-num">08</span>
+        <h2>The goal loop</h2>
+      </div>
+      <div class="stack">
+        <p class="lede">The checklist is written and sitting at <code>~/Developer/interstice/GOAL_LOOP.md</code>. It is fully autonomous: every item carries a check a machine can run, and none of them waits on you to look at something.</p>
+        <p>It runs in eight phases. Preflight proves the two dependencies that can silently kill everything, the Anki socket and the transcript watcher, and refuses to continue until both are demonstrated on real events. Then detection, routing, delivery, reclaim, the dashboard, and a soak phase that runs against genuine gaps and holds the loop open until the false positive rate is under one in twenty.</p>
+        <p>Because it builds a dashboard, it carries the UI to UX convergence sub loop twice: once after the design pass and once after the code pass, with a synthetic reviewer and a separate judge ruling each piece of feedback worthwhile or not. The loop cannot close while any worthwhile item is open.</p>
+        <hr class="hr" style="margin-block:0.6rem;">
+        <p class="muted" style="font-size:0.95rem;">Nothing in this document is running. No daemon has been installed, no file outside the checklist has been created, and no setting on your machine has been changed. The next move is yours.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- hero trace ---------- */
+  var fill = document.getElementById("fill");
+  var head = document.getElementById("head");
+  var clock = document.getElementById("clock");
+  var readout = document.getElementById("readout");
+  var chipEls = {};
+  Array.prototype.forEach.call(document.querySelectorAll("#chips .chip"), function (c) {
+    chipEls[c.getAttribute("data-k")] = c;
+  });
+
+  // steps: [seconds, pct, active chip, done chips, text]
+  var steps = [
+    [0,   2,  "submit", [], "<b>19:35:05.551</b> a line of type user lands in the Cowork transcript. The gap opens. Nothing happens yet."],
+    [12,  14, "submit", ["submit"], "<b>12s</b> still below threshold. Short turns must never move you, so the router stays quiet."],
+    [25,  25, "armed", ["submit"], "<b>25s</b> threshold crossed and you have not touched the keyboard. The gap is real."],
+    [26,  27, "routed", ["submit","armed"], "<b>26s</b> 32 cards due, so the flashcard rung wins. Anki is driven straight to a card, not a deck list."],
+    [95,  40, "working", ["submit","armed","routed"], "<b>1m 35s</b> you are answering cards. The agent is still working. Your Cowork window is untouched, one keystroke behind."],
+    [210, 58, "working", ["submit","armed","routed"], "<b>3m 30s</b> past the second threshold, but the deck still has work, so the router does not switch you. Escalation only fires into an empty rung."],
+    [268, 72, "reclaim", ["submit","armed","routed","working"], "<b>4m 28s</b> the agent asks for permission. Cowork comes forward, Anki drops behind, and the notification names the session."],
+    [269, 92, "reclaim", ["submit","armed","routed","working"], "<b>Gap closed.</b> 4m 03s captured, 19 cards answered, zero decisions made. Written to the log, then a 90 second cooldown."]
+  ];
+
+  function fmt(s) {
+    var m = Math.floor(s / 60), r = Math.floor(s % 60);
+    return m + ":" + (r < 10 ? "0" : "") + r;
+  }
+
+  function paint(i) {
+    var st = steps[i];
+    clock.textContent = fmt(st[0]);
+    fill.style.width = st[1] + "%";
+    head.style.left = st[1] + "%";
+    readout.innerHTML = st[4];
+    for (var k in chipEls) {
+      chipEls[k].className = "chip";
+    }
+    st[3].forEach(function (k) { if (chipEls[k]) chipEls[k].className = "chip done"; });
+    if (chipEls[st[2]]) chipEls[st[2]].className = "chip on";
+  }
+
+  if (reduce) {
+    paint(6);
+  } else {
+    var i = 0;
+    paint(0);
+    setInterval(function () {
+      i = (i + 1) % steps.length;
+      paint(i);
+    }, 2600);
+  }
+
+  /* ---------- router simulator ---------- */
+  var sGap = document.getElementById("s-gap");
+  var sAnki = document.getElementById("s-anki");
+  var sBook = document.getElementById("s-book");
+  var vGap = document.getElementById("v-gap");
+  var vAnki = document.getElementById("v-anki");
+  var vBook = document.getElementById("v-book");
+  var out = document.getElementById("sim-out");
+
+  function dur(s) {
+    if (s < 60) return s + "s";
+    var m = Math.floor(s / 60), r = s % 60;
+    return m + "m " + (r < 10 ? "0" : "") + r + "s";
+  }
+
+  function route() {
+    var gap = parseInt(sGap.value, 10);
+    var anki = parseInt(sAnki.value, 10);
+    var book = sBook.value === "1";
+
+    vGap.textContent = dur(gap);
+    vAnki.textContent = anki;
+    vBook.textContent = book ? "Yes" : "No";
+
+    var rows = [];
+    var current = null;
+
+    rows.push(["0s", "Gap opens", "A user line appears in the transcript. The router arms a timer and does nothing else.", true]);
+
+    if (gap < 25) {
+      rows.push([dur(gap), "Nothing fires", "The turn finished before the 25 second threshold. Below this, switching you costs more attention than it saves.", true]);
+      render(rows);
+      return;
+    }
+
+    if (anki > 0) {
+      current = "anki";
+      rows.push(["25s", "Flashcards", anki + " cards due, so the top rung has work. Anki is driven straight into a review.", false]);
+    } else {
+      current = "queue";
+      rows.push(["25s", "Queue next prompt", "The deck is empty, so the top rung falls through. A capture window opens, already focused.", false]);
+    }
+
+    if (gap >= 180) {
+      if (current === "anki" && anki >= 15) {
+        rows.push(["3m", "No change", "Roughly " + Math.max(0, anki - 12) + " cards still due, so the rung is not exhausted. Escalation only fires into an empty rung.", true]);
+      } else if (book) {
+        current = "kindle";
+        rows.push(["3m", "Reading", (current === "anki" ? "The deck is nearly done" : "Nothing left on the short rung") + ", and a book is in progress. Kindle opens to it by URL.", false]);
+      } else {
+        rows.push(["3m", "No change", "The next rung has nothing available either, so you are left where you are rather than shuffled.", true]);
+      }
+    }
+
+    if (gap >= 720) {
+      if (current !== "kindle" && book) {
+        current = "kindle";
+        rows.push(["12m", "Reading", "A long gap. Reading is the only rung that comfortably fills it, and a book is in progress.", false]);
+      } else if (current === "kindle") {
+        rows.push(["12m", "No change", "Already reading, which is the right rung for a gap this long.", true]);
+      } else {
+        rows.push(["12m", "No change", "No book in progress, so there is no long form rung to escalate into.", true]);
+      }
+    }
+
+    rows.push([dur(gap), "Reclaim", "The agent finishes or asks for you. Cowork comes forward, the activity drops behind, and the gap is written to the log.", false]);
+    render(rows);
+  }
+
+  function render(rows) {
+    out.innerHTML = rows.map(function (r) {
+      return '<div class="sim-row' + (r[3] ? " quiet" : "") + '">' +
+        '<span class="sim-t">' + r[0] + "</span>" +
+        '<span class="sim-act">' + r[1] + '<span class="sim-why">' + r[2] + "</span></span>" +
+        "</div>";
+    }).join("");
+  }
+
+  [sGap, sAnki, sBook].forEach(function (el) { el.addEventListener("input", route); });
+  route();
+})();
+</script>
+</body></html>

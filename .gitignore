@@ -1,0 +1,8 @@
+node_modules/
+logs/
+*.log
+.DS_Store
+config/interstice.config.json
+!config/interstice.config.default.json
+.interstice-runtime/
+coverage/

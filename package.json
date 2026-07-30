@@ -1,0 +1,32 @@
+{
+  "name": "interstice",
+  "version": "0.1.0",
+  "description": "Fills the dead moment after you dispatch an AI agent, before you can decide to waste it.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "interstice": "./bin/interstice.js"
+  },
+  "scripts": {
+    "test": "node --test test/",
+    "doctor": "node ./bin/interstice.js doctor",
+    "start": "node ./bin/interstice.js start --foreground"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scott-lydon/interstice.git"
+  },
+  "keywords": [
+    "macos",
+    "focus",
+    "anki",
+    "claude-code",
+    "attention",
+    "automation"
+  ],
+  "dependencies": {},
+  "devDependencies": {}
+}
