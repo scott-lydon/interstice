@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Interstice debug</title>
+<style>
+  :root {
+    --ground: #EEF0F2; --raised: #FFFFFF; --sunk: #E4E8EC;
+    --ink: #12161C; --muted: #5A6673; --faint: #8B96A3; --rule: #CFD6DD;
+    --accent: #2440E8; --ok: #1B7A4B; --warn: #9A6A12; --crit: #A82B22;
+    --display: "Avenir Next Condensed", "Avenir Next", sans-serif;
+    --body: Charter, "Iowan Old Style", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0E1116; --raised: #161A21; --sunk: #11151B;
+      --ink: #E4E8EE; --muted: #939EAC; --faint: #6C7784; --rule: #262D37;
+      --accent: #8296FF; --ok: #4FBF8B; --warn: #D6A44A; --crit: #E0736A;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 16px/1.6 var(--body); }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 30px 24px 70px; }
+  h1, h2 { margin: 0; font-family: var(--display); font-weight: 600; }
+  h1 { font-size: 1.9rem; }
+  h2 { font-size: 1.05rem; }
+  .eyebrow { font-family: var(--display); text-transform: uppercase; letter-spacing: .16em; font-size: .7rem; color: var(--muted); font-weight: 600; }
+  p { margin: 0; }
+  a { color: var(--accent); }
+  section { margin-top: 30px; border: 1px solid var(--rule); background: var(--raised); padding: 18px; }
+  .why { color: var(--muted); font-size: .9rem; margin-top: 6px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+  button {
+    font: 600 .68rem/1 var(--display); text-transform: uppercase; letter-spacing: .1em;
+    padding: 9px 14px; border-radius: 3px; cursor: pointer;
+    background: transparent; color: var(--ink); border: 1px solid var(--rule);
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  input[type=number] { font-family: var(--mono); width: 80px; padding: 7px; background: var(--ground); color: var(--ink); border: 1px solid var(--rule); border-radius: 3px; }
+  pre {
+    margin: 14px 0 0; background: var(--sunk); border: 1px solid var(--rule); border-left: 2px solid var(--accent);
+    padding: 12px; overflow-x: auto; font-family: var(--mono); font-size: .74rem; line-height: 1.55; color: var(--muted);
+    max-height: 340px; overflow-y: auto;
+  }
+  .banner { border: 1px solid var(--warn); color: var(--warn); padding: 11px 14px; font-size: .88rem; }
+  .status { font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+  .spinner { width: 12px; height: 12px; border: 2px solid var(--rule); border-top-color: var(--accent); border-radius: 50%; display: inline-block; animation: spin .7s linear infinite; vertical-align: -2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Interstice</p>
+  <h1>Debug console</h1>
+  <p class="why" style="margin-top:10px;max-width:62ch">
+    Most interesting states are slow to reach by hand. You cannot conjure a twelve minute
+    agent turn on demand, and waiting for one makes every iteration cost twelve minutes.
+    These controls drive the daemon into any state directly.
+  </p>
+
+  <section>
+    <div class="banner">
+      Everything created here is tagged <b>synthetic</b> and excluded from the statistics on the
+      dashboard. The debug surface can never inflate the numbers sitting next to it.
+    </div>
+    <div class="row">
+      <span class="status" id="status">reading status <span class="spinner"></span></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Drive a gap</h2>
+    <p class="why">Open one, walk the ladder, close it. The same code path a real prompt takes.</p>
+    <div class="row">
+      <button class="primary" id="open" type="button">Open gap</button>
+      <button id="next" type="button">Next rung</button>
+      <button id="stand" type="button">Stand down</button>
+      <button id="endc" type="button">End (complete)</button>
+      <button id="endp" type="button">End (needs permission)</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Timed run</h2>
+    <p class="why">Open a gap, wait, then close it, so you can watch the thresholds fire in order.</p>
+    <div class="row">
+      <label class="status" for="secs">seconds</label>
+      <input type="number" id="secs" value="30" min="1" max="1800">
+      <button id="timed" type="button">Run</button>
+      <span class="status" id="countdown"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Live state</h2>
+    <p class="why">What the router would see right now, from the real providers.</p>
+    <div class="row"><button id="refresh" type="button">Refresh</button></div>
+    <pre id="out">…</pre>
+  </section>
+
+  <p style="margin-top:26px"><a href="/">Back to the dashboard</a></p>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+async function post(p, body) {
+  const r = await fetch(p, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}) });
+  return r.json();
+}
+async function get(p) { return (await fetch(p)).json(); }
+
+function show(obj) { $('out').textContent = JSON.stringify(obj, null, 2); }
+
+async function status() {
+  try {
+    const h = await get('/api/health');
+    $('status').textContent = h.open
+      ? `gap open · ${h.gap.surface} · ${h.gap.elapsed}s · rung ${h.gap.current || 'none yet'}${h.gap.synthetic ? ' · synthetic' : ''}`
+      : `no gap open · ${h.counters.gaps} gaps this session · uptime ${h.uptimeSec}s`;
+  } catch {
+    $('status').textContent = 'daemon not reachable';
+  }
+}
+
+$('open').addEventListener('click', async () => { show(await post('/debug/submit', { surface: 'debug' })); status(); });
+$('next').addEventListener('click', async () => { show(await post('/api/advance')); status(); });
+$('stand').addEventListener('click', async () => { show(await post('/api/standdown', {})); status(); });
+$('endc').addEventListener('click', async () => { show(await post('/debug/end', { reason: 'complete' })); status(); });
+$('endp').addEventListener('click', async () => { show(await post('/debug/end', { reason: 'permission' })); status(); });
+$('refresh').addEventListener('click', async () => show(await get('/api/health')));
+
+$('timed').addEventListener('click', async () => {
+  const total = Math.max(1, Number($('secs').value) || 30);
+  await post('/debug/submit', { surface: 'debug' });
+  let left = total;
+  $('countdown').textContent = `running… ${left}s left`;
+  const t = setInterval(async () => {
+    left -= 1;
+    $('countdown').textContent = left > 0 ? `running… ${left}s left` : 'closing…';
+    status();
+    if (left <= 0) {
+      clearInterval(t);
+      show(await post('/debug/end', { reason: 'complete' }));
+      $('countdown').textContent = 'done';
+      status();
+    }
+  }, 1000);
+});
+
+status();
+setInterval(status, 2000);
+</script>
+</body>
+</html>
