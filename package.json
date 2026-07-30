@@ -11,7 +11,7 @@
     "interstice": "./bin/interstice.js"
   },
   "scripts": {
-    "test": "node --test test/",
+    "test": "node --test",
     "doctor": "node ./bin/interstice.js doctor",
     "start": "node ./bin/interstice.js start --foreground"
   },
