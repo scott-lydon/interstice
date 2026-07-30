@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Interstice</title>
+<style>
+  :root {
+    --ground: #EEF0F2; --raised: #FFFFFF; --sunk: #E4E8EC;
+    --ink: #12161C; --muted: #5A6673; --faint: #8B96A3; --rule: #CFD6DD;
+    --accent: #2440E8; --accent-soft: rgba(36,64,232,.10);
+    --ok: #1B7A4B; --warn: #9A6A12; --crit: #A82B22;
+    --display: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", sans-serif;
+    --body: Charter, "Iowan Old Style", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0E1116; --raised: #161A21; --sunk: #11151B;
+      --ink: #E4E8EE; --muted: #939EAC; --faint: #6C7784; --rule: #262D37;
+      --accent: #8296FF; --accent-soft: rgba(130,150,255,.13);
+      --ok: #4FBF8B; --warn: #D6A44A; --crit: #E0736A;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font: 16px/1.6 var(--body); -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px 72px; }
+  h1, h2, h3 { margin: 0; font-family: var(--display); font-weight: 600; text-wrap: balance; }
+  p { margin: 0; }
+  .eyebrow {
+    font-family: var(--display); text-transform: uppercase; letter-spacing: .16em;
+    font-size: .7rem; color: var(--muted); font-weight: 600;
+  }
+  .num { font-variant-numeric: tabular-nums; }
+
+  header { padding: 34px 0 22px; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+  header h1 { font-size: 2.1rem; letter-spacing: -.01em; line-height: 1; }
+
+  /* live strip */
+  .live {
+    border: 1px solid var(--rule); background: var(--raised);
+    padding: 16px 18px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); flex: none; }
+  .dot.on { background: var(--ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 22%, transparent); }
+  .dot.gap { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .dot.bad { background: var(--crit); box-shadow: 0 0 0 4px color-mix(in srgb, var(--crit) 22%, transparent); }
+  .live-text { font-family: var(--mono); font-size: .82rem; color: var(--muted); }
+  .live-text b { color: var(--ink); font-weight: 600; }
+  .live-actions { margin-left: auto; display: flex; gap: 8px; }
+  button {
+    font: 600 .68rem/1 var(--display); text-transform: uppercase; letter-spacing: .1em;
+    padding: 8px 13px; border-radius: 3px; cursor: pointer;
+    background: transparent; color: var(--ink); border: 1px solid var(--rule);
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button[disabled] { opacity: .4; cursor: not-allowed; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* tiles */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin-top: 26px; }
+  .tile { background: var(--ground); padding: 15px 17px; display: flex; flex-direction: column; gap: 3px; }
+  .tile .v { font-family: var(--mono); font-size: 1.5rem; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .tile .k { font-family: var(--display); text-transform: uppercase; letter-spacing: .1em; font-size: .62rem; color: var(--muted); font-weight: 600; }
+  .tile .v.accent { color: var(--accent); }
+  .tile .v.ok { color: var(--ok); }
+  .tile .v.warn { color: var(--warn); }
+  .tile .v.crit { color: var(--crit); }
+
+  section { margin-top: 38px; }
+  .sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+  .sec-head h2 { font-size: 1.15rem; }
+  .sec-head .note { font-size: .84rem; color: var(--muted); }
+
+  .bars { display: flex; flex-direction: column; gap: 6px; }
+  .bar-row { display: grid; grid-template-columns: 104px 1fr 54px; gap: 12px; align-items: center; }
+  .bar-lab { font-family: var(--mono); font-size: .74rem; color: var(--muted); text-align: right; }
+  .bar { height: 15px; background: var(--sunk); }
+  .bar > i { display: block; height: 100%; background: var(--accent); }
+  .bar-val { font-family: var(--mono); font-size: .74rem; font-variant-numeric: tabular-nums; }
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--rule); background: var(--raised); }
+  table { border-collapse: collapse; width: 100%; font-size: .87rem; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; white-space: nowrap; }
+  th { font-family: var(--display); text-transform: uppercase; letter-spacing: .11em; font-size: .62rem; color: var(--muted); font-weight: 600; background: var(--sunk); }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.mono, th.mono { font-family: var(--mono); font-size: .76rem; font-variant-numeric: tabular-nums; }
+  tr.synthetic td { color: var(--faint); font-style: italic; }
+  .pill { font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: .6rem; font-weight: 600; padding: 2px 6px; border: 1px solid currentColor; border-radius: 2px; }
+  .p-ok { color: var(--ok); } .p-warn { color: var(--warn); } .p-crit { color: var(--crit); } .p-mute { color: var(--faint); }
+  tr.expandable { cursor: pointer; }
+  tr.expandable:hover td { background: var(--accent-soft); }
+  tr.detail td { white-space: pre-wrap; font-family: var(--mono); font-size: .72rem; color: var(--muted); background: var(--sunk); }
+
+  .excluded { margin-top: 9px; font-family: var(--mono); font-size: .72rem; color: var(--faint); }
+  .empty { border: 1px dashed var(--rule); padding: 30px; text-align: center; color: var(--muted); }
+  .empty b { color: var(--ink); font-weight: 600; }
+
+  footer { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--rule); display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); }
+  a { color: var(--accent); }
+
+  .spinner { width: 13px; height: 13px; border: 2px solid var(--rule); border-top-color: var(--accent); border-radius: 50%; display: inline-block; animation: spin .7s linear infinite; vertical-align: -2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .skeleton { background: linear-gradient(90deg, var(--sunk) 25%, var(--rule) 50%, var(--sunk) 75%); background-size: 200% 100%; animation: sh 1.3s ease-in-out infinite; color: transparent !important; border-radius: 2px; }
+  @keyframes sh { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="eyebrow">Interstice</p>
+      <h1>Gaps caught</h1>
+    </div>
+    <p class="eyebrow" id="refreshed">connecting <span class="spinner"></span></p>
+  </header>
+
+  <div class="live">
+    <span class="dot" id="dot"></span>
+    <span class="live-text" id="live">reading daemon status…</span>
+    <span class="live-actions">
+      <button id="advance" type="button" disabled>Next rung</button>
+      <button id="standdown" type="button" disabled>Stand down</button>
+      <button id="standdownday" type="button">Off for today</button>
+    </span>
+  </div>
+
+  <div class="tiles" id="tiles">
+    <div class="tile"><span class="v skeleton">000</span><span class="k">Gaps</span></div>
+    <div class="tile"><span class="v skeleton">000</span><span class="k">Delivered</span></div>
+    <div class="tile"><span class="v skeleton">000</span><span class="k">Minutes reclaimed</span></div>
+    <div class="tile"><span class="v skeleton">000</span><span class="k">Median turn</span></div>
+    <div class="tile"><span class="v skeleton">000</span><span class="k">False positives</span></div>
+  </div>
+  <p class="excluded" id="excluded" hidden></p>
+
+  <section id="rungs-sec">
+    <div class="sec-head"><h2>Where it sent you</h2><span class="note" id="rung-note"></span></div>
+    <div class="bars" id="rungs"></div>
+  </section>
+
+  <section id="verdict-sec">
+    <div class="sec-head"><h2>Is it working?</h2><span class="note">The numbers that would tell you it is not.</span></div>
+    <div id="verdict"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Every gap</h2>
+      <span class="note">Click a row for the raw decisions behind it.</span>
+    </div>
+    <div id="gaps"></div>
+  </section>
+
+  <footer>
+    <span>Local only. Reads timestamps and structure from agent transcripts, never message content.</span>
+    <span><a href="/debug">Debug console</a> · <a href="/api/stats">Raw stats</a></span>
+  </footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+const fmtSec = (s) => (s == null ? '·' : s < 60 ? s + 's' : Math.floor(s / 60) + 'm ' + String(s % 60).padStart(2, '0') + 's');
+const pct = (x) => (x * 100).toFixed(1) + '%';
+const clock = (ts) => new Date(ts).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+let expanded = null;
+
+async function get(p) { const r = await fetch(p); if (!r.ok) throw new Error(p + ' -> ' + r.status); return r.json(); }
+async function post(p, body) {
+  const r = await fetch(p, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}) });
+  return r.json();
+}
+
+function renderLive(h) {
+  const dot = $('dot');
+  const hasGap = h.open;
+  dot.className = 'dot ' + (h.detectionSilent ? 'bad' : hasGap ? 'gap' : 'on');
+  const c = h.counters;
+  if (h.detectionSilent) {
+    $('live').innerHTML = '<b>No events in 24 hours.</b> Detection may be broken. Run <b>interstice doctor</b>.';
+  } else if (hasGap) {
+    $('live').innerHTML =
+      `<b>Gap open</b> · ${esc(h.gap.surface)} · ${fmtSec(h.gap.elapsed)} elapsed · rung ` +
+      `<b>${esc(h.gap.current || 'none yet')}</b>${h.gap.synthetic ? ' · synthetic' : ''}`;
+  } else {
+    $('live').innerHTML =
+      `<b>Watching.</b> up ${fmtSec(h.uptimeSec)} · ${c.gaps} gaps · ${c.delivered} delivered` +
+      (h.stoodDownForDay ? ' · <b>stood down for today</b>' : '');
+  }
+  $('advance').disabled = !hasGap;
+  $('standdown').disabled = !hasGap;
+}
+
+function renderTiles(s) {
+  const fp = s.quality.falsePositiveRate;
+  const fpClass = s.totals.delivered === 0 ? '' : fp < 0.05 ? 'ok' : fp < 0.15 ? 'warn' : 'crit';
+  $('tiles').innerHTML = [
+    ['Gaps', s.totals.gaps, 'accent'],
+    ['Delivered', `${s.totals.delivered}`, ''],
+    ['Minutes reclaimed', s.totals.minutesReclaimed, ''],
+    ['Median turn', fmtSec(s.duration.medianSec), ''],
+    ['False positives', s.totals.delivered ? pct(fp) : '·', fpClass],
+  ].map(([k, v, cls]) => `<div class="tile"><span class="v ${cls}">${esc(v)}</span><span class="k">${esc(k)}</span></div>`).join('');
+
+  // Say it out loud when the tiles read zero because everything logged was
+  // synthetic. Numbers that disagree with the table below them, without a stated
+  // reason, are how a dashboard starts lying.
+  const ex = $('excluded');
+  if (s.totals.synthetic > 0) {
+    ex.hidden = false;
+    ex.textContent =
+      `${s.totals.synthetic} synthetic gap${s.totals.synthetic === 1 ? '' : 's'} from /debug ` +
+      `excluded from these figures` +
+      (s.totals.gaps === 0 ? ', which is why they read zero while the table below has rows' : '');
+  } else {
+    ex.hidden = true;
+  }
+}
+
+function renderRungs(s) {
+  const entries = Object.entries(s.byRung).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) {
+    $('rungs-sec').style.display = 'none';
+    return;
+  }
+  $('rungs-sec').style.display = '';
+  const max = Math.max(...entries.map((e) => e[1]));
+  $('rung-note').textContent = `${entries.reduce((a, e) => a + e[1], 0)} deliveries`;
+  $('rungs').innerHTML = entries
+    .map(([rung, n]) => `<div class="bar-row"><span class="bar-lab">${esc(rung)}</span><span class="bar"><i style="width:${(n / max) * 100}%"></i></span><span class="bar-val">${n}</span></div>`)
+    .join('');
+}
+
+function renderVerdict(s) {
+  if (!s.totals.gaps) { $('verdict-sec').style.display = 'none'; return; }
+  $('verdict-sec').style.display = '';
+  const fp = s.quality.falsePositiveRate;
+  const sd = s.quality.standDownRate;
+  const rows = [
+    ['False positive rate', s.totals.delivered ? pct(fp) : '·',
+      'You were moved and immediately rejected it. Above 5% means it is interrupting, not helping.',
+      s.totals.delivered === 0 ? 'p-mute' : fp < 0.05 ? 'p-ok' : fp < 0.15 ? 'p-warn' : 'p-crit'],
+    ['Stand-down rate', pct(sd),
+      'How often you told it to go away. Rising means the ladder is wrong, not the timing.',
+      sd < 0.1 ? 'p-ok' : sd < 0.3 ? 'p-warn' : 'p-crit'],
+    ['Gaps below threshold', s.duration.belowArm,
+      'Turns too short to route. If this is most of them, the premise does not hold for you.',
+      s.duration.belowArm / Math.max(1, s.totals.gaps) < 0.5 ? 'p-ok' : 'p-warn'],
+  ];
+  $('verdict').innerHTML =
+    '<div class="tablewrap"><table><tbody>' +
+    rows.map(([k, v, why, cls]) =>
+      `<tr><td><b>${esc(k)}</b></td><td class="mono"><span class="pill ${cls}">${esc(v)}</span></td><td style="white-space:normal;color:var(--muted)">${esc(why)}</td></tr>`
+    ).join('') +
+    '</tbody></table></div>';
+}
+
+function renderGaps(gaps, events) {
+  if (!gaps.length) {
+    $('gaps').innerHTML =
+      '<div class="empty"><b>No gaps recorded yet.</b><br>' +
+      'Submit a prompt in Cowork or Claude Code and let it run past the threshold. ' +
+      'Nothing here is placeholder data: this stays empty until a real gap is logged.</div>';
+    return;
+  }
+  const rows = gaps.slice().reverse().map((g) => {
+    const rungs = (g.delivered || []).map((d) => d.rung).join(' → ') || '·';
+    const cls = g.synthetic ? 'synthetic' : '';
+    const outcome = g.stoodDown
+      ? '<span class="pill p-warn">stood down</span>'
+      : g.delivered?.length
+        ? '<span class="pill p-ok">delivered</span>'
+        : '<span class="pill p-mute">quiet</span>';
+    const detail = expanded === g.id
+      ? `<tr class="detail"><td colspan="6">${esc(
+          (events[g.id] || []).map((e) =>
+            e.kind === 'decision'
+              ? `${String(e.elapsed).padStart(4)}s  ${e.threshold.padEnd(5)} ${e.action.padEnd(8)} ${e.rung || '-'}  ${e.reason}\n        state ${JSON.stringify(e.state)}`
+              : `      ${e.kind} ${e.rung || ''} ${e.reason || e.error || ''}`
+          ).join('\n') || 'no events retained for this gap'
+        )}</td></tr>`
+      : '';
+    return (
+      `<tr class="expandable ${cls}" data-id="${esc(g.id)}">` +
+      `<td class="mono">${esc(clock(g.submittedAt))}</td>` +
+      `<td>${esc(g.surface)}${g.synthetic ? ' <span class="pill p-mute">synthetic</span>' : ''}</td>` +
+      `<td class="mono">${esc(fmtSec(g.durationSec))}</td>` +
+      `<td>${esc(rungs)}</td>` +
+      `<td>${outcome}</td>` +
+      `<td class="mono">${esc(g.endReason || '')}</td>` +
+      `</tr>${detail}`
+    );
+  });
+  $('gaps').innerHTML =
+    '<div class="tablewrap"><table><thead><tr>' +
+    '<th>When</th><th>Surface</th><th class="mono">Duration</th><th>Rungs</th><th>Outcome</th><th>Ended</th>' +
+    '</tr></thead><tbody>' + rows.join('') + '</tbody></table></div>';
+
+  for (const tr of document.querySelectorAll('tr.expandable')) {
+    tr.addEventListener('click', () => {
+      expanded = expanded === tr.dataset.id ? null : tr.dataset.id;
+      refresh();
+    });
+  }
+}
+
+async function refresh() {
+  try {
+    const [h, s, g] = await Promise.all([get('/api/health'), get('/api/stats'), get('/api/gaps?limit=200')]);
+    renderLive(h);
+    renderTiles(s);
+    renderRungs(s);
+    renderVerdict(s);
+
+    let events = {};
+    if (expanded) {
+      const ev = await get('/api/events?limit=400&gapId=' + encodeURIComponent(expanded));
+      events[expanded] = ev.events;
+    }
+    renderGaps(g.gaps, events);
+    $('refreshed').textContent = 'updated ' + new Date().toLocaleTimeString();
+  } catch (err) {
+    $('dot').className = 'dot bad';
+    $('live').innerHTML = '<b>Daemon not reachable.</b> Start it with <b>interstice start</b>.';
+    $('refreshed').textContent = 'disconnected';
+  }
+}
+
+$('advance').addEventListener('click', async () => { await post('/api/advance'); refresh(); });
+$('standdown').addEventListener('click', async () => { await post('/api/standdown', {}); refresh(); });
+$('standdownday').addEventListener('click', async () => { await post('/api/standdown', { day: true }); refresh(); });
+
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>

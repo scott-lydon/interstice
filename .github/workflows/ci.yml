@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    # macOS because Interstice drives macOS APIs (FSEvents, ioreg, lsappinfo).
+    # Tests that need a real Anki or real transcripts skip cleanly here.
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: No dependencies to install
+        run: test ! -f package-lock.json && echo "zero-dependency by design"
+      - name: Test
+        run: node --test
+      - name: Config defaults must be valid
+        run: node -e "import('./lib/config.js').then(m=>{const e=m.validate(m.defaults());if(e.length){console.error(e);process.exit(1)}console.log('defaults valid')})"
