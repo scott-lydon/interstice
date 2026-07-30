@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Queue a prompt</title>
+<style>
+  :root {
+    --ground: #F1F3F5; --ink: #12161C; --muted: #5A6673; --rule: #CFD6DD;
+    --accent: #2440E8; --raised: #FFFFFF; --ok: #1B7A4B;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0E1116; --ink: #E4E8EE; --muted: #939EAC; --rule: #262D37;
+      --accent: #8296FF; --raised: #161A21; --ok: #4FBF8B;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font: 15px/1.5 Charter, "Iowan Old Style", Georgia, serif;
+    display: flex; flex-direction: column; padding: 18px; gap: 12px;
+    -webkit-font-smoothing: antialiased;
+  }
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  h1 {
+    font: 600 12px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin: 0;
+  }
+  .hint { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; color: var(--muted); }
+  textarea {
+    flex: 1; resize: none; width: 100%; padding: 14px;
+    background: var(--raised); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 3px;
+    font: 15px/1.55 Charter, "Iowan Old Style", Georgia, serif;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  button {
+    font: 600 12px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    padding: 9px 16px; border-radius: 3px; cursor: pointer;
+    background: var(--accent); color: #fff; border: 1px solid var(--accent);
+  }
+  button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  #status { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; color: var(--ok); min-height: 1.2em; }
+  ul { margin: 0; padding: 0; list-style: none; max-height: 22vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  li { font-size: 12px; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 8px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Queue your next prompt</h1>
+    <span class="hint">&#8984;&#9166; to save</span>
+  </header>
+  <textarea id="box" autofocus placeholder="What do you want to hand off next?"></textarea>
+  <footer>
+    <span id="status"></span>
+    <button id="save" type="button">Save</button>
+  </footer>
+  <ul id="recent"></ul>
+
+<script>
+  const box = document.getElementById('box');
+  const status = document.getElementById('status');
+  const recent = document.getElementById('recent');
+
+  async function refresh() {
+    try {
+      const r = await fetch('/api/queued');
+      const d = await r.json();
+      recent.innerHTML = (d.queued || [])
+        .filter((q) => q.text)
+        .slice(-6)
+        .reverse()
+        .map((q) => '<li>' + q.text.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c])).slice(0, 140) + '</li>')
+        .join('');
+    } catch { /* daemon gone */ }
+  }
+
+  async function save() {
+    const text = box.value.trim();
+    if (!text) return;
+    await fetch('/api/queued', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    box.value = '';
+    status.textContent = 'saved ' + new Date().toLocaleTimeString();
+    refresh();
+    box.focus();
+  }
+
+  document.getElementById('save').addEventListener('click', save);
+  box.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); save(); }
+  });
+  window.addEventListener('load', () => { box.focus(); refresh(); });
+</script>
+</body>
+</html>

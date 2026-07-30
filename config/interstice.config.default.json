@@ -5,7 +5,12 @@
   "cooldown": 90,
   "focusMode": "take",
   "idleVetoMs": 4000,
-  "ladder": ["flashcards", "reading", "queue_prompt", "todo"],
+  "ladder": [
+    "flashcards",
+    "reading",
+    "queue_prompt",
+    "todo"
+  ],
   "originApps": [
     "Claude",
     "Cowork",
@@ -21,10 +26,12 @@
     "claudeCode": true
   },
   "anki": {
-    "url": "http://127.0.0.1:8765",
+    "url": null,
     "timeoutMs": 800,
     "midRungMinDue": 15,
-    "deck": null
+    "deck": null,
+    "apiKey": null,
+    "guiTimeoutMs": 8000
   },
   "reading": {
     "app": "Kindle"
