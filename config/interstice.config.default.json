@@ -1,0 +1,39 @@
+{
+  "arm": 25,
+  "mid": 180,
+  "long": 720,
+  "cooldown": 90,
+  "focusMode": "take",
+  "idleVetoMs": 4000,
+  "ladder": ["flashcards", "reading", "queue_prompt", "todo"],
+  "originApps": [
+    "Claude",
+    "Cowork",
+    "Ghostty",
+    "iTerm2",
+    "Terminal",
+    "Warp",
+    "Electron",
+    "Code"
+  ],
+  "surfaces": {
+    "cowork": true,
+    "claudeCode": true
+  },
+  "anki": {
+    "url": "http://127.0.0.1:8765",
+    "timeoutMs": 800,
+    "midRungMinDue": 15,
+    "deck": null
+  },
+  "reading": {
+    "app": "Kindle"
+  },
+  "todo": {
+    "vault": "Obsidian Vault",
+    "note": "Inbox.md"
+  },
+  "port": 7420,
+  "quietHours": null,
+  "notifications": true
+}
