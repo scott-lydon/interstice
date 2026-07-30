@@ -9,6 +9,7 @@ import { install, uninstall } from '../lib/install.js';
 import { PID_FILE, GAPS_LOG } from '../lib/paths.js';
 import { summarize, suggestThresholds } from '../lib/stats.js';
 import { openUrl } from '../lib/state/system.js';
+import { buildHotkeyApps, instructions } from '../lib/hotkeys.js';
 
 const [, , cmd, ...args] = process.argv;
 const has = (flag) => args.includes(flag);
@@ -24,6 +25,7 @@ const USAGE = `interstice - fills the dead moment after you dispatch an AI agent
   advance             Move to the next rung.
   standdown [--day]   Stop routing for this gap, or for today.
   dashboard           Open the log UI.
+  hotkeys             Build the advance / stand-down apps and print how to bind them.
   stats [--tune]      Summarise your gaps. --tune suggests thresholds from data.
   simulate <seconds>  Drive a synthetic gap. Tagged, excluded from stats.
 `;
@@ -126,6 +128,13 @@ async function main() {
     case 'standdown':
       console.log(JSON.stringify(await api('/api/standdown', { method: 'POST', body: { day: has('--day') } })));
       break;
+
+    case 'hotkeys': {
+      const config = load();
+      const built = await buildHotkeyApps({ port: config.port });
+      console.log(instructions(built));
+      break;
+    }
 
     case 'dashboard': {
       const config = load();

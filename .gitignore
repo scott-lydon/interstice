@@ -6,3 +6,4 @@ config/interstice.config.json
 !config/interstice.config.default.json
 .interstice-runtime/
 coverage/
+hotkeys/

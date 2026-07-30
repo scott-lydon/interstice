@@ -266,3 +266,51 @@ test('synthetic gaps are tagged so they can be excluded from statistics', async 
   const rec = await h.engine.onEnd({ reason: 'complete' });
   assert.equal(rec.synthetic, true);
 });
+
+test('an idle veto retries shortly after, because it is transient', async () => {
+  // You were mid-keystroke at the threshold, then you stop. Waiting until the
+  // next declared threshold to look again throws away a catchable gap.
+  const h = harness({ idleMs: 200 });
+  h.engine.onSubmit({ surface: 'cowork' });
+  await h.tick(30);
+  assert.deepEqual(h.delivered, [], 'vetoed at the threshold');
+
+  h.setState({ idleMs: 30_000 }); // your hands come off the keyboard
+  await h.tick(20);
+  assert.deepEqual(h.delivered, ['flashcards'], 'retry caught the gap');
+});
+
+test('veto retries are bounded, not an infinite poll', async () => {
+  const h = harness({ idleMs: 100 }); // never goes idle
+  const logs = [];
+  h.engine.on('log', (r) => logs.push(r));
+  h.engine.onSubmit({ surface: 'cowork' });
+  await h.tick(300);
+  const scheduled = logs.filter((l) => l.kind === 'retry_scheduled');
+  assert.ok(scheduled.length <= 4, `expected at most 4 retries, saw ${scheduled.length}`);
+  assert.deepEqual(h.delivered, []);
+});
+
+test('leaving for another app does NOT trigger retries', async () => {
+  // wrong_app means you already went somewhere else. Chasing you there is the
+  // interruption this whole system exists to avoid.
+  const h = harness({ frontmostApp: 'Safari' });
+  const logs = [];
+  h.engine.on('log', (r) => logs.push(r));
+  h.engine.onSubmit({ surface: 'cowork' });
+  await h.tick(120);
+  assert.equal(logs.filter((l) => l.kind === 'retry_scheduled').length, 0);
+  assert.deepEqual(h.delivered, []);
+});
+
+test('the retry counter resets between gaps', async () => {
+  const h = harness({ idleMs: 100 });
+  h.engine.onSubmit({ surface: 'cowork' });
+  await h.tick(120);
+  await h.engine.onEnd({ reason: 'complete' });
+
+  h.setState({ idleMs: 30_000 });
+  h.engine.onSubmit({ surface: 'cowork' });
+  await h.tick(30);
+  assert.deepEqual(h.delivered, ['flashcards'], 'a fresh gap is not penalised by the last one');
+});
