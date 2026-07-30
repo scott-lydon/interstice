@@ -42,5 +42,7 @@
   },
   "port": 7420,
   "quietHours": null,
-  "notifications": true
+  "notifications": true,
+  "vetoRetrySec": 15,
+  "vetoRetries": 4
 }

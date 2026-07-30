@@ -93,6 +93,22 @@ empty deck.
 
 Both are logged, so the record shows whether you are escaping the router or the work.
 
+Run `interstice hotkeys` to build two small apps, then bind a key to each in
+Shortcuts.app (or Raycast, Alfred, Karabiner, anything that launches an app on a
+hotkey). They talk to the daemon over loopback, so a keypress costs milliseconds and
+nothing needs Accessibility access.
+
+### When it holds back
+
+Two guards stop it interrupting you, and they behave differently on purpose:
+
+- **You were mid-keystroke.** Transient, so it waits about fifteen seconds and looks
+  again, up to four times. Otherwise a gap you could have used is thrown away because
+  you happened to be typing at second twenty-five.
+- **You already left for another app.** Not transient. It does nothing and does not
+  chase you, because following you into Safari is the interruption this exists to
+  prevent.
+
 ## Commands
 
 ```
@@ -126,6 +142,19 @@ data; simulated gaps are tagged `synthetic: true` and excluded from the statisti
   "idleVetoMs": 4000
 }
 ```
+
+## Things that will silently break, and what handles them
+
+Every one of these produces *nothing happening*, with no error, which is the failure
+this project can least afford. `doctor` proves each of them rather than assuming.
+
+| Trap | Why it is invisible | Handled by |
+|---|---|---|
+| macOS App Nap suspends backgrounded Anki | AnkiConnect just stops answering | `doctor --fix` sets `NSAppSleepDisabled` on **both** `net.ankiweb.dtop` and `net.ankiweb.launcher`; current builds run under the launcher, so setting only the documented one looks right and does nothing |
+| AnkiConnect's port is user editable | a hardcoded 8765 makes the top rung permanently unavailable | the port and any API key are read from the addon's own config |
+| Anki runs inside a Python venv | System Events reports its process name as `python`, so app-name guards break | frontmost is read via `lsappinfo` display names, which also needs no Automation grant |
+| `ioreg -c IOHIDSystem -d 1` returns no properties without `-r` | idle time reads as null, and the idle veto silently switches off | correct flags, plus a regression test |
+| Cowork changes where it writes sessions | detection goes quiet and looks like calm | the daemon logs `DETECTION_SILENT` after 24h with no events, and the dashboard says so |
 
 ## Privacy
 
