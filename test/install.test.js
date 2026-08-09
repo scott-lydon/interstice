@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mergeHooks, stripHooks, hookEntries, launchAgentPlist } from '../lib/install.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { mergeHooks, stripHooks, hookEntries, launchAgentPlist, resolveNode } from '../lib/install.js';
 
 /**
  * ~/.claude/settings.json belongs to the user, not to us.
@@ -68,6 +70,20 @@ test('uninstall drops an event that becomes empty rather than leaving a husk', (
 
 test('uninstall on settings we never touched is a no-op', () => {
   assert.deepEqual(stripHooks(existing), existing);
+});
+
+/**
+ * The plist is written once and read at every login for months. A versioned
+ * Homebrew path survives exactly until the next `brew upgrade node`, and the
+ * failure is silent: Interstice simply never appears.
+ */
+test('the LaunchAgent gets a node that survives a Homebrew upgrade', async () => {
+  const node = await resolveNode({ execPath: '/opt/homebrew/Cellar/node/23.11.0/bin/node' });
+  assert.ok(path.isAbsolute(node.path));
+  if (node.stable) assert.ok(!node.path.includes('/Cellar/'), node.path);
+  // Nothing stable installed is a real possibility, and then the honest answer is
+  // the versioned path plus the flag that says so, not a path that does not exist.
+  assert.equal(fs.existsSync(node.path), true, node.path);
 });
 
 test('the LaunchAgent plist is well formed and absolute', () => {

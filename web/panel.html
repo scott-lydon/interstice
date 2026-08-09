@@ -1,0 +1,1489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Interstice</title>
+<style>
+  :root {
+    --ground: #F1F3F5; --ink: #12161C; --muted: #5A6673; --rule: #CFD6DD;
+    --accent: #2440E8; --raised: #FFFFFF; --ok: #1B7A4B; --warn: #A8620F;
+    --shim-a: rgba(0,0,0,.04); --shim-b: rgba(0,0,0,.09);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0E1116; --ink: #E4E8EE; --muted: #939EAC; --rule: #262D37;
+      --accent: #8296FF; --raised: #161A21; --ok: #4FBF8B; --warn: #D9A05B;
+      --shim-a: rgba(255,255,255,.04); --shim-b: rgba(255,255,255,.09);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font: 15px/1.5 Charter, "Iowan Old Style", Georgia, serif;
+    display: flex; flex-direction: column; overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* The header never scrolls away: whatever the view is doing, the way to the next
+     rung stays one click from wherever you are. */
+  header {
+    position: sticky; top: 0; z-index: 5; flex: 0 0 auto;
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; background: var(--ground);
+    border-bottom: 1px solid var(--rule);
+  }
+  .brand {
+    font: 600 11px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    text-transform: uppercase; letter-spacing: .16em; color: var(--muted);
+  }
+  .rungs { display: flex; gap: 2px; margin-left: auto; }
+  .rungs button {
+    font: 600 10px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    text-transform: uppercase; letter-spacing: .1em;
+    background: none; border: 1px solid transparent; color: var(--muted);
+    padding: 5px 7px; border-radius: 3px; cursor: pointer;
+  }
+  .rungs button[aria-current="true"] { color: var(--ink); border-color: var(--rule); background: var(--raised); }
+  .rungs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* The setup check sits under the header, above whatever the rung is showing. It
+     is a note, not a gate: it never covers the activity and never asks for an
+     answer. Bounded and scrollable, because a warning you cannot scroll past is a
+     warning that has taken the window. */
+  #companions {
+    flex: 0 0 auto; display: none; padding: 10px 14px;
+    background: var(--raised); border-bottom: 1px solid var(--rule);
+    border-left: 2px solid var(--warn);
+    max-height: 40vh; overflow-y: auto; overscroll-behavior: contain;
+  }
+  #companions.show { display: block; }
+  #companions .top { display: flex; align-items: baseline; gap: 8px; }
+  #companions .top .label { color: var(--warn); }
+  #companions .top button {
+    font: 600 9px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+    background: none; border: 1px solid var(--rule); border-radius: 3px;
+    padding: 3px 6px; cursor: pointer;
+  }
+  #companions .top button:hover { color: var(--ink); border-color: var(--accent); }
+  #companions .top .grow { margin-left: auto; }
+  #companions ul { list-style: none; margin: 6px 0 0; padding: 0; }
+  #companions li { padding: 4px 0; }
+  #companions li + li { border-top: 1px solid var(--rule); }
+  #companions .say { font-size: 13px; display: flex; align-items: baseline; gap: 8px; }
+  #companions .say .grow { margin-left: auto; }
+  /* The fix, next to the thing it fixes. A banner that can only tell you what is
+     missing leaves the work exactly where it was. */
+  #companions button.do {
+    font: 600 10px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    text-transform: uppercase; letter-spacing: .08em; white-space: nowrap;
+    background: var(--accent); color: #fff; border: 1px solid var(--accent);
+    border-radius: 3px; padding: 4px 8px; cursor: pointer;
+  }
+  #companions button.do[disabled] { opacity: .5; cursor: default; }
+  #companions .how { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+  #companions .how li { padding: 1px 0; border: 0; list-style: disc; margin-left: 16px; }
+  #companions .proof { display: flex; align-items: center; gap: 7px; margin-top: 3px; }
+  #companions .proof img {
+    height: 18px; width: auto; border: 1px solid var(--rule); border-radius: 2px;
+    background: #000; image-rendering: -webkit-optimize-contrast;
+  }
+
+  main { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 14px; }
+  .view { display: none; flex-direction: column; gap: 12px; height: 100%; }
+  .view.active { display: flex; }
+
+  h2 { font: 600 13px/1.3 Charter, Georgia, serif; margin: 0; }
+  .label {
+    font: 600 10px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    text-transform: uppercase; letter-spacing: .14em; color: var(--muted);
+  }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; color: var(--muted); }
+  .why { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+
+  /* The card is a physical object on the ground: its own surface, its own edge.
+     Anki's stylesheet governs what is inside it, so it looks like your card. */
+  .cardframe {
+    background: var(--raised); border: 1px solid var(--rule); border-radius: 4px;
+    overflow: hidden; flex: 0 0 auto;
+  }
+  .cardframe iframe { display: block; width: 100%; border: 0; background: #fff; }
+
+  .ease { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  button.act {
+    font: 600 11px/1.1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    text-transform: uppercase; letter-spacing: .08em;
+    padding: 10px 6px; border-radius: 3px; cursor: pointer;
+    background: var(--raised); color: var(--ink); border: 1px solid var(--rule);
+  }
+  button.act:hover { border-color: var(--accent); }
+  button.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button.act.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.act small { display: block; font-size: 9px; opacity: .7; letter-spacing: .04em; margin-top: 2px; }
+  button.act[disabled] { opacity: .45; cursor: default; }
+
+  .bar { height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--accent); transition: width .3s ease; }
+
+  /* The book. Amazon's own reader draws this, in a browser you never see, at the
+     size of this box; what arrives is the picture, and what goes back is where you
+     clicked. It fills whatever is left of the panel, because the page it is showing
+     was laid out for exactly this rectangle. */
+  .reader {
+    position: relative; flex: 1 1 auto; min-height: 200px;
+    background: var(--raised); border: 1px solid var(--rule); border-radius: 4px;
+    overflow: hidden;
+  }
+  .reader img { display: block; width: 100%; height: 100%; object-fit: contain; cursor: pointer; }
+
+  /* The page, set in our own type rather than shown as a photograph of itself.
+     Amazon draws each page as one image, so these words were read back off that
+     image; the picture stays one press away, because a diagram is a thing the
+     reading cannot do and seeing the real page is the check on all of this. */
+  .reader .text {
+    position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain;
+    padding: 16px 18px 20px; background: var(--raised);
+    font: 15.5px/1.62 Charter, "Iowan Old Style", Georgia, serif;
+    -webkit-font-smoothing: antialiased; hyphens: auto;
+  }
+  .reader .text p { margin: 0 0 0.85em; text-align: left; }
+  .reader .text h3 {
+    font: 600 17px/1.3 Charter, Georgia, serif; margin: 2px 0 0.7em; letter-spacing: -0.01em;
+  }
+  .reader .text .thin { color: var(--muted); font-size: 11.5px; }
+  .reader .over {
+    position: absolute; inset: 0; padding: 16px; display: flex; flex-direction: column;
+    align-items: stretch; justify-content: center; gap: 8px;
+    background: var(--raised); font-size: 13px; color: var(--muted);
+    overflow-y: auto; overscroll-behavior: contain;
+  }
+  .reader .over[hidden] { display: none; }
+  .pager { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+  .pager .grow { margin-left: auto; }
+  .pager button.act { padding: 7px 12px; }
+  .signin { border-left: 2px solid var(--warn); padding-left: 10px; }
+  .signin .label { color: var(--warn); }
+
+  ul.todo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+  ul.todo li { display: flex; gap: 8px; align-items: flex-start; padding: 4px 2px; border-radius: 3px; }
+  ul.todo li:hover { background: var(--raised); }
+  ul.todo input { margin: 4px 0 0; accent-color: var(--accent); flex: 0 0 auto; }
+  ul.todo label { font-size: 13.5px; line-height: 1.4; cursor: pointer; }
+  ul.todo li.done label { color: var(--muted); text-decoration: line-through; }
+  .listhead { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
+
+  textarea {
+    flex: 1 1 auto; min-height: 120px; resize: none; width: 100%; padding: 12px;
+    background: var(--raised); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 3px;
+    font: 15px/1.55 Charter, "Iowan Old Style", Georgia, serif;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  footer {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border-top: 1px solid var(--rule); background: var(--ground);
+  }
+  #status { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10px; color: var(--muted); }
+  footer .grow { margin-left: auto; }
+
+  /* Work in progress is always animated. A frozen word does not tell you whether
+     the thing is thinking or has died. */
+  .shimmer { border-radius: 3px; background: linear-gradient(90deg, var(--shim-a) 25%, var(--shim-b) 37%, var(--shim-a) 63%);
+    background-size: 400% 100%; animation: shim 1.3s ease infinite; }
+  @keyframes shim { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+  .skeleton { display: flex; flex-direction: column; gap: 8px; }
+  .skeleton > i { display: block; height: 12px; }
+  .spinner {
+    width: 13px; height: 13px; border-radius: 50%; display: inline-block; vertical-align: -2px;
+    border: 2px solid var(--rule); border-top-color: var(--accent); animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .shimmer, .spinner { animation-duration: 0s; }
+  }
+  .empty { color: var(--muted); font-size: 13px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+  <header>
+    <span class="brand">Interstice</span>
+    <nav class="rungs" id="rungs" aria-label="Activities">
+      <button data-view="flashcards" type="button">Cards</button>
+      <button data-view="reading" type="button">Book</button>
+      <button data-view="queue_prompt" type="button">Queue</button>
+      <button data-view="todo" type="button">To-do</button>
+    </nav>
+  </header>
+
+  <aside id="companions" aria-live="polite">
+    <div class="top">
+      <span class="label">Before you settle in</span>
+      <span class="grow"></span>
+      <button id="companions-recheck" type="button">Recheck</button>
+      <button id="companions-hide" type="button" aria-label="Dismiss until the next gap">Dismiss</button>
+    </div>
+    <ul id="companions-list"></ul>
+  </aside>
+
+  <main>
+    <!-- ---------------------------------------------------------------- cards -->
+    <section class="view" id="view-flashcards">
+      <div>
+        <div class="label">Least studied deck</div>
+        <h2 id="deck-name">&nbsp;</h2>
+        <div class="why" id="deck-why"></div>
+        <div id="deck-fix"></div>
+      </div>
+      <div class="bar"><i id="deck-bar" style="width:0%"></i></div>
+      <div class="cardframe" id="cardframe">
+        <div class="skeleton" style="padding:14px">
+          <i class="shimmer" style="width:70%"></i>
+          <i class="shimmer" style="width:90%"></i>
+          <i class="shimmer" style="width:45%"></i>
+        </div>
+      </div>
+      <div id="card-controls">
+        <button class="act primary" id="show-answer" type="button" style="width:100%">Show answer</button>
+      </div>
+      <div class="ease" id="ease" hidden>
+        <button class="act" data-ease="1" type="button">Again<small>1</small></button>
+        <button class="act" data-ease="2" type="button">Hard<small>2</small></button>
+        <button class="act primary" data-ease="3" type="button">Good<small>3</small></button>
+        <button class="act" data-ease="4" type="button">Easy<small>4</small></button>
+      </div>
+      <div class="mono" id="card-meta"></div>
+    </section>
+
+    <!-- ---------------------------------------------------------------- book -->
+    <section class="view" id="view-reading">
+      <div>
+        <div class="label">Reading</div>
+        <h2 id="book-title">&nbsp;</h2>
+        <div class="why" id="book-why"></div>
+      </div>
+      <div class="bar"><i id="book-bar" style="width:0%"></i></div>
+      <div class="reader" id="reader">
+        <img id="reader-frame" alt="Your book, at the page you were on" hidden>
+        <div class="text" id="reader-text" hidden></div>
+        <div class="over" id="reader-over">
+          <div class="skeleton">
+            <i class="shimmer" style="width:80%"></i>
+            <i class="shimmer" style="width:95%"></i>
+            <i class="shimmer" style="width:62%"></i>
+            <i class="shimmer" style="width:88%"></i>
+          </div>
+          <div class="mono" id="reader-status">opening your book</div>
+        </div>
+      </div>
+      <div class="pager">
+        <button class="act" id="page-prev" type="button">&#8249; Back</button>
+        <span class="mono" id="reader-page"></span>
+        <span class="grow"></span>
+        <button class="act" id="reader-mode" type="button" title="Show the page as Amazon drew it">Page</button>
+        <button class="act" id="page-next" type="button">Next &#8250;</button>
+      </div>
+      <!--
+        Anything this view has to say about the page you are on goes here, and not
+        into `#reader-status`. That one lives inside the loading overlay, which is
+        hidden the moment a frame paints, so every per-page message written to it
+        since this view existed has been invisible: the picture came forward on a
+        page that did not transcribe and said nothing at all, which read as the view
+        having silently given up and gone back to the cluttered one.
+      -->
+      <div class="why" id="reader-note" hidden style="display:flex; align-items:center; gap:8px">
+        <span id="reader-note-text"></span>
+        <button class="act" id="read-again" type="button" style="padding:2px 8px">Read it again</button>
+      </div>
+      <div id="book-actions" style="display:flex; flex-direction:column; gap:6px"></div>
+    </section>
+
+    <!-- --------------------------------------------------------------- queue -->
+    <section class="view" id="view-queue_prompt">
+      <div>
+        <div class="label">Queue your next prompt</div>
+        <div class="why">Held here until you want it. &#8984;&#9166; saves.</div>
+      </div>
+      <textarea id="box" placeholder="What do you want to hand off next?"></textarea>
+      <button class="act primary" id="save" type="button">Save</button>
+      <ul class="todo" id="queued"></ul>
+    </section>
+
+    <!-- --------------------------------------------------------------- to-do -->
+    <section class="view" id="view-todo">
+      <div>
+        <div class="label">From your Notes</div>
+        <div class="why" id="todo-why">Read only. Ticking here is tracked by Interstice and never edits the note.</div>
+      </div>
+      <div id="todo-lists"></div>
+    </section>
+  </main>
+
+  <footer>
+    <span id="status"></span>
+    <span class="grow"></span>
+    <!--
+      Not "Next". This steps to the next thing on the ladder; the book's own "Next"
+      is three inches above it and turns a page. Two adjacent buttons reading NEXT
+      that do entirely different things is a coin toss, and on the book screen it was
+      being read as a second, broken page-turn.
+    -->
+    <button class="act" id="advance" type="button" title="Show me a different interstice">Something else</button>
+  </footer>
+
+<script>
+'use strict';
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+const status = $('status');
+
+let currentView = null;
+let seenSeq = -1;
+let assetStamp = null;
+
+function say(text, spin) {
+  status.innerHTML = (spin ? '<span class="spinner"></span> ' : '') + esc(text);
+}
+
+function setView(name, { fromServer = false } = {}) {
+  if (!name) return;
+  const leaving = currentView;
+  currentView = name;
+  // The reader keeps rendering pages nobody is looking at otherwise, and every one
+  // of them costs a frame and a poll.
+  if (leaving === 'reading' && name !== 'reading') stopReader();
+  for (const s of document.querySelectorAll('.view')) s.classList.toggle('active', s.id === 'view-' + name);
+  for (const b of document.querySelectorAll('#rungs button')) {
+    b.setAttribute('aria-current', String(b.dataset.view === name));
+  }
+  const load = LOADERS[name];
+  if (load) load({ fromServer });
+  if (name === 'queue_prompt' && fromServer) $('box').focus();
+}
+
+/* ------------------------------------------------------------------ cards --- */
+
+let queue = [];
+let cardIndex = 0;
+let answering = false;
+
+function renderCard(revealed) {
+  const card = queue[cardIndex];
+  const frame = $('cardframe');
+  if (!card) {
+    frame.innerHTML = '<div class="empty" style="padding:16px">Deck finished. Nothing else is due here.</div>';
+    $('card-controls').hidden = true;
+    $('ease').hidden = true;
+    $('card-meta').textContent = '';
+    return;
+  }
+  // The card renders in its own document so the deck's stylesheet cannot reach the
+  // panel, and so a template carrying script cannot run: no allow-scripts.
+  const html = revealed ? card.answer : card.question;
+  const doc = '<!doctype html><meta charset="utf-8"><style>'
+    + 'html,body{margin:0}body{padding:16px;font-family:Charter,Georgia,serif}'
+    + 'img{max-width:100%;height:auto}'
+    + card.css
+    + '</style><div class="card">' + html + '</div>';
+  frame.innerHTML = '<iframe sandbox="allow-same-origin" title="Flashcard"></iframe>';
+  const f = frame.querySelector('iframe');
+  f.style.height = '120px';
+  f.srcdoc = doc;
+  f.addEventListener('load', () => {
+    try {
+      const h = f.contentDocument.documentElement.scrollHeight;
+      f.style.height = Math.min(Math.max(h, 90), 320) + 'px';
+    } catch { /* height stays at its default */ }
+  });
+
+  $('card-controls').hidden = revealed;
+  $('ease').hidden = !revealed;
+  $('deck-bar').style.width = ((cardIndex / queue.length) * 100).toFixed(1) + '%';
+  $('card-meta').textContent =
+    (cardIndex + 1) + ' of ' + queue.length + ' · ' + card.reps + ' review' + (card.reps === 1 ? '' : 's')
+    + (card.lapses ? ' · ' + card.lapses + ' lapse' + (card.lapses === 1 ? '' : 's') : '');
+}
+
+async function loadCards() {
+  say('reading your collection', true);
+  $('cardframe').innerHTML = '<div class="skeleton" style="padding:14px">'
+    + '<i class="shimmer" style="width:70%"></i><i class="shimmer" style="width:90%"></i>'
+    + '<i class="shimmer" style="width:45%"></i></div>';
+  try {
+    const d = await (await fetch('/api/cards')).json();
+    if (!d.deck) {
+      // "AnkiConnect unreachable: fetch failed" is true and useless. It is one of
+      // four states, three of which the button below fixes without you leaving the
+      // panel, so the two cases are told apart here rather than shown as one.
+      const unreachable = d.reason !== 'no_due_cards';
+      $('deck-name').textContent = unreachable ? 'Anki is not answering' : 'Nothing due';
+      $('deck-why').textContent = unreachable
+        ? String(d.reason || '')
+        : 'No cards are due in any deck right now.';
+      $('deck-fix').innerHTML = unreachable ? ankiFixHtml() : '';
+      if (unreachable) {
+        $('anki-reconnect').addEventListener('click', reconnectAnki);
+        // Arriving at the deck is the request. Pressing a button to say "yes, do the
+        // thing I just asked for" is a step that only ever has one answer, so it is
+        // taken here rather than asked for. The button stays as the way to try again
+        // if this attempt does not get there.
+        autoReconnectAnki();
+      }
+      queue = [];
+      renderCard(false);
+      say('');
+      return;
+    }
+    queue = d.cards;
+    cardIndex = 0;
+    $('deck-fix').innerHTML = '';
+    $('deck-name').textContent = d.deck;
+    // Show the arithmetic behind the choice, not just the conclusion.
+    $('deck-why').textContent =
+      d.metric.meanReps + (d.metric.meanReps === 1 ? ' review' : ' reviews') + ' per due card, the lowest of '
+      + d.metric.decksWithDue + ' decks with anything due · ' + d.metric.due
+      + ' due here of ' + d.totalDue + ' overall';
+    renderCard(false);
+    say('');
+  } catch (err) {
+    say('cards unavailable');
+  }
+}
+
+/**
+ * Getting Anki answering again, without leaving the panel.
+ *
+ * Anki is started behind everything, App Nap is turned off for both of the bundle
+ * ids it ships under, and then it is waited for rather than declared dead at the
+ * 800ms the router allows itself. Nothing about the window changes: Anki has never
+ * been visible in this design and does not become visible now.
+ */
+function ankiFixHtml() {
+  return '<button class="act primary" id="anki-reconnect" type="button" style="width:100%;margin-top:8px">'
+    + 'Reconnect to Anki</button>'
+    + '<div class="why" style="margin-top:6px">Starts Anki behind everything, turns off App Nap, '
+    + 'and waits for AnkiConnect to answer. Nothing comes to the front.</div>'
+    + '<div class="why" id="anki-how"></div>';
+}
+
+/**
+ * The reconnect you did not have to ask for.
+ *
+ * Held back by two things rather than one. It only runs while the deck is the view
+ * you are actually on, because a reconnect started by a background poll wakes Anki
+ * for a rung nobody opened. And it will not start again for a while after it ends,
+ * because `loadCards` runs on every visit and a wait of up to 25 seconds that
+ * restarts on each of them is a panel that never finishes loading.
+ *
+ * A failure is left on screen with the button enabled: at that point the answer is
+ * not "try the same thing again immediately", it is the list of things to check.
+ */
+let ankiAutoAt = 0;
+const ANKI_AUTO_EVERY_MS = 60000;
+
+function autoReconnectAnki() {
+  if (currentView !== 'flashcards') return;
+  if (Date.now() - ankiAutoAt < ANKI_AUTO_EVERY_MS) return;
+  ankiAutoAt = Date.now();
+  reconnectAnki({ automatic: true });
+}
+
+async function reconnectAnki({ automatic = false } = {}) {
+  // `loadCards` rewrites this block, and the wait is long enough that it can be
+  // rewritten underneath us, so every touch of the button is guarded rather than
+  // assumed. A reconnect whose button has gone still has a result worth having.
+  const btn = () => $('anki-reconnect');
+  const waiting = automatic ? 'Connecting to Anki' : 'Waiting for Anki';
+  if (btn()) {
+    btn().disabled = true;
+    btn().textContent = waiting;
+  }
+  say(automatic ? 'connecting to Anki' : 'waking Anki', true);
+  try {
+    const d = await (await fetch('/api/anki/reconnect', { method: 'POST' })).json();
+    if (d.ok) {
+      // Says what it did to the window, because that is the part you can see. A
+      // "connected" that leaves Anki's deck list in front of the panel is not the
+      // same event as one that puts it away, and calling both of them "answering"
+      // is how the first one went unnoticed.
+      say(d.launched && !d.hidden
+        ? 'Anki is answering · it would not hide itself'
+        : 'Anki is answering');
+      await loadCards();
+      return;
+    }
+    if ($('anki-how')) {
+      $('anki-how').innerHTML = esc(d.error || 'Anki did not answer')
+        + '<ul style="margin:4px 0 0 16px">' + (d.how || []).map((h) => '<li>' + esc(h) + '</li>').join('') + '</ul>';
+    }
+    say('Anki did not answer');
+  } catch {
+    say('the daemon is not answering');
+  } finally {
+    if (btn()) {
+      btn().disabled = false;
+      btn().textContent = 'Reconnect to Anki';
+    }
+  }
+}
+
+async function answer(ease) {
+  const card = queue[cardIndex];
+  if (!card || answering) return;
+  answering = true;
+  say('recording review', true);
+  try {
+    const r = await fetch('/api/cards/answer', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ cardId: card.cardId, ease }),
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'refused');
+    cardIndex += 1;
+    renderCard(false);
+    say('reviewed');
+  } catch (err) {
+    say('could not record that review');
+  } finally {
+    answering = false;
+  }
+}
+
+/* ------------------------------------------------------------------- book --- */
+
+/**
+ * The book opens itself, and it opens here.
+ *
+ * Amazon's reader cannot be framed (`x-frame-options: SAMEORIGIN`) and the text is
+ * encrypted, so for a long time the only way to show a Kindle book was to give it a
+ * window of its own. A second window is the interruption this project exists to
+ * remove, so the reader now runs in a browser you never see: it renders the page at
+ * the size of the box below, and only its picture arrives. Clicks and keys go back
+ * the other way, so it is the reader, not a screenshot of one.
+ *
+ * It opens at the page you were on because Amazon holds that position, the same one
+ * your Kindle syncs to. Nothing here asks you which book or whether to continue.
+ */
+
+let readerAsin = null;
+let readerSeq = -1;
+let readerTimer = null;
+let readerSignedOut = false;
+let readerViewport = { width: 0, height: 0 };
+let readerBusy = false;
+let readerTextSeq = -1;
+let readerTextBusy = false;
+// What the reader has already read ahead of you. Reported by the daemon on every
+// poll and on every turn; shown so that "it was instant" is a thing you can check
+// rather than a thing you have to take on trust.
+let readerShelf = null;
+
+/**
+ * Words by default, the picture on request.
+ *
+ * Amazon draws each page as a single image with no text in it anywhere, so the words
+ * here were read back off that image on this machine. That reading is what belongs
+ * in a panel: it sets in our own type, at a size that suits the window, and it
+ * reflows. What it cannot do is a diagram, a table or an equation, which is why the
+ * page Amazon actually drew is always one press away.
+ */
+/**
+ * Versioned, and deliberately so.
+ *
+ * A panel that had been switched to the picture at any point in its life stayed on
+ * the picture for every session afterwards, because this is remembered and nothing
+ * ever reset it. That was a reasonable choice to remember while the picture was the
+ * whole window Amazon drew, complete with its toolbar, its own two page-turn arrows
+ * and its scrubber, and it is why a panel could open straight into the cluttered
+ * view with no one having asked it to today.
+ *
+ * The picture is now the page and nothing but the page, so the old preference was
+ * made about something that no longer exists. The key is renamed once so everyone
+ * starts back in the text, and the toggle is still there and still remembered.
+ */
+const MODE_KEY = 'interstice.readerMode.v2';
+
+function readerMode() {
+  try {
+    return localStorage.getItem(MODE_KEY) === 'image' ? 'image' : 'text';
+  } catch {
+    return 'text';
+  }
+}
+
+function setReaderMode(mode) {
+  try {
+    localStorage.setItem(MODE_KEY, mode);
+  } catch {
+    /* a panel without storage just starts in text every time */
+  }
+  $('reader-mode').textContent = mode === 'text' ? 'Page' : 'Text';
+  $('reader-mode').title = mode === 'text'
+    ? 'Show the page as Amazon drew it'
+    : 'Back to the text, set in this window’s type';
+  if (mode === 'image') {
+    $('reader-text').hidden = true;
+    // "This page did not read cleanly" is about the text view, and you have just
+    // left it. Saying it over a picture you asked for is noise.
+    readerNote('');
+    if ($('reader-frame').src) $('reader-frame').hidden = false;
+  } else {
+    $('reader-frame').hidden = true;
+    readerTextSeq = -1;
+    loadReaderText();
+  }
+  // The two modes read the page at different sizes, so the switch is not just a
+  // matter of which element is showing: ask for the page again at the size this
+  // mode wants, rather than leaving the old shape up until something else polls.
+  if (readerTimer) tickReader();
+}
+
+function readerBox() {
+  const r = $('reader').getBoundingClientRect();
+  return { width: Math.max(240, Math.round(r.width)), height: Math.max(220, Math.round(r.height)) };
+}
+
+/**
+ * How big a page to ask the reader for, which is not the same as how big this
+ * window is.
+ *
+ * In image mode it is exactly this window, because the picture has to fit it. In
+ * text mode the words are reflowed into our own type, so the page they were read
+ * from can be any shape at all, and a taller one is simply a better deal: measured
+ * on this book, the same panel got 39 words a page at its own height, 109 at 1000,
+ * and 178 at 1400, while the reading got *more* confident rather than less (a fifth
+ * of the lines doubted became a thirtieth, because a taller page sets fewer lines
+ * broken across a page edge). Fewer turns for the same reading is the point: the
+ * complaint that started this was not being able to settle into the text.
+ */
+const TEXT_RENDER_SCALE = 2.2;
+const TEXT_RENDER_MAX = 1400;
+
+function readerRenderBox() {
+  const box = readerBox();
+  if (readerMode() !== 'text' || readerSignedOut) return box;
+  return { width: box.width, height: Math.min(TEXT_RENDER_MAX, Math.round(box.height * TEXT_RENDER_SCALE)) };
+}
+
+function readerSay(text, spin) {
+  const el = $('reader-status');
+  if (el) el.innerHTML = (spin ? '<span class="spinner"></span> ' : '') + esc(text);
+}
+
+function stopReader() {
+  if (readerTimer) clearInterval(readerTimer);
+  readerTimer = null;
+}
+
+/**
+ * What this view has to say about the page you are on, where you can see it.
+ *
+ * Shown under the pager rather than over the page, because a message drawn on top of
+ * the book is a message you have to dismiss to keep reading.
+ */
+function readerNote(text, { again = false } = {}) {
+  const box = $('reader-note');
+  if (!text) {
+    box.hidden = true;
+    return;
+  }
+  $('reader-note-text').textContent = text;
+  $('read-again').hidden = !again;
+  box.hidden = false;
+}
+
+/**
+ * Read the page that is on screen, once per page.
+ *
+ * Keyed to the frame it came from: the panel polls, and reading the same page twice
+ * costs six tenths of a second for nothing, while serving the last page's words
+ * after a turn would be worse than showing nothing at all.
+ */
+async function loadReaderText({ force = false, fresh = false } = {}) {
+  if (readerMode() !== 'text' || readerTextBusy) return;
+  if (!force && !fresh && readerTextSeq === readerSeq) return;
+  readerTextBusy = true;
+  const host = $('reader-text');
+  if (!host.innerHTML || force || fresh) {
+    host.innerHTML = '<div class="skeleton"><i class="shimmer" style="width:92%"></i>'
+      + '<i class="shimmer" style="width:88%"></i><i class="shimmer" style="width:95%"></i>'
+      + '<i class="shimmer" style="width:70%"></i></div>';
+  }
+  host.hidden = false;
+  try {
+    const d = await (await fetch('/api/reading/text' + (fresh ? '?fresh=1' : ''))).json();
+    if (d.shelf) readerShelf = d.shelf;
+    if (!d.ok || !d.blocks || !d.blocks.length) {
+      host.innerHTML = '<p class="thin">Nothing could be read from this page. '
+        + 'Press <em>Page</em> to see what is actually on it.</p>';
+      readerNote('Nothing was legible on this page.', { again: true });
+      readerTextSeq = readerSeq;
+      return;
+    }
+    // A page the reading is unsure of is exactly the page you need to look at. It
+    // is usually not prose at all: a diagram, or one of Amazon's own dialogs over a
+    // blurred page, asking which device's position to keep. So the picture comes
+    // forward by itself, with the reason, rather than showing you a confident
+    // transcription of something it could not read.
+    //
+    // "Unsure of" has to mean the page, not a line of it. Two shaky lines in eleven
+    // is a couple of odd glyphs; half the page shaky is a page that is not prose.
+    // Judging on the worst line alone sent you to the picture for the former, which
+    // is the whole complaint this view exists to answer.
+    if (d.confidence !== null && (d.confidence < 0.6 || (d.weak ?? 0) > 0.5)) {
+      host.hidden = true;
+      $('reader-frame').hidden = false;
+      // Said with a way out of it. This is a per-page decision, and it used to look
+      // exactly like the view having given up and gone back to the old one: the page
+      // came forward, nothing said why in a way you could act on, and the only route
+      // back to the text was a page turn. Now it says which page it is about and
+      // offers to read it again.
+      readerNote('This page did not read cleanly, so this is the page itself.', { again: true });
+      readerTextSeq = readerSeq;
+      return;
+    }
+    readerNote('');
+    host.innerHTML = d.blocks
+      .map((b) => (b.type === 'heading' ? '<h3>' + esc(b.text) + '</h3>' : '<p>' + esc(b.text) + '</p>'))
+      .join('')
+      // Never passed off as the book itself. These are words read off a picture,
+      // and how sure the reading was is the one number worth showing.
+      + '<p class="thin">Read from the page Amazon drew'
+      // Said when any of it was doubted, which is a lower bar than sending you to
+      // the picture and is the honest thing to say about a transcription.
+      + ((d.weak ?? 0) > 0 || (d.confidence !== null && d.confidence < 0.85)
+        ? ' · some of this page read poorly' : '')
+      + '.</p>';
+    $('reader-frame').hidden = true;
+    host.scrollTop = 0;
+    readerTextSeq = readerSeq;
+  } catch {
+    host.innerHTML = '<p class="thin">The daemon stopped answering.</p>';
+  } finally {
+    readerTextBusy = false;
+  }
+}
+
+function startReader(asin) {
+  stopReader();
+  readerAsin = asin;
+  readerSeq = -1;
+  readerTextSeq = -1;
+  readerSignedOut = false;
+  readerShelf = null;
+  readerNote('');
+  $('reader-frame').hidden = true;
+  $('reader-text').hidden = readerMode() !== 'text';
+  $('reader-text').innerHTML = '';
+  $('reader-over').hidden = false;
+  readerSay('opening your book', true);
+  tickReader();
+  // Slow on purpose. The reader pushes a frame whenever it repaints, so this poll
+  // is only asking whether anything happened, not driving the rendering.
+  readerTimer = setInterval(tickReader, 1500);
+}
+
+async function tickReader() {
+  if (currentView !== 'reading') return stopReader();
+  if (readerBusy) return;
+  readerBusy = true;
+  try {
+    const res = await fetch('/api/reading/view', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ asin: readerAsin, ...readerRenderBox() }),
+    });
+    renderReader(await res.json());
+  } catch {
+    /* the daemon is restarting; the next tick picks it up */
+  } finally {
+    readerBusy = false;
+  }
+}
+
+function renderReader(d) {
+  if (d.viewport) readerViewport = d.viewport;
+  if (d.shelf) readerShelf = d.shelf;
+
+  if (!d.ok) {
+    $('reader-frame').hidden = true;
+    $('reader-over').hidden = false;
+    readerSay(d.error || 'the book could not be opened here');
+    return;
+  }
+
+  // A sign-in page is a state, not a failure, and the page below is the live one:
+  // you can type into it. Say which of the two you are looking at.
+  if (d.signedOut !== readerSignedOut) {
+    readerSignedOut = Boolean(d.signedOut);
+    renderSignIn(d);
+    // Turning a page of a sign-in form does nothing, and a button that does nothing
+    // when pressed is worse than one that shows it cannot be pressed.
+    for (const id of ['page-prev', 'page-next', 'reader-mode']) {
+      const el = $(id);
+      el.dataset.title ??= el.title;
+      el.disabled = readerSignedOut;
+      el.title = readerSignedOut ? 'Sign in to Amazon first' : el.dataset.title;
+    }
+  }
+
+  // The page, and how much of the book is already in hand behind it. The second half
+  // is the thing that makes the speed checkable: "2 ready" means the next two turns
+  // cost nothing, and its absence is why one of them did not.
+  $('reader-page').textContent = d.signedOut
+    ? 'sign in'
+    : (d.label || '') + (readerShelf?.ahead > 0 ? '  ·  ' + readerShelf.ahead + ' ready' : '');
+
+  if (d.seq && d.seq !== readerSeq) {
+    readerSeq = d.seq;
+    const img = $('reader-frame');
+    img.onload = () => {
+      $('reader-over').hidden = true;
+      // A sign-in page is a thing you have to see and press, so it is always the
+      // picture, whatever the mode says.
+      if (readerMode() === 'image' || readerSignedOut) img.hidden = false;
+    };
+    img.src = '/api/reading/frame?s=' + d.seq;
+    if (readerMode() === 'text' && !readerSignedOut) loadReaderText();
+  } else if (!d.ready && !d.signedOut) {
+    readerSay('opening your book', true);
+  }
+}
+
+/**
+ * What to do when Amazon wants a sign-in.
+ *
+ * Signing in happens in a Chrome window you can see, because that is the only place
+ * every method Amazon offers actually works. A password and an emailed code can be
+ * typed into the live page above, but a passkey cannot: Chrome draws that QR code in
+ * its own window chrome rather than in the page, so it needs a window to draw it in.
+ * The window is Chrome's own, so the QR is there for the scanning, and it closes
+ * itself the moment the session lands.
+ *
+ * Carrying the session across from your ordinary browser stays as the quiet path,
+ * because when it works it costs no window at all. It only works when that browser
+ * is holding a session that is still alive, so it now reports whether you ended up
+ * signed in rather than how many cookies it copied.
+ */
+let signinPoll = null;
+
+function signinBox() {
+  return $('book-actions').querySelector('.signin');
+}
+
+function signinSay(text, spin) {
+  const el = signinBox()?.querySelector('.signin-status');
+  if (!el) return;
+  el.innerHTML = (spin ? '<span class="spinner"></span> ' : '') + esc(text);
+}
+
+function renderSignIn(d) {
+  const host = $('book-actions');
+  if (!readerSignedOut) {
+    signinBox()?.remove();
+    return;
+  }
+  if (signinBox()) return;
+  const box = document.createElement('div');
+  box.className = 'signin';
+  box.innerHTML =
+    '<div class="label">Amazon is asking you to sign in</div>'
+    + '<button class="act primary" id="signin-chrome" type="button" style="width:100%;margin-top:6px">'
+    + 'Sign in to Amazon in Chrome<small>password, emailed code, or scan the QR with your phone</small>'
+    + '</button>'
+    + '<div class="signin-status mono" style="margin-top:6px;min-height:1.2em"></div>'
+    + '<div class="why" style="margin-top:4px">A Chrome window opens on Amazon\'s sign-in page and '
+    + 'closes itself as soon as you are in, then your book opens here. Nothing types a password for '
+    + 'you and nothing stores one.</div>'
+    + '<button class="act" id="carry-session" type="button" style="width:100%;margin-top:8px">'
+    + 'Use the session from your own Chrome instead</button>'
+    + '<div class="why" style="margin-top:4px">No window. Only works while your ordinary browser is '
+    + 'still signed in to Amazon: the amazon.com cookies it holds are copied across, sealed, on this '
+    + 'machine.</div>';
+  host.prepend(box);
+
+  // A sign-in already in flight when this was drawn: the window is open and the
+  // person is in it, and a panel that re-rendered in the meantime must pick the
+  // thread back up rather than offer to start a second one.
+  fetch('/api/reading/signin')
+    .then((r) => r.json())
+    .then((s) => {
+      if (!s.active || !signinBox()) return;
+      $('signin-chrome').disabled = true;
+      $('carry-session').disabled = true;
+      signinSay(s.reason || 'waiting for you to sign in', true);
+      watchSignIn();
+    })
+    .catch(() => {
+      /* the next poll will draw this again */
+    });
+
+  $('signin-chrome').onclick = async () => {
+    $('signin-chrome').disabled = true;
+    $('carry-session').disabled = true;
+    signinSay('opening Chrome', true);
+    try {
+      await fetch('/api/reading/signin', { method: 'POST' });
+      watchSignIn();
+    } catch {
+      signinSay('the daemon is not answering');
+      $('signin-chrome').disabled = false;
+      $('carry-session').disabled = false;
+    }
+  };
+
+  $('carry-session').onclick = async () => {
+    $('carry-session').disabled = true;
+    $('signin-chrome').disabled = true;
+    signinSay('carrying your session', true);
+    try {
+      const r = await (await fetch('/api/reading/session', { method: 'POST' })).json();
+      signinSay(r.reason || (r.ok ? 'signed in' : 'could not carry the session'));
+      if (r.ok) {
+        readerSeq = -1;
+        readerSignedOut = false;
+        renderSignIn({});
+        $('reader-over').hidden = false;
+        readerSay('opening your book', true);
+        return;
+      }
+      // It cannot work until that browser has a live session again, so it stops
+      // offering itself rather than staying pressable and doing nothing.
+      $('carry-session').textContent = 'That session has expired';
+    } catch {
+      signinSay('the daemon is not answering');
+      $('carry-session').disabled = false;
+    } finally {
+      $('signin-chrome').disabled = false;
+    }
+  };
+}
+
+/** Follow the sign-in window until it is done, then put the book back on screen. */
+function watchSignIn() {
+  clearInterval(signinPoll);
+  signinPoll = setInterval(async () => {
+    let s;
+    try {
+      s = await (await fetch('/api/reading/signin')).json();
+    } catch {
+      return;
+    }
+    if (s.active) return signinSay(s.reason || 'waiting for you to sign in', true);
+
+    clearInterval(signinPoll);
+    signinPoll = null;
+    if (s.ok) {
+      readerSeq = -1;
+      readerSignedOut = false;
+      renderSignIn({});
+      $('reader-over').hidden = false;
+      readerSay('opening your book', true);
+      return;
+    }
+    signinSay(s.reason || 'the sign-in did not finish');
+    if ($('signin-chrome')) $('signin-chrome').disabled = false;
+    if ($('carry-session')) $('carry-session').disabled = false;
+  }, 1500);
+}
+
+async function readerInput(payload) {
+  try {
+    const d = await (await fetch('/api/reading/input', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    })).json();
+    if (d.shelf) readerShelf = d.shelf;
+    if (d.seq && d.seq !== readerSeq) {
+      readerSeq = d.seq;
+      $('reader-frame').src = '/api/reading/frame?s=' + d.seq;
+    }
+    return d;
+  } catch {
+    /* the reader will be reopened by the next tick */
+    return null;
+  }
+}
+
+/**
+ * Turn the page.
+ *
+ * The skeleton only goes up when there is going to be a wait. A page the daemon has
+ * already read ahead comes back in the time of one request, and putting a shimmer up
+ * for that long is a flash of "loading" between two pages of prose, which reads as a
+ * stutter rather than as progress.
+ */
+async function turnPage(direction) {
+  const held = readerShelf && (direction === 'next'
+    ? readerShelf.ahead > 0
+    : readerShelf.pos > 0 && readerShelf.held > 1);
+  readerNote('');
+  if (!held) {
+    readerSay(direction === 'prev' ? 'going back' : 'turning', true);
+    if (readerMode() === 'text') {
+      $('reader-text').innerHTML = '<div class="skeleton"><i class="shimmer" style="width:92%"></i>'
+        + '<i class="shimmer" style="width:88%"></i><i class="shimmer" style="width:95%"></i></div>';
+    }
+  }
+  const turned = await readerInput({ kind: 'turn', direction });
+  if (turned && turned.turned === false && turned.atStart) {
+    readerNote('This is the first page the panel has open in this session.');
+    return;
+  }
+  await loadReaderText();
+}
+
+function bookLine(b) {
+  return b.percent + '% · position ' + b.position.toLocaleString()
+    + ' of ' + b.end.toLocaleString() + ' · ASIN ' + b.asin;
+}
+
+async function loadBook() {
+  say('finding your book', true);
+  try {
+    const d = await (await fetch('/api/reading')).json();
+    const b = d.book;
+
+    if (!b) {
+      stopReader();
+      $('book-title').textContent = 'No book in progress';
+      $('book-why').textContent = ({
+        app_not_installed: 'No Kindle app is installed.',
+        no_unfinished_book: 'Every book with a saved position is finished.',
+        installed: 'Kindle is installed but has no readable positions.',
+        library_found_no_positions: 'This Kindle app does not record reading positions.',
+        // Not "no book". macOS is refusing the read, and saying so is the
+        // difference between a fixable state and an inexplicable one.
+        book_data_forbidden: 'macOS will not let Interstice read your Kindle library. '
+          + 'Answer the “node would like to access data from other apps” prompt, or add node '
+          + 'under Privacy & Security → Full Disk Access.',
+      }[d.reason]) || String(d.reason || '');
+      $('book-bar').style.width = '0%';
+      $('reader-frame').hidden = true;
+      $('reader-over').hidden = false;
+      readerSay('nothing to open');
+      $('book-actions').innerHTML = '';
+      say('');
+      return;
+    }
+
+    $('book-title').textContent = b.title;
+    // A remembered position is never shown as a live one. The book still opens at
+    // the right page, because Amazon holds that; this is only about what we know.
+    $('book-why').textContent = d.stale
+      ? 'Remembered from ' + new Date(d.staleSince).toLocaleString()
+        + '. macOS is refusing the read now, so this position may have moved since.'
+      : 'Most recently read book you have not finished · ' + bookLine(b);
+    $('book-bar').style.width = (b.percent || 0) + '%';
+    $('book-actions').innerHTML =
+      (d.shelf && d.shelf.length
+        ? '<div class="listhead"><span class="label">Or another one you have going</span></div>'
+          + '<ul class="todo" id="shelf">' + d.shelf.map((s, i) =>
+              '<li><label data-shelf="' + i + '">' + esc(s.title)
+              + ' <span class="mono">' + (s.percent === null ? '' : s.percent + '%') + '</span></label></li>'
+            ).join('') + '</ul>'
+        : '')
+      + '<div class="why">Amazon’s own reader is drawing this, in a browser you never see, at '
+      + 'the page your Kindle synced to. <a href="#" id="read-app">Open the Kindle app instead.</a></div>';
+
+    for (const el of document.querySelectorAll('#shelf label[data-shelf]')) {
+      const s = d.shelf[Number(el.dataset.shelf)];
+      el.onclick = () => {
+        $('book-title').textContent = s.title;
+        $('book-bar').style.width = (s.percent || 0) + '%';
+        startReader(s.asin);
+      };
+    }
+    $('read-app').onclick = async (e) => {
+      e.preventDefault();
+      say('opening Kindle', true);
+      await fetch('/api/reading/open', { method: 'POST' });
+      say('opened in Kindle');
+    };
+
+    if (readerAsin !== b.asin || !readerTimer) startReader(b.asin);
+    say('');
+  } catch {
+    say('book unavailable');
+  }
+}
+
+/* ------------------------------------------------------------------ to-do --- */
+
+/**
+ * A list in two parts: what is left, and what is finished.
+ *
+ * Both halves are always in the document, empty or not, so a tick has somewhere to
+ * move to without the list being rebuilt underneath your cursor. The finished half
+ * keeps its heading hidden while it is empty rather than being absent, which is the
+ * same reason: moving an item into a section that has to be created first is where
+ * the flicker comes from.
+ *
+ * Nesting is preserved in the open half, because a sub-item under its parent is the
+ * shape you wrote. It is dropped in the finished half, where the only thing you want
+ * from an item is to see it is gone.
+ */
+function todoItemHtml(it, { indent = true } = {}) {
+  return '<li class="' + (it.done ? 'done' : '') + '"'
+    + ' style="padding-left:' + (indent ? (it.depth - 1) * 14 : 0) + 'px">'
+    + '<input type="checkbox" id="t-' + it.key + '"' + (it.done ? ' checked' : '')
+    + ' data-key="' + it.key + '" data-note="' + esc(it.noteId) + '">'
+    + '<label for="t-' + it.key + '">' + esc(it.text) + '</label></li>';
+}
+
+function todoListHtml(l) {
+  const open = l.items.filter((it) => !it.done);
+  const done = l.items.filter((it) => it.done);
+  return '<div class="listhead" data-head><span class="label">' + esc(l.title) + '</span>'
+    + '<span class="mono" data-count>' + l.counts.open + ' open · ' + l.counts.done + ' done</span></div>'
+    + '<div data-list="' + esc(l.id) + '">'
+    + '<ul class="todo" data-open>' + open.map((it) => todoItemHtml(it)).join('') + '</ul>'
+    + '<div class="label" data-donehead style="margin-top:10px;opacity:.55'
+    + (done.length ? '' : ';display:none') + '">Done</div>'
+    + '<ul class="todo" data-done>'
+    + done.map((it) => todoItemHtml(it, { indent: false })).join('') + '</ul>'
+    + '</div>';
+}
+
+function moveTodoItem(li, section, done) {
+  const target = section.querySelector(done ? '[data-done]' : '[data-open]');
+  if (!target || li.parentElement === target) return;
+  // Indentation is what the open half uses to show nesting, and what the finished
+  // half has no use for.
+  li.style.paddingLeft = done ? '0px' : li.style.paddingLeft;
+  target.appendChild(li);
+}
+
+function retallyTodos(section) {
+  const all = section.querySelectorAll('input[type=checkbox]');
+  const done = section.querySelectorAll('input[type=checkbox]:checked').length;
+  // The tally is the point of tracking, so it moves with the tick rather than
+  // waiting for a reload to tell you what you already did.
+  const tally = section.previousElementSibling?.querySelector('[data-count]');
+  if (tally) tally.textContent = (all.length - done) + ' open · ' + done + ' done';
+  const head = section.querySelector('[data-donehead]');
+  if (head) head.style.display = done ? '' : 'none';
+}
+
+/** Rough is right here: this says how stale the copy is, not when it was taken. */
+function whenish(ts) {
+  const mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
+  if (mins < 1) return 'a moment ago';
+  if (mins < 60) return mins + (mins === 1 ? ' minute ago' : ' minutes ago');
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return hours + (hours === 1 ? ' hour ago' : ' hours ago');
+  const days = Math.round(hours / 24);
+  return days + (days === 1 ? ' day ago' : ' days ago');
+}
+
+async function loadTodos() {
+  say('reading your notes', true);
+  const host = $('todo-lists');
+  host.innerHTML = '<div class="skeleton"><i class="shimmer" style="width:55%"></i>'
+    + '<i class="shimmer" style="width:85%"></i><i class="shimmer" style="width:70%"></i></div>';
+  try {
+    const d = await (await fetch('/api/todos')).json();
+    if (!d.lists || !d.lists.length) {
+      host.innerHTML = '<div class="empty">' + esc(({
+        no_todo_lists: 'No note looks like a to-do list yet.',
+        no_notes: 'Notes has nothing in it.',
+        // Interstice will not start Notes for you. Say that plainly instead of
+        // reporting a failure, because nothing failed.
+        notes_not_running: 'Notes is closed, and Interstice will not open it. Open Notes once and your lists appear here.',
+      }[d.reason]) || String(d.reason || 'Nothing found.')) + '</div>';
+      say('');
+      return;
+    }
+    host.innerHTML = d.lists.map(todoListHtml).join('')
+      + (d.cachedAt ? '<div class="why" style="margin-top:10px">Notes is closed, so this is the '
+        + 'copy from ' + esc(whenish(d.cachedAt)) + '. Ticking still works and is kept here.</div>' : '');
+    for (const box of host.querySelectorAll('input[type=checkbox]')) {
+      box.addEventListener('change', async () => {
+        const li = box.closest('li');
+        li.classList.toggle('done', box.checked);
+        const section = li.closest('[data-list]');
+        // What is finished goes to the bottom the moment it is finished, rather than
+        // sitting in the middle of the list until something else reloads the panel.
+        // The point of ticking a box is to stop having to look at it.
+        moveTodoItem(li, section, box.checked);
+        retallyTodos(section);
+        await fetch('/api/todos/toggle', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            key: box.dataset.key,
+            done: box.checked,
+            noteId: box.dataset.note,
+            text: li.querySelector('label').textContent,
+          }),
+        });
+        say(box.checked ? 'marked done' : 'reopened');
+      });
+    }
+    say('');
+  } catch {
+    host.innerHTML = '<div class="empty">Notes could not be read.</div>';
+    say('');
+  }
+}
+
+/* ------------------------------------------------------------------ queue --- */
+
+async function loadQueued() {
+  try {
+    const d = await (await fetch('/api/queued')).json();
+    $('queued').innerHTML = (d.queued || []).slice(-6).reverse()
+      .map((q) => '<li><label>' + esc(q.text.slice(0, 140)) + '</label></li>').join('');
+  } catch { /* daemon gone */ }
+}
+
+async function savePrompt() {
+  const text = $('box').value.trim();
+  if (!text) return;
+  await fetch('/api/queued', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+  $('box').value = '';
+  say('saved');
+  loadQueued();
+  $('box').focus();
+}
+
+const LOADERS = {
+  flashcards: loadCards,
+  reading: loadBook,
+  todo: loadTodos,
+  queue_prompt: loadQueued,
+};
+
+/* ------------------------------------------------------------- companions --- */
+
+/**
+ * The two things you set up before a work block and forget to set up when you do
+ * not. This says what was found, shows what it read, and now carries the one button
+ * that fixes it.
+ *
+ * The reading itself is still only ever a reading: nothing starts on its own, and a
+ * companion that could not be read still says nothing at all, because a warning
+ * fired on a reading we could not take is a warning you learn to ignore. What
+ * changed is that the fix no longer costs you a trip to another app and back.
+ */
+
+let companionsHiddenFor = -1;
+
+const SAYS = {
+  binaural: { off: 'are not playing', other: 'are not what is playing', paused: 'are paused' },
+  pomodoro: { off: 'is not running', paused: 'is paused', other: 'is not running' },
+};
+
+/** What the button does, and what it says while it is doing it. */
+const FIXES = {
+  binaural: { label: 'Play', route: '/api/companions/binaural/play', doing: 'starting your track' },
+  pomodoro: { label: 'Start 25:00', route: '/api/companions/pomodoro/start', doing: 'starting a 25 minute timer' },
+};
+
+function renderCompanions(d) {
+  const host = $('companions');
+  const needing = (d.companions || []).filter((c) => SAYS[c.key] && SAYS[c.key][c.verdict]);
+  if (!needing.length || companionsHiddenFor === seenSeq) {
+    host.classList.remove('show');
+    return;
+  }
+  $('companions-list').innerHTML = needing.map((c) => {
+    const proof = c.image
+      ? '<img src="' + c.image + '" alt="the menu bar strip that was read">'
+      : '';
+    const fix = FIXES[c.key];
+    return '<li>'
+      + '<div class="say"><span>Your ' + esc(c.label) + ' ' + SAYS[c.key][c.verdict] + '.</span>'
+      + '<span class="grow"></span>'
+      + (fix ? '<button class="do" type="button" data-fix="' + c.key + '">' + fix.label + '</button>' : '')
+      + '</div>'
+      + '<div class="proof">' + proof
+      + '<span class="mono">' + esc(c.detail || '')
+      + (c.track ? ' · ' + esc(c.track.slice(0, 60)) : '')
+      + (c.forced ? ' · forced' : '') + '</span></div>'
+      + '<div class="how" data-how="' + c.key + '"></div>'
+      + '</li>';
+  }).join('');
+  for (const b of $('companions-list').querySelectorAll('button[data-fix]')) {
+    b.addEventListener('click', () => runFix(b.dataset.fix, b));
+  }
+  host.classList.add('show');
+}
+
+/**
+ * Press it, then look again.
+ *
+ * The answer is not "done": it is the companion, re-read after the fact, with the
+ * strip of menu bar it read attached. A button that reports its own success is a
+ * button you cannot check.
+ */
+async function runFix(key, button) {
+  const fix = FIXES[key];
+  if (!fix) return;
+  button.disabled = true;
+  const wasLabel = button.textContent;
+  button.textContent = 'working';
+  say(fix.doing, true);
+  try {
+    const d = await (await fetch(fix.route, { method: 'POST' })).json();
+    renderCompanions(d);
+    const how = $('companions-list').querySelector('[data-how="' + key + '"]');
+    if (!d.ok && how) {
+      how.innerHTML = esc(d.detail || d.reason || 'that did not work')
+        + (d.how && d.how.length ? '<ul>' + d.how.map((h) => '<li>' + esc(h) + '</li>').join('') + '</ul>' : '');
+    }
+    say(d.ok ? (d.playing ? 'playing ' + String(d.playing).slice(0, 40) : 'started') : 'could not do that');
+  } catch {
+    say('the daemon is not answering');
+  } finally {
+    button.disabled = false;
+    button.textContent = wasLabel;
+  }
+}
+
+async function loadCompanions({ force = false } = {}) {
+  try {
+    renderCompanions(await (await fetch('/api/companions' + (force ? '?force=1' : ''))).json());
+  } catch { /* daemon restarting */ }
+}
+
+/* ------------------------------------------------------------------- wiring - */
+
+for (const b of document.querySelectorAll('#rungs button')) {
+  b.addEventListener('click', () => setView(b.dataset.view));
+}
+$('show-answer').addEventListener('click', () => renderCard(true));
+for (const b of document.querySelectorAll('#ease button')) {
+  b.addEventListener('click', () => answer(Number(b.dataset.ease)));
+}
+$('save').addEventListener('click', savePrompt);
+$('box').addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); savePrompt(); }
+});
+$('companions-recheck').addEventListener('click', async () => {
+  say('checking your setup', true);
+  companionsHiddenFor = -1;
+  await loadCompanions({ force: true });
+  say('');
+});
+$('companions-hide').addEventListener('click', () => {
+  companionsHiddenFor = seenSeq;
+  $('companions').classList.remove('show');
+});
+$('advance').addEventListener('click', async () => {
+  say('next', true);
+  await fetch('/api/advance', { method: 'POST' });
+  say('');
+});
+
+$('page-next').addEventListener('click', () => turnPage('next'));
+$('page-prev').addEventListener('click', () => turnPage('prev'));
+$('reader-mode').addEventListener('click', () => setReaderMode(readerMode() === 'text' ? 'image' : 'text'));
+$('read-again').addEventListener('click', () => {
+  // Back to the text, and ask the daemon to look at the page again rather than hand
+  // back the reading it already has. The usual reason a page reads badly is a
+  // picture taken while one of Amazon's dialogs was still on top of it.
+  readerNote('');
+  $('reader-frame').hidden = readerMode() === 'text';
+  loadReaderText({ fresh: true });
+});
+
+/**
+ * A click on the picture is a click on the page.
+ *
+ * Mapped through the size the reader was told to lay out for rather than the size
+ * this image happens to be drawn at, so a footnote is still a footnote after the
+ * window has been resized.
+ */
+$('reader-frame').addEventListener('click', (e) => {
+  const r = e.currentTarget.getBoundingClientRect();
+  if (!readerViewport.width || !r.width) return;
+  readerInput({
+    kind: 'click',
+    x: ((e.clientX - r.left) / r.width) * readerViewport.width,
+    y: ((e.clientY - r.top) / r.height) * readerViewport.height,
+  });
+});
+
+// The panel resizes with the window, and the page was laid out for the old box.
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  if (currentView !== 'reading') return;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => tickReader(), 400);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+
+  if (currentView === 'reading') {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      turnPage(e.key === 'ArrowLeft' ? 'prev' : 'next');
+      return;
+    }
+    // A sign-in page needs typing, and the only keyboard it has is this one.
+    if (!readerSignedOut || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key.length === 1) {
+      e.preventDefault();
+      readerInput({ kind: 'text', text: e.key });
+    } else if (['Enter', 'Backspace', 'Tab', 'Escape'].includes(e.key)) {
+      e.preventDefault();
+      readerInput({ kind: 'key', key: e.key });
+    }
+    return;
+  }
+
+  if (currentView !== 'flashcards') return;
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    if ($('ease').hidden) renderCard(true); else answer(3);
+    return;
+  }
+  if (['1', '2', '3', '4'].includes(e.key) && !$('ease').hidden) answer(Number(e.key));
+});
+
+/**
+ * The panel tells the daemon it is on screen, and the daemon answers with the rung
+ * that should be showing. One poll does both, which is why a second window never
+ * gets opened on top of this one.
+ */
+async function beat() {
+  try {
+    const d = await (await fetch('/api/panel/ping', { method: 'POST' })).json();
+    // This window can stay open for days. An edit to this file would never reach it
+    // otherwise, and a change you cannot see has not shipped.
+    if (assetStamp === null) assetStamp = d.asset;
+    else if (d.asset && d.asset !== assetStamp) { location.reload(); return; }
+    if (d.seq !== seenSeq) {
+      seenSeq = d.seq;
+      if (d.rung) setView(d.rung, { fromServer: true });
+      // A new delivery is a new moment to be told, so the reading is taken again
+      // rather than served from the cache, and a dismissal does not outlive the gap
+      // it was dismissed in.
+      loadCompanions({ force: true });
+    }
+  } catch { /* daemon restarting */ }
+}
+
+setInterval(beat, 1500);
+setInterval(loadCompanions, 30000);
+
+window.addEventListener('load', () => {
+  beat();
+  $('reader-mode').textContent = readerMode() === 'text' ? 'Page' : 'Text';
+  setView('flashcards');
+  loadCompanions();
+});
+</script>
+</body>
+</html>

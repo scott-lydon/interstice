@@ -97,6 +97,23 @@
   </section>
 
   <section>
+    <h2>Companions</h2>
+    <p class="why">
+      The setup check the panel shows: is the binaural track playing, is a pomodoro actually
+      counting down. Reaching "off" for real means stopping your own music, so the verdicts can
+      be forced from here; a forced reading is marked as forced in the panel. "Read for real"
+      clears the force and takes a fresh reading, screen captures and all.
+    </p>
+    <div class="row">
+      <button id="comp-read" type="button">Read for real</button>
+      <button id="comp-both-off" type="button">Force both off</button>
+      <button id="comp-pom-paused" type="button">Force pomodoro paused</button>
+      <button id="comp-bin-other" type="button">Force binaural other</button>
+      <button id="comp-unknown" type="button">Force both unknown</button>
+    </div>
+  </section>
+
+  <section>
     <h2>Live state</h2>
     <p class="why">What the router would see right now, from the real providers.</p>
     <div class="row"><button id="refresh" type="button">Refresh</button></div>
@@ -133,6 +150,25 @@ $('stand').addEventListener('click', async () => { show(await post('/api/standdo
 $('endc').addEventListener('click', async () => { show(await post('/debug/end', { reason: 'complete' })); status(); });
 $('endp').addEventListener('click', async () => { show(await post('/debug/end', { reason: 'permission' })); status(); });
 $('refresh').addEventListener('click', async () => show(await get('/api/health')));
+
+// The captured menu bar strip is base64 and would bury everything else in the panel.
+const trimImages = (d) => ({
+  ...d,
+  companions: (d.companions || []).map((c) => (c.image ? { ...c, image: `<${c.image.length} byte capture>` } : c)),
+});
+$('comp-read').addEventListener('click', async () => {
+  $('out').textContent = 'capturing the menu bar twice, a second apart…';
+  await post('/debug/companions', {});
+  show(trimImages(await get('/api/companions?force=1')));
+});
+$('comp-both-off').addEventListener('click', async () =>
+  show(trimImages(await post('/debug/companions', { binaural: 'off', pomodoro: 'off' }))));
+$('comp-pom-paused').addEventListener('click', async () =>
+  show(trimImages(await post('/debug/companions', { pomodoro: 'paused' }))));
+$('comp-bin-other').addEventListener('click', async () =>
+  show(trimImages(await post('/debug/companions', { binaural: 'other' }))));
+$('comp-unknown').addEventListener('click', async () =>
+  show(trimImages(await post('/debug/companions', { binaural: 'unknown', pomodoro: 'unknown' }))));
 
 $('timed').addEventListener('click', async () => {
   const total = Math.max(1, Number($('secs').value) || 30);

@@ -7,3 +7,4 @@ config/interstice.config.json
 .interstice-runtime/
 coverage/
 hotkeys/
+chrome/port.js

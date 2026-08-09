@@ -39,6 +39,50 @@ test('no actuator quits, hides, or closes an application', () => {
   }
 });
 
+test('no actuator brings a third-party app to the front', () => {
+  // Anki, Kindle and Notes are data sources. The build this replaced activated each
+  // one in turn, and four apps taking the screen in sequence is four interruptions,
+  // which is the problem this project exists to remove rather than a way to solve
+  // it. Everything is rendered in the panel; only the panel is ever raised.
+  const files = sourceFiles(path.join(ROOT, 'lib', 'actuators'));
+  const banned = /\bactivate\s*\(|open\s+-a\b|openUrl\s*\(/;
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const [i, line] of src.split('\n').entries()) {
+      if (line.trim().startsWith('*') || line.trim().startsWith('//')) continue;
+      assert.ok(!banned.test(line), `${path.basename(f)}:${i + 1} raises another app: ${line.trim()}`);
+    }
+  }
+});
+
+test('the only app an actuator may start is started behind everything', () => {
+  // Anki has to be *running* for AnkiConnect to answer. It does not have to be
+  // seen, and `open -g -j` is the difference.
+  const src = fs.readFileSync(path.join(ROOT, 'lib', 'actuators', 'index.js'), 'utf8');
+  if (!/launchHeadless/.test(src)) return;
+  const impl = fs.readFileSync(path.join(ROOT, 'lib', 'state', 'system.js'), 'utf8');
+  const fn = impl.slice(impl.indexOf('export async function launchHeadless'));
+  assert.match(fn.slice(0, 400), /'-g'/, 'launchHeadless must open in the background');
+});
+
+test('nothing starts Notes', () => {
+  // An earlier build launched Notes hidden before every read. Quitting Notes got it
+  // back inside twenty seconds, because the read runs on every state poll and the
+  // polls run while you work. Hidden is not the same as closed: an app you shut and
+  // that reappears in your Dock and your app switcher is an app this project
+  // opened. So the read is gated on Notes already being up, and there is no path
+  // through this file that can start it.
+  const src = fs.readFileSync(path.join(ROOT, 'lib', 'state', 'notes.js'), 'utf8');
+  for (const [i, line] of src.split('\n').entries()) {
+    if (line.trim().startsWith('*') || line.trim().startsWith('//')) continue;
+    assert.ok(
+      !/\/usr\/bin\/open|launchHeadless|\bactivate\s*\(/.test(line),
+      `notes.js:${i + 1} can start Notes: ${line.trim()}`
+    );
+  }
+  assert.match(src, /isRunning\('Notes'\)/, 'every Notes read must be gated on it already running');
+});
+
 test('reclaim never sends keystrokes to the delivered app', () => {
   const src = fs.readFileSync(path.join(ROOT, 'lib', 'reclaim.js'), 'utf8');
   const banned = /\b(keystroke|key code|System Events.*keystroke)\b/i;
