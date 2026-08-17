@@ -96,10 +96,50 @@ would otherwise need the operator is pre-resolved in "Settled decisions" below.
   tree is not behind a deploy branch.
   - Verify: `cd $R && git rev-list --left-right --count origin/main...HEAD` — record both
     counts. If HEAD is behind, merge before diagnosing.
-- [ ] **0.4 Baseline green.** Establish the pre-change state of the test suite so later
-  failures are attributable.
-  - Verify: `cd $R && npm test 2>&1 | tail -20` — record pass/fail counts verbatim in
-    parallel notes.
+### 0.3b Reconcile the pre-existing uncommitted work (do this before the baseline)
+
+As of 2026-08-17 the working tree carries uncommitted modifications to
+`lib/reader.js`, `lib/ocr.js`, `lib/panel.js`, `lib/server.js`,
+`config/interstice.config.default.json`, `web/panel.html`, `test/ocr.test.js` and
+`test/reader.test.js`. That is precisely the file set Phases 1 and 2 touch, which means it
+is probably partial work on the book-loading failure. It must be reconciled before
+anything else: building on top of unexamined changes makes every later bisect lie, and
+discarding them silently throws away a diagnosis someone already paid for.
+
+- [ ] **0.3b.1 Preserve the diff before touching it.** Write the full diff and the
+  untracked file list to a timestamped file outside the working tree, so no subsequent
+  operation can lose it.
+  - Verify: `test -s` on the saved diff file returns true, and its line count matches
+    `git diff | wc -l`.
+- [ ] **0.3b.2 Classify every changed hunk into exactly one of four buckets.**
+  (a) **useful and finished** — a coherent change that stands on its own;
+  (b) **useful but partial** — the right direction, incomplete;
+  (c) **debug scaffolding** — logging, probes, commented-out experiments;
+  (d) **unrelated** — belongs to some other line of work.
+  - Verify: a written table with one row per changed file, each row naming its bucket and
+    citing the hunk that decides it. No file may be left unclassified.
+- [ ] **0.3b.3 Commit bucket (a) on its own, with a message that says what it does.**
+  Separate logical units get separate commits; unrelated changes are never squashed
+  together.
+  - Verify: `git log --oneline` shows one commit per logical unit, and
+    `git show --stat` for each contains only files from that unit.
+- [ ] **0.3b.4 Carry bucket (b) forward as the starting point for Phase 1, not as a
+  discovery to be re-made.** Whatever the partial work already established about the book
+  failure is evidence, and Phase 1.2 must reconcile its classification against it.
+  - Verify: the parallel notes record what the partial work had already determined, and
+    Phase 1.2's bucket choice either agrees with it or states specifically why it does not.
+- [ ] **0.3b.5 Park buckets (c) and (d) on a branch, never delete them.**
+  - Verify: `git branch --list` shows the parking branch and `git show <branch>` contains
+    the scaffolding; the working tree no longer carries it.
+- [ ] **0.3b.6 Working tree is clean before Phase 1 begins.**
+  - Verify: `cd $R && git status --porcelain` produces no output.
+
+- [ ] **0.4 Baseline green — measured AFTER 0.3b, not before.** Establish the post-
+  reconciliation state of the test suite so later failures are attributable. A baseline
+  taken over a dirty tree would attribute someone else's half-finished work to this loop.
+  - Verify: `cd $R && git status --porcelain` is empty AND
+    `cd $R && npm test 2>&1 | tail -20` — record pass/fail counts verbatim in parallel
+    notes.
 - [ ] **0.5 Read the predecessor spec.** Read `$R/docs/GOAL_LOOP.md`, `$R/README.md`, and
   `$R/config/interstice.config.default.json` end to end so this loop's additions match the
   system's existing vocabulary (rung, gap, ladder, actuator, companion) rather than
@@ -499,60 +539,90 @@ running UI**.
 
 ---
 
-## Phase 7 — Recurring goals audit
+## Phase 7 — Recurring goals audit (selected rules only, never the whole tree)
 
-Apply the operator's standing rule sets. **Route these with the `routed-audit-team`
-pattern — a router, workers batched by locality and executor type, and a reducer — rather
-than literally spawning one model per row.** The relevant sheets total roughly 3,400 rows;
-one agent per row is the wrong parallelism axis and the routed pattern covers the same rows
-at a fraction of the cost. Each checkbox below is one full routed pass over one sheet.
+`Recurring_goals` holds **643 atomic rules across 19 sheets**. Count them with a CSV
+reader, never with `wc -l`: the `agent_prompt` column carries embedded newlines, so line
+counting overstates the tree roughly ninefold and makes the corpus look far larger than it
+is.
 
-Sheet root: `/Users/scottlydon/Developer/Recurring_goals`. Row schema:
-`row_id,rule_title,agent_prompt,model,source,deterministic_tools,applies_to,severity`.
-`tools/rows.py validate|find|plan --for` is the existing driver — prefer it over a new one.
+Running all 643 against Interstice would spend most of the effort on Swift, Python, React
+and Gauntlet-assignment rules that cannot apply to a dependency-free Node ESM tool with a
+single HTML panel. **Selection is the work, and it is machine-made and auditable rather
+than asserted.**
 
-**Relevant to this loop** (the repo is Node 20 ESM plus browser UI on macOS):
+| Artifact | Path | Role |
+|---|---|---|
+| Selector | `$R/docs/recurring_goals_selection.py` | Decision table keyed by `(sheet, applies_to)`; target facts probed from the filesystem, not assumed |
+| Manifest | `$R/docs/RECURRING_GOALS_SELECTION.md` | Generated: every selected row id, every exclusion with its reason, every conditional with its precondition |
 
-- [ ] **7.1** Create and run a routed agent team over `Code/JavaScript_TypeScript_Development/rows.csv` (1,044 rows).
-  - Verify: a findings file exists with one verdict per row id, and every `severity`
-    high finding is either fixed or has a cited reason it does not apply.
-- [ ] **7.2** Create and run a routed agent team over `Code/Universal/rows.csv` (162 rows).
-  - Verify: as 7.1.
-- [ ] **7.3** Create and run a routed agent team over `Code/Testing_and_Coverage/rows.csv` (90 rows).
-  - Verify: as 7.1.
-- [ ] **7.4** Create and run a routed agent team over `UX/rows.csv` (855 rows).
-  - Verify: as 7.1.
-- [ ] **7.5** Create and run a routed agent team over `Design/Visual_Design/rows.csv` (90 rows).
-  - Verify: as 7.1.
-- [ ] **7.6** Create and run a routed agent team over `Design/Design_Fidelity/rows.csv` (72 rows).
-  - Verify: as 7.1.
-- [ ] **7.7** Create and run a routed agent team over `Design/Data_Visualization/rows.csv` (54 rows) — the star calendar is a data visualization.
-  - Verify: as 7.1.
-- [ ] **7.8** Create and run a routed agent team over `Project_Structure/rows.csv` (63 rows).
-  - Verify: as 7.1.
-- [ ] **7.9** Create and run a routed agent team over `Process/Agent_Behavior/rows.csv` (234 rows).
-  - Verify: as 7.1.
-- [ ] **7.10** Create and run a routed agent team over `Process/Communication/rows.csv` (135 rows).
-  - Verify: as 7.1.
-- [ ] **7.11** Create and run a routed agent team over `Process/Data_Integrity/rows.csv` (90 rows) — star records are user-facing measurements and must be real.
-  - Verify: as 7.1.
-- [ ] **7.12** Create and run a routed agent team over `Security_and_Secrets/rows.csv` (45 rows) — the loop touches Amazon session material and a browser CDP attach.
-  - Verify: as 7.1.
-- [ ] **7.13** Create and run a routed agent team over `Machine_Safety/rows.csv` (90 rows).
-  - Verify: as 7.1.
-- [ ] **7.14** Create and run a routed agent team over `Deployment/rows.csv` (171 rows) — the LaunchAgent and install path change.
-  - Verify: as 7.1.
-- [ ] **7.15** Create and run a routed agent team over `User_Facing_Copy/rows.csv` (108 rows) — the star copy, the forfeit copy, and the reader failure remedies are all user-facing.
-  - Verify: as 7.1.
-- [ ] **7.16 Record, with evidence, why each remaining sheet is out of scope.** The
-  remaining sheets are `Code/Python_Development`, `Code/React_NextJS_Development`,
-  `Code/Swift_Development`, and `Assignments`.
-  - Verify: `find $R -name '*.py' -o -name '*.swift' -o -name '*.tsx' | grep -v node_modules`
-    returns empty, proving the three language sheets do not apply; and a one-line written
-    reason covers `Assignments`. If any of those file types is found, the corresponding
-    sheet gets its own routed pass and its own checkbox before this item may be checked.
+**The guard that makes this trustworthy:** any `(sheet, applies_to)` pair absent from the
+decision table is a hard error naming the sheet, the exact string, the row count and the
+row ids. The script refuses to emit a manifest until every pair is classified, because a
+silently dropped rule is indistinguishable from a rule that was never considered. The
+language probes scan only `lib/ bin/ test/ web/ hooks/ launchd/`, never the repo root, so
+tooling under `docs/` cannot answer a question about the product.
 
----
+**Current selection: 303 included, 16 conditional, 324 excluded, of 643.**
+
+| Sheet | Rules | Selected | Conditional | Excluded | Why the exclusions |
+|---|---:|---:|---:|---:|---|
+| Code/JavaScript_TypeScript_Development | 116 | 116 | 0 | 0 | — |
+| UX | 95 | 95 | 0 | 0 | — |
+| Code/Universal | 18 | 18 | 0 | 0 | — |
+| Process/Agent_Behavior | 26 | 17 | 0 | 9 | conversational-only rows |
+| User_Facing_Copy | 12 | 12 | 0 | 0 | — |
+| Process/Data_Integrity | 10 | 10 | 0 | 0 | — |
+| Machine_Safety | 10 | 7 | 0 | 3 | iCloud paths, graphify, new-project rows |
+| Project_Structure | 7 | 6 | 0 | 1 | new-project row |
+| Design/Data_Visualization | 6 | 6 | 0 | 0 | — |
+| Code/Testing_and_Coverage | 10 | 5 | 0 | 5 | assignment and XCUITest rows |
+| Design/Visual_Design | 10 | 4 | 1 | 5 | no `website/index.html`, no Mermaid diagrams |
+| Security_and_Secrets | 5 | 4 | 0 | 1 | no `server/` or `app/` tree |
+| Deployment | 19 | 1 | 13 | 5 | no server tree, no migrations; "the deployed system" is conditional |
+| Design/Design_Fidelity | 8 | 1 | 0 | 7 | no Claude Design handoff bundle |
+| Assignments | 12 | 1 | 0 | 11 | not a Gauntlet assignment |
+| Process/Communication | 15 | 0 | 2 | 13 | governs reply style, not the codebase |
+| Code/Swift_Development | 133 | 0 | 0 | 133 | no Swift source |
+| Code/React_NextJS_Development | 70 | 0 | 0 | 70 | glob matches `.js`, but every rule presumes a React tree |
+| Code/Python_Development | 61 | 0 | 0 | 61 | no Python source |
+| **TOTAL** | **643** | **303** | **16** | **324** | |
+
+Run the selected rules with the `routed-audit-team` pattern — router, workers batched by
+locality and executor type, reducer — rather than one agent per row. 303 rules against one
+small repo is a routing problem, not a fan-out-to-303-models problem. Suggested batching
+axis: by target file cluster (`lib/focus/*`, `lib/video/*`, `lib/reader.js`,
+`web/panel.html`, `test/*`), since a worker that has already read a file can evaluate many
+rules against it in one pass.
+
+- [ ] **7.1 Regenerate the manifest and prove it is current.** The selection must reflect
+  the repo as it is now, not as it was when this loop was written.
+  - Verify: `cd $R && python3 docs/recurring_goals_selection.py > docs/RECURRING_GOALS_SELECTION.md`
+    exits 0 (a non-zero exit means an unclassified pair, which must be classified before
+    proceeding), AND `git diff --exit-code docs/RECURRING_GOALS_SELECTION.md` shows either
+    no change or a change that is committed with a reason.
+- [ ] **7.2 Route and run the audit over the 303 selected rules.**
+  - Verify: a findings file carries one verdict per selected `row_id`, and the set of
+    `row_id`s in the findings file is exactly the selected set from the manifest — no
+    extras, no omissions, checked by a script rather than by eye.
+- [ ] **7.3 Every `severity: blocker` and `severity: high` finding is fixed or refuted.**
+  - Verify: no finding at those severities is left in an open state; each is either fixed
+    with a commit reference or refuted with a cited reason specific to this repo.
+- [ ] **7.4 Resolve all 16 conditional rows explicitly.** The 13 `the deployed system`
+  rows, the 1 `design tokens` row, and the 2 `every guide` rows each need a recorded
+  resolution: does the precondition hold here, and therefore does the rule apply?
+  - Verify: a table with one row per conditional `row_id`, each naming its precondition and
+    whether it held. No conditional may be left unresolved.
+- [ ] **7.5 Adversarially spot-check the exclusions.** Selection is only trustworthy if
+  someone tries to break it. Spin up a fresh-context agent given the manifest's exclusion
+  table and the repo, told to find any excluded rule that in fact applies.
+  - Verify: the agent's written finding is either "no wrongly excluded rule found", with
+    the specific exclusions it probed named, or a list of rules to reclassify — in which
+    case the decision table is corrected and 7.1 through 7.4 re-run.
+- [ ] **7.6 Re-run the selector after the code lands.** Phases 3 through 5 add files; new
+  files can flip a probed fact and change which rules apply.
+  - Verify: 7.1 re-run after Phase 5 exits 0 and produces a manifest whose selected set is
+    either unchanged or changed with the delta explained.
 
 ## Phase 8 — Integration, coverage, documentation
 
