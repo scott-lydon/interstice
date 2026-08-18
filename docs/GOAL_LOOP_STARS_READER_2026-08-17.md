@@ -8,6 +8,53 @@ the disagreement is itself a bug to fix, not a fork to tolerate.
 
 ---
 
+## How to start this loop from a terminal
+
+This loop is driven by `cont`, the runner already defined in `~/.zshrc` line ~150. Do not
+write a new runner: `cont` already supplies the iteration cap, the convergence phrase, and
+the error triage this loop needs.
+
+**Step 1 — seed a session.** `cont` calls `claude --continue -p`, which needs an existing
+session in the working directory to continue from. Run this once, interactively:
+
+```bash
+cd /Users/scottlydon/Developer/interstice
+claude
+```
+
+Type anything (for example `read docs/GOAL_LOOP_STARS_READER_2026-08-17.md`) and exit. This
+is the one step `cont` cannot do for itself; its own error text says so.
+
+**Step 2 — run the loop.** Paste this whole block:
+
+```bash
+export R="/Users/scottlydon/Developer/interstice"
+export PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH"
+
+cd "$R" || { echo "FATAL: $R does not exist."; exit 1; }
+command -v node   >/dev/null || { echo "FATAL: node not on PATH (expected /opt/homebrew/bin/node)."; exit 1; }
+command -v claude >/dev/null || { echo "FATAL: claude not on PATH (expected ~/.local/bin/claude)."; exit 1; }
+
+cont 40 "Work the goal loop at docs/GOAL_LOOP_STARS_READER_2026-08-17.md in $R.
+Read the whole file before acting. Obey its RULE block verbatim: the only edits you may
+make to that file are ticking completed boxes and appending one link to your parallel
+notes. Start at Phase 0 item 0.0a and continue in order.
+Every Verify line assumes R=$R is exported and that /opt/homebrew/bin is on PATH; export
+both in every shell you spawn, because a non-login shell cannot see node.
+Say the phrase 'I'm completely done.' ONLY when every single box in the file is ticked.
+If any box remains unticked, do not say it, and instead report which box you are on."
+```
+
+**Why 40.** `cont`'s default cap is 8. This loop has 88 checkboxes across 10 phases, two
+UI-to-UX convergence sub-loops that ping-pong an unknown number of rounds, and a routed
+audit over 319 rules. Eight iterations would hit the hard cap far short of the end, and
+`cont` returns exit 2 in that case rather than pretending it finished. Raise the number and
+re-run `cont` if it caps; the loop is resumable because its state lives in the ticked boxes.
+
+**Reading the exit code.** `cont` returns `0` when the agent said the phrase, `2` when it
+hit the cap with work outstanding, and `1` when the CLI itself failed. Only `0` means the
+loop is done, and even then Z-block item 9.2 has to have passed.
+
 ## RULE (read before touching anything)
 
 ```
@@ -50,8 +97,20 @@ would otherwise need the operator is pre-resolved in "Settled decisions" below.
 | S4 | Does using the Interstice panel break a focus block? | **No.** The panel is the product's answer to the gap; delivering it and forfeiting the star for it would be self-defeating. | Interstice's own panel process, and the headless reader profile it drives, are permanently whitelisted in both the app blacklist and the video whitelist. Encode this as a constant, not a config default a user could break. |
 | S5 | Star granularity and timezone. | **Local calendar day**, `America/Los_Angeles`, day boundary at local midnight. | A block that spans midnight is credited to the day it **completed**. Store every timestamp as ISO 8601 with offset; never store a bare local string. |
 | S6 | Goal loop home. | `$R/docs/GOAL_LOOP_STARS_READER_2026-08-17.md` | Lives in the repo and is committed with the work, so the checklist and the code cannot drift apart. |
+| S7 | Playwright versus the zero-dependency promise. | **Playwright is added to `devDependencies`, and `README.md` line 50 is corrected to say "no runtime dependencies".** | Four items in this loop (2C.1, 3.8, 5.2, 6.2) drive the running UI, and the repo currently has empty `dependencies` **and** empty `devDependencies` while the README promises "There are no npm dependencies." Shipping a test dependency without correcting that sentence would make the README false, which is the exact self-inconsistency this project forbids. A test-only tool does not change what a user installs to *run* Interstice, so the promise stays true once it is stated precisely. `bin/interstice.js` and `doctor` must keep working with `node_modules` absent. |
 
 ---
+
+## Ground truth verified on 2026-08-17 (do not re-derive)
+
+| Fact | Value | Consequence |
+|---|---|---|
+| Node | `/opt/homebrew/bin/node`, v23.11.0 | Present in a login shell (`zsh -lc`), **absent from a plain non-login ssh shell**. Any spawned shell must export the PATH above or every `npm test` verify fails for the wrong reason. |
+| Git remote | `origin` → `github.com/scott-lydon/interstice.git`, `origin/main` exists | HEAD is **4 commits ahead, unpushed** as of this writing. Item 0.3 compares against `origin/main`; expect a non-zero right-hand count and do not read it as a deploy lag. |
+| Screen lock probe, zero dependencies | `ioreg -n Root -d1 -a \| plutil -extract IOConsoleLocked raw -` → `true`/`false` | Satisfies breaker 3.4 without a native module. It is a poll, not an event, so pair it with a sleep/wake notification if an event source is found; do not treat the poll as a blocker. |
+| Frontmost app probe, zero dependencies | `lsappinfo info -only name $(lsappinfo front)` → `"LSDisplayName"="Claude"` | Satisfies breaker 3.3 without a native module or Accessibility permission. |
+| Playwright | **not installed**, not resolvable locally or globally | See S7. Nothing that needs it can run until 0.0c completes. |
+| `CLAUDE.md` | **does not exist** in this repo | See 0.0d. |
 
 ## Success condition (the loop closes only when every one of these holds)
 
@@ -77,6 +136,38 @@ would otherwise need the operator is pre-resolved in "Settled decisions" below.
 ---
 
 ## Phase 0 — Preflight: unblock everything before writing a line
+
+- [ ] **0.0a Environment is exported and proven, before any other item.** Every later
+  `Verify` line depends on it.
+  - Verify: `test -d "$R" && command -v node && command -v npm && command -v git` all
+    succeed in the shell the loop will actually use. If `node` is missing, the shell is
+    non-login; re-run under `zsh -lc` or export `/opt/homebrew/bin` and record which.
+- [ ] **0.0b Resolve S7 in the files, not just in this table.** Correct `README.md` line 50
+  from "There are no npm dependencies" to the precise claim, so the repo does not ship a
+  false sentence the moment a devDependency appears.
+  - Verify: `grep -n "no runtime dependencies" $R/README.md` returns a match AND
+    `grep -c "There are no npm dependencies" $R/README.md` returns 0.
+- [ ] **0.0c Install Playwright as a devDependency and prove the runtime path is unaffected.**
+  - Suggested route: `npm i -D @playwright/test` then `npx playwright install chromium`.
+    Chromium may already be present from the reader's own profile; reuse it rather than
+    downloading a second copy if the versions are compatible.
+  - Verify: `cd $R && npx playwright --version` succeeds, AND — proving Interstice still
+    runs without its test tooling — `mv node_modules /tmp/pw-parked && node ./bin/interstice.js doctor; rc=$?; mv /tmp/pw-parked node_modules; exit $rc`
+    exits 0.
+- [ ] **0.0d Create `$R/CLAUDE.md` so a fresh session inherits this loop's constraints.**
+  Without it, a new agent opening this repo does not know that idle must not break a focus
+  block (S2), that the panel never breaks its own block (S4), or that the reader failure
+  path must throw remedy-bearing errors.
+  - Suggested content: a short file pointing at this goal loop, the settled decisions
+    table, and `docs/GOAL_LOOP.md`; not a copy of them, so there is one source of truth.
+  - Verify: `test -s $R/CLAUDE.md` AND `grep -q "GOAL_LOOP_STARS_READER_2026-08-17" $R/CLAUDE.md`
+    AND the file contains no duplicated decision text, only references — checked by
+    asserting the phrase "25 unbroken minutes" appears in the goal loop and **not** in
+    `CLAUDE.md`.
+- [ ] **0.0e Push the goal loop commits before starting work**, so the checklist exists on
+  the remote if this machine is lost mid-loop.
+  - Verify: `cd $R && git rev-list --count origin/main..HEAD` returns 0 at the moment
+    Phase 1 begins.
 
 - [ ] **0.1 Machine load guard.** Run `uptime` on the target Mac. If the 1-minute load
   average exceeds the core count, wait and re-check rather than starting a build. Never run
