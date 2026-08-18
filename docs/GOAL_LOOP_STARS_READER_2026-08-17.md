@@ -539,31 +539,50 @@ running UI**.
 
 ---
 
-## Phase 7 — Recurring goals audit (selected rules only, never the whole tree)
+## Phase 7 — Recurring goals audit (selected folders, then selected rules)
 
-`Recurring_goals` holds **643 atomic rules across 19 sheets**. Count them with a CSV
+`Recurring_goals` holds **643 atomic rules across 19 folders**. Count them with a CSV
 reader, never with `wc -l`: the `agent_prompt` column carries embedded newlines, so line
-counting overstates the tree roughly ninefold and makes the corpus look far larger than it
-is.
+counting overstates the corpus roughly ninefold.
 
-Running all 643 against Interstice would spend most of the effort on Swift, Python, React
-and Gauntlet-assignment rules that cannot apply to a dependency-free Node ESM tool with a
-single HTML panel. **Selection is the work, and it is machine-made and auditable rather
-than asserted.**
+### Step 1 — folder selection (this is where most of the saving is)
+
+Four of the nineteen folders cannot apply to a dependency-free Node ESM tool with one HTML
+panel, and are dropped whole:
+
+| Folder dropped | Rules | Why |
+|---|---:|---|
+| `Code/Swift_Development` | 133 | no Swift source anywhere in the repo |
+| `Code/React_NextJS_Development` | 70 | its `applies_to` glob matches this repo's `.js` files, but every rule on the folder presumes a React component tree, which this repo does not have |
+| `Code/Python_Development` | 61 | no Python source in `lib/ bin/ test/ web/ hooks/ launchd/` |
+| `Assignments` | 12 | Interstice is a personal tool, not a Gauntlet assignment submission |
+
+**276 of 643 rules removed at the folder level.** The remaining fifteen folders are in
+scope.
+
+### Step 2 — row refinement inside the folders that were kept
+
+A kept folder still contains rules that cannot be evaluated here: `Process/Communication`
+governs how replies are written and has nothing in a codebase to inspect,
+`Design/Design_Fidelity` mostly presumes a Claude Design handoff bundle, and several
+`Design/Visual_Design` rules are scoped to a `website/index.html` that does not exist. That
+is a further **48 rules**, taking the run from 367 to 319.
+
+This second step is machine-made and auditable rather than asserted:
 
 | Artifact | Path | Role |
 |---|---|---|
-| Selector | `$R/docs/recurring_goals_selection.py` | Decision table keyed by `(sheet, applies_to)`; target facts probed from the filesystem, not assumed |
+| Selector | `$R/docs/recurring_goals_selection.py` | Decision table keyed by `(folder, applies_to)`; target facts probed from the filesystem, not assumed |
 | Manifest | `$R/docs/RECURRING_GOALS_SELECTION.md` | Generated: every selected row id, every exclusion with its reason, every conditional with its precondition |
 
-**The guard that makes this trustworthy:** any `(sheet, applies_to)` pair absent from the
-decision table is a hard error naming the sheet, the exact string, the row count and the
+**The guard that makes it trustworthy:** any `(folder, applies_to)` pair absent from the
+decision table is a hard error naming the folder, the exact string, the row count and the
 row ids. The script refuses to emit a manifest until every pair is classified, because a
 silently dropped rule is indistinguishable from a rule that was never considered. The
 language probes scan only `lib/ bin/ test/ web/ hooks/ launchd/`, never the repo root, so
 tooling under `docs/` cannot answer a question about the product.
 
-**Current selection: 303 included, 16 conditional, 324 excluded, of 643.**
+**Net selection: 303 included, 16 conditional, 324 excluded, of 643.**
 
 | Sheet | Rules | Selected | Conditional | Excluded | Why the exclusions |
 |---|---:|---:|---:|---:|---|
