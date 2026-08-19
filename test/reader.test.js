@@ -328,3 +328,20 @@ test('the sign-in verdict outlasts a slow book', async () => {
   };
   assert.equal(await reader.waitUntilSignedIn({ tries: 40, everyMs: 1 }), true);
 });
+
+test('every reader throw names a remedy the reader can render', () => {
+  // 1.5: a failure path must not merely say what went wrong; it must say what to do about it, so
+  // #reader-failed-why can carry an actionable line. This scans the reader source for throw sites
+  // and requires each `throw new Error(...)` string to name a remedy. A bare rethrow (`throw err`)
+  // carries whatever remedy the original error already had and is not a new site.
+  const src = fs.readFileSync(path.join(ROOT, 'lib', 'reader.js'), 'utf8');
+  const sites = [...src.matchAll(/throw new Error\((['"`])([\s\S]*?)\1\)/g)].map((m) => m[2]);
+  assert.ok(sites.length >= 2, 'the reader has explicit throw sites to check');
+  for (const message of sites) {
+    assert.match(
+      message,
+      /Remedy:/,
+      `reader throw "${message.slice(0, 60)}" must name a remedy`
+    );
+  }
+});

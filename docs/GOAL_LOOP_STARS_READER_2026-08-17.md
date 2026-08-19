@@ -315,7 +315,7 @@ crashing. The diagnosis must therefore start from what that surface actually say
   wrapped around a broken selector is a symptom fix and does not satisfy this item.
   - Verify: the test from 1.3 passes, and `npm test` shows zero regressions against the
     0.4 baseline.
-- [ ] **1.5 Harden the error reporting for this class of failure.** Per the project rule,
+- [x] **1.5 Harden the error reporting for this class of failure.** Per the project rule,
   after a fix the codebase must expose this kind of issue earlier next time. Every failure
   path in the reader must throw a specific, actionable error naming (i) what was being
   attempted, (ii) the concrete value that was wrong, and (iii) the suggested remedy.
