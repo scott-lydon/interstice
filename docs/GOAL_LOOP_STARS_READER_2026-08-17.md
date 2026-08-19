@@ -560,7 +560,7 @@ Interstice already knows when a prompt was submitted (the transcript watcher for
 the `UserPromptSubmit` hook for Claude Code) and when the agent finishes (the reclaim
 path). This phase surfaces that knowledge inside the panel.
 
-- [ ] **5.1 Latency module.** Given the existing submit and completion events, exposes
+- [x] **5.1 Latency module.** Given the existing submit and completion events, exposes
   elapsed-since-submit per session as plain data.
   - Suggested route: `$R/lib/latency.js`, subscribing to the existing engine events rather
     than re-parsing transcripts. Re-parsing would be a second source of truth for the same
@@ -584,7 +584,7 @@ path). This phase surfaces that knowledge inside the panel.
   the notification.
   - Verify: separate tests inject a Cowork-shaped and a Claude-Code-shaped event and assert
     identical downstream behaviour.
-- [ ] **5.6 Multiple concurrent sessions do not collide.** Two prompts in flight produce two
+- [x] **5.6 Multiple concurrent sessions do not collide.** Two prompts in flight produce two
   correctly-attributed timers.
   - Verify: a test injects two submits with different session ids, completes one, and
     asserts only that one's indicator clears.
