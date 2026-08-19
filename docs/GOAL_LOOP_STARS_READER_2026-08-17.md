@@ -523,7 +523,7 @@ Per S3: **browsers only**, tab URL plus play state.
   - Verify: a test asserts the probe performs no navigation, no window activation, and no
     tab creation; and that it returns an empty list rather than launching anything when no
     browser is running.
-- [ ] **4.3 Whitelist configuration, with Udemy shipping as a default.**
+- [x] **4.3 Whitelist configuration, with Udemy shipping as a default.**
   - Suggested route: `focus.videoWhitelist` in `$R/config/interstice.config.default.json`,
     an ordered list of host patterns, defaulting to at least `udemy.com` and its CDN hosts.
     Match on registrable domain, so `www.udemy.com` and `*.udemy.com` both pass and a
@@ -531,12 +531,12 @@ Per S3: **browsers only**, tab URL plus play state.
   - Verify: a test table covers `www.udemy.com` (pass), `sub.udemy.com` (pass),
     `udemy.com.evil.example` (fail), `youtube.com` (fail), and an empty/malformed URL
     (fail, with a specific error rather than a silent pass).
-- [ ] **4.4 Breaker: non-whitelisted video.** Emits `break{cause:'video', detail:{host}}`
+- [x] **4.4 Breaker: non-whitelisted video.** Emits `break{cause:'video', detail:{host}}`
   when the probe reports a playing, non-whitelisted source.
   - Suggested route: `$R/lib/focus/breakers/video.js`, same interface as the other breakers.
   - Verify: a test asserts a whitelisted host emits no break while a non-whitelisted host
     emits exactly one, and that Interstice's own reader profile (S4) never emits one.
-- [ ] **4.5 Debounce so a one-frame autoplay does not cost a block.** A brief flicker of
+- [x] **4.5 Debounce so a one-frame autoplay does not cost a block.** A brief flicker of
   playback is not a distraction; sustained playback is.
   - Suggested route: `focus.videoBreakAfterMs`, defaulting to a few seconds, applied to
     continuous playback.

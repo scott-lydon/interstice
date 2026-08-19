@@ -103,6 +103,12 @@
       "Twitter",
       "Instagram",
       "TikTok"
-    ]
+    ],
+    "videoWhitelist": [
+      "udemy.com",
+      "*.udemy.com",
+      "*.udemycdn.com"
+    ],
+    "videoBreakAfterMs": 4000
   }
 }
