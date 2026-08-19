@@ -705,7 +705,7 @@ axis: by target file cluster (`lib/focus/*`, `lib/video/*`, `lib/reader.js`,
 `web/panel.html`, `test/*`), since a worker that has already read a file can evaluate many
 rules against it in one pass.
 
-- [ ] **7.1 Regenerate the manifest and prove it is current.** The selection must reflect
+- [x] **7.1 Regenerate the manifest and prove it is current.** The selection must reflect
   the repo as it is now, not as it was when this loop was written.
   - Verify: `cd $R && python3 docs/recurring_goals_selection.py > docs/RECURRING_GOALS_SELECTION.md`
     exits 0 (a non-zero exit means an unclassified pair, which must be classified before
