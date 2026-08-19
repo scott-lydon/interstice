@@ -471,16 +471,16 @@ Per S4: Interstice's own panel never breaks a block.
   - Verify: a test injects synthetic sleep and lock events and asserts a
     `break{cause:'display'}` for each; and `doctor` gains a check proving the subscription
     is actually receiving events, failing loudly with a specific remedy if it is not.
-- [ ] **3.5 No idle breaker exists.** Per S2, keyboard/mouse idle must **not** break a
+- [x] **3.5 No idle breaker exists.** Per S2, keyboard/mouse idle must **not** break a
   block.
   - Verify: `grep -rn "HIDIdleTime\|idleVeto" $R/lib/focus` returns no matches, and a test
     asserts a 25-minute block with zero input events still completes and awards a star.
-- [ ] **3.6 Wire the breakers into the state machine through the declared contract only.**
+- [x] **3.6 Wire the breakers into the state machine through the declared contract only.**
   Each breaker exports the same interface and emits the same plain `{cause, at, detail}`
   shape; the state machine imports no breaker directly.
   - Verify: `grep -rn "breakers/" $R/lib/focus/blocks.js` returns no matches, and a test
     drives the state machine with a fake breaker to prove substitutability.
-- [ ] **3.7 Star aggregation: per day and per month.** A query surface returning stars
+- [x] **3.7 Star aggregation: per day and per month.** A query surface returning stars
   grouped by local calendar day and by calendar month, per S5.
   - Verify: a test seeds stars across a month boundary, a DST boundary, and a
     block-spanning-midnight case, and asserts each is credited to the day it completed in
