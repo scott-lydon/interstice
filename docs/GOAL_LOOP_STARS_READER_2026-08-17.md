@@ -440,7 +440,7 @@ Per S1: **one star per 25 unbroken minutes.** Per S2: broken by a blacklisted ap
 frontmost, by display sleep or screen lock, or by non-whitelisted online video (Phase 4).
 Per S4: Interstice's own panel never breaks a block.
 
-- [ ] **3.1 Focus block state machine, pure and testable.** A module that takes a stream of
+- [x] **3.1 Focus block state machine, pure and testable.** A module that takes a stream of
   plain events (`start`, `tick`, `break{cause, at}`) and emits `blockCompleted{startedAt,
   endedAt}` or `blockForfeited{cause, at, elapsedMs}`. No I/O, no timers, no knowledge of
   macOS.
@@ -448,7 +448,7 @@ Per S4: Interstice's own panel never breaks a block.
   - Verify: `$R/test/focus-blocks.test.js` covers, at minimum: exact-25-minute completion,
     24m59s forfeiture, break at t=0, break at t=24m59s, back-to-back blocks, and two
     breaks arriving in the same millisecond. All pass.
-- [ ] **3.2 Durable star store.** Append-only persistence surviving daemon restart and
+- [x] **3.2 Durable star store.** Append-only persistence surviving daemon restart and
   machine reboot, storing per star: `startedAt`, `endedAt`, both ISO 8601 with offset.
   - Suggested route: `$R/lib/focus/store.js` writing JSONL under `$R/logs/`, matching the
     existing gap-log convention rather than introducing a new format.
