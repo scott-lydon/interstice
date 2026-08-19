@@ -463,7 +463,7 @@ Per S4: Interstice's own panel never breaks a block.
   - Verify: a test injects a synthetic frontmost-app signal for a denylisted bundle id and
     asserts exactly one `break{cause:'app'}` is emitted; a second test asserts an
     allowlisted app and the Interstice panel itself emit none.
-- [ ] **3.4 Breaker: display sleep or screen lock.** Emits a break when the display sleeps
+- [x] **3.4 Breaker: display sleep or screen lock.** Emits a break when the display sleeps
   or the screen locks.
   - Suggested route: `$R/lib/focus/breakers/display.js` subscribing to the macOS display
     and session-lock notifications. Prefer an event subscription over polling, consistent
