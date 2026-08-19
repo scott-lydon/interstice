@@ -70,7 +70,12 @@
       "app": "Music",
       "label": "binaural beats",
       "match": "binaural|isochronic|solfeggio|[0-9]{2,3} ?hz|gamma|alpha|theta|delta|focus|concentration",
-      "search": ["binaural", "isochronic", "solfeggio", "hz"],
+      "search": [
+        "binaural",
+        "isochronic",
+        "solfeggio",
+        "hz"
+      ],
       "playlist": null,
       "track": null
     },
@@ -86,5 +91,18 @@
   "quietHours": null,
   "notifications": true,
   "vetoRetrySec": 15,
-  "vetoRetries": 4
+  "vetoRetries": 4,
+  "focus": {
+    "blockMinutes": 25,
+    "blacklistApps": [
+      "Slack",
+      "Discord",
+      "Messages",
+      "Mail",
+      "X",
+      "Twitter",
+      "Instagram",
+      "TikTok"
+    ]
+  }
 }

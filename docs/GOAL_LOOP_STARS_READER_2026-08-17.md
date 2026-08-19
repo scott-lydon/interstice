@@ -455,7 +455,7 @@ Per S4: Interstice's own panel never breaks a block.
   - Verify: a test writes stars, kills and reconstructs the store, and asserts byte-exact
     recovery including timestamps; plus a test asserting a malformed line is reported with
     a specific error naming the line number, not silently skipped.
-- [ ] **3.3 Breaker: blacklisted app frontmost.** Detects the frontmost application and
+- [x] **3.3 Breaker: blacklisted app frontmost.** Detects the frontmost application and
   emits a break when it matches the denylist.
   - Suggested route: `$R/lib/focus/breakers/frontmost.js`. The repo already reasons about
     frontmost apps via `originApps` in config; reuse that mechanism rather than adding a
