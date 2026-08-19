@@ -139,3 +139,17 @@ running reader and the carried Amazon session.
 - `lib/video/whitelist.js`: **100.00%** lines covered
 - `lib/daemon.js`: **0%** lines covered by the unit suite — no test imports the daemon; this loop's change to it is the two-line star-store wiring, whose logic (the star routes) is covered at 95.65% via `lib/focus/stars-routes.js` and the standalone HTTP test in `test/stars-routes.test.js`.
 - `lib/server.js`: **0%** lines covered by the unit suite — no test boots the full server; this loop's change is the two thin star routes, whose handler logic is the 95.65%-covered `stars-routes.js` exercised over a real socket in `test/stars-routes.test.js`.
+
+## 9.3 — demo-URL / credential grep, each match justified
+The grep `localhost:74[0-9]{2}|password|api[_-]?key|secret` over README + docs returns 13 lines, all
+intentional and safe; none is a demo URL or a leaked credential:
+- `README.md:76` `http://localhost:7420` — the Learn feature's real local render endpoint, documented,
+  not a demo placeholder. A localhost address is not a credential.
+- `README.md:215/221/251` — the word "password" appears in prose describing that the sign-in flow
+  types and stores NO password (session-carrying). Documentation about the absence of a stored
+  credential, not a credential.
+- `docs/RECURRING_GOALS_SELECTION.md` and the goal-loop's copy of that table — "Security_and_Secrets"
+  is the NAME of a Recurring_goals rule folder, not a secret.
+- `docs/GOAL_LOOP_STARS_READER...` lines 67/176/178/181/691/807 — references to the Secrets Driver
+  MCP mechanism, `get_secret`, and the verify command's own regex. No secret value appears.
+No actual demo URL or credential is present in any public-facing text.

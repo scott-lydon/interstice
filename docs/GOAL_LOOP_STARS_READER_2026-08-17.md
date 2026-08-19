@@ -803,7 +803,7 @@ rules against it in one pass.
   statement that will be false next week.
   - Verify: the agent produces a written finding list; every item is fixed and re-scanned to
     zero findings by a second fresh-context pass.
-- [ ] **9.3 No demo URLs or credentials anywhere in public-facing text.**
+- [x] **9.3 No demo URLs or credentials anywhere in public-facing text.**
   - Verify: `grep -rniE "localhost:74[0-9]{2}|password|api[_-]?key|secret" $R/README.md $R/docs/*.md`
     returns only intentional, safe references, each individually justified in writing.
 
