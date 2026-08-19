@@ -26,8 +26,8 @@
     "claudeCode": true
   },
   "panel": {
-    "width": 440,
-    "height": 620,
+    "width": 640,
+    "height": 900,
     "margin": 24,
     "side": "bottom-right",
     "raiseOnDeliver": true
