@@ -567,15 +567,15 @@ path). This phase surfaces that knowledge inside the panel.
     fact.
   - Verify: `grep -rn "jsonl\|transcript" $R/lib/latency.js` returns no matches, and a unit
     test drives it purely from injected engine events.
-- [ ] **5.2 Live elapsed indicator in the panel.** Shows time since the prompt was sent,
+- [x] **5.2 Live elapsed indicator in the panel.** Shows time since the prompt was sent,
   updating while the user waits, without stealing attention from the reading page.
   - Verify: a Playwright test injects a submit event, advances time, and asserts the
     rendered elapsed string increments and matches the injected elapsed value.
-- [ ] **5.3 Indicator clears on response.** When the agent's response arrives, the elapsed
+- [x] **5.3 Indicator clears on response.** When the agent's response arrives, the elapsed
   indicator is cleared, not left frozen at its last value.
   - Verify: a test injects submit then completion and asserts the indicator is absent or
     explicitly cleared afterwards.
-- [ ] **5.4 Response-arrival notification inside the panel.** A distinct in-panel
+- [x] **5.4 Response-arrival notification inside the panel.** A distinct in-panel
   notification announces that the response landed, separate in appearance from the elapsed
   indicator.
   - Verify: a test asserts the arrival notification appears exactly once per completion
@@ -588,7 +588,7 @@ path). This phase surfaces that knowledge inside the panel.
   correctly-attributed timers.
   - Verify: a test injects two submits with different session ids, completes one, and
     asserts only that one's indicator clears.
-- [ ] **5.7 The indicator does not break the immersive layout.** With the timer visible, the
+- [x] **5.7 The indicator does not break the immersive layout.** With the timer visible, the
   page region still meets the ≥90% contract from 2A.2.
   - Verify: the 2C.1 measurement script re-run with an active timer still asserts ≥90%.
 - [ ] **5.8 Conversational smoke test on the live path.** Per the project rule, before
