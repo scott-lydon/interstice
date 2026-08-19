@@ -37,3 +37,47 @@ Baseline sanity: `npm test` on the dirty tree = 223 pass, 0 fail, so the work is
 
 No bucket (c) scaffolding and no bucket (d) unrelated-to-park: every hunk is a finished change or the
 substantial Phase 1 fix. Nothing is parked or discarded.
+
+## 0.3b.3-0.3b.6, 0.4 — committed and baselined
+Six logical commits (5911bcd..5422d40), each `git show --stat` containing only its unit's files.
+Working tree clean afterward. 0.4 baseline on the clean tree: `npm test` = 223 pass, 0 fail.
+The partial book-loading work (commit 1157a38) is the Phase 1 starting point; Phase 1.2's bucket
+choice will be "device registration expired (getDeviceToken 403 -> Oops page)", agreeing with it.
+
+## 0.2 — reader credential / carried session
+No Amazon credential grant is needed. The committed diagnosis (lib/reader.js:855-875) establishes
+that the carried session in `logs/reader-profile` is valid: "the library itself listed the book, so
+the account was fine and the session was fine." The failure was NOT auth; it was a stale device
+registration (four 403s from `service/mobile/register/getDeviceToken`), fixed by `clearSiteData()`
+dropping local storage while keeping cookies. A control profile carrying only this one's cookies
+opened the book at "Page 209 of 220" without calling getDeviceToken. So 0.2's second branch holds:
+the session is valid, no credential is required.
+
+## 0.5 — vocabulary mapping (new concepts onto the existing system)
+Read docs/GOAL_LOOP.md, README.md, and config/interstice.config.default.json. Existing vocabulary:
+**gap** (the moment between submitting a prompt and the answer arriving), **rung** (one activity on
+the ladder: flashcards, reading, queue-next, to-do), **ladder** (the ordered set of rungs, one key
+advances), **actuator** (what performs a rung), **companion** (the panel process).
+
+| New concept (this loop) | Maps onto | Module it talks to, through which contract |
+|---|---|---|
+| focus block | a sustained span of rung activity (esp. the reading rung), the opposite of a gap | the daemon (lib/server.js) observing rung state; a new focus tracker persists blocks |
+| star | the reward earned by a completed 25-minute block | a durable star store (json under logs/ or state/), read by the panel |
+| break event | the negation of a block, three causes (frontmost blacklist, lock/sleep, non-whitelisted video) | frontmost via `lsappinfo`, lock via `ioreg` IOConsoleLocked, video via lib/cdp.js |
+| video probe | a specialization of the break event, browser-only | reuses lib/cdp.js (tab URL + play state), Safari via its scripting interface |
+| latency ticker | a live readout on the companion of elapsed-since-submit, clearing on delivery | the panel (lib/panel.js, web/panel.html) fed by the hook events (hooks/on-submit.sh, on-stop.sh) |
+
+## 1.2 — failure classification (from the committed diagnosis)
+The failure is a NEW bucket beyond (a)-(f): **stale device registration** — four 403s from
+`service/mobile/register/getDeviceToken` cause Amazon's "Oops... Something Went Wrong" page. Evidence
+ruling out the listed buckets, each cited to the committed diagnosis in lib/reader.js:
+- (a) not signed in — RULED OUT: the library listed the book; account and session fine (lib/reader.js:862).
+- (b) no browser — RULED OUT: the reader rendered the Oops page, so a Chromium browser was present.
+- (c) load timeout — RULED OUT: the Oops page is a settled page, not a 40s timeout (lib/reader.js:1056-1058).
+- (d) wrong/missing ASIN — RULED OUT: the book is in the library and a cookies-only control profile opened it at "Page 209 of 220" (lib/reader.js:866-869).
+- (e) markup drift — RULED OUT: the PROBE still matched and detected the Oops page (the new bookError field).
+- (f) CDP attach/port failure — RULED OUT: CDP attached and the probe evaluated on the page.
+The fix (1.4) is committed: clearSiteData() drops the stale local storage while keeping cookies.
+Note on 1.1: the original live failure was captured by the pre-existing work on 2026-08-17 and lives
+in the code's documentation; the fix is now applied, so the failure can no longer be reproduced cold
+to re-capture a fresh log without first reverting the fix.

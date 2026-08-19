@@ -147,7 +147,7 @@ would otherwise need the operator is pre-resolved in "Settled decisions" below.
   false sentence the moment a devDependency appears.
   - Verify: `grep -n "no runtime dependencies" $R/README.md` returns a match AND
     `grep -c "There are no npm dependencies" $R/README.md` returns 0.
-- [ ] **0.0c Install Playwright as a devDependency and prove the runtime path is unaffected.**
+- [x] **0.0c Install Playwright as a devDependency and prove the runtime path is unaffected.**
   - Suggested route: `npm i -D @playwright/test` then `npx playwright install chromium`.
     Chromium may already be present from the reader's own profile; reuse it rather than
     downloading a second copy if the versions are compatible.
@@ -164,16 +164,16 @@ would otherwise need the operator is pre-resolved in "Settled decisions" below.
     AND the file contains no duplicated decision text, only references — checked by
     asserting the phrase "25 unbroken minutes" appears in the goal loop and **not** in
     `CLAUDE.md`.
-- [ ] **0.0e Push the goal loop commits before starting work**, so the checklist exists on
+- [x] **0.0e Push the goal loop commits before starting work**, so the checklist exists on
   the remote if this machine is lost mid-loop.
   - Verify: `cd $R && git rev-list --count origin/main..HEAD` returns 0 at the moment
     Phase 1 begins.
 
-- [ ] **0.1 Machine load guard.** Run `uptime` on the target Mac. If the 1-minute load
+- [x] **0.1 Machine load guard.** Run `uptime` on the target Mac. If the 1-minute load
   average exceeds the core count, wait and re-check rather than starting a build. Never run
   two heavy builds concurrently.
   - Verify: `ssh localhost uptime` recorded in parallel notes, load average below core count.
-- [ ] **0.2 Secrets Driver grant, requested up front.** The reading rung authenticates
+- [x] **0.2 Secrets Driver grant, requested up front.** The reading rung authenticates
   against Amazon's web reader. Before any diagnosis, request a time-boxed, budget-scoped
   grant covering the Amazon account credential via the Secrets Driver MCP so that a sign-in
   wall later in the loop is a known-resolved step and not a fresh blocker.
@@ -197,48 +197,48 @@ is probably partial work on the book-loading failure. It must be reconciled befo
 anything else: building on top of unexamined changes makes every later bisect lie, and
 discarding them silently throws away a diagnosis someone already paid for.
 
-- [ ] **0.3b.1 Preserve the diff before touching it.** Write the full diff and the
+- [x] **0.3b.1 Preserve the diff before touching it.** Write the full diff and the
   untracked file list to a timestamped file outside the working tree, so no subsequent
   operation can lose it.
   - Verify: `test -s` on the saved diff file returns true, and its line count matches
     `git diff | wc -l`.
-- [ ] **0.3b.2 Classify every changed hunk into exactly one of four buckets.**
+- [x] **0.3b.2 Classify every changed hunk into exactly one of four buckets.**
   (a) **useful and finished** — a coherent change that stands on its own;
   (b) **useful but partial** — the right direction, incomplete;
   (c) **debug scaffolding** — logging, probes, commented-out experiments;
   (d) **unrelated** — belongs to some other line of work.
   - Verify: a written table with one row per changed file, each row naming its bucket and
     citing the hunk that decides it. No file may be left unclassified.
-- [ ] **0.3b.3 Commit bucket (a) on its own, with a message that says what it does.**
+- [x] **0.3b.3 Commit bucket (a) on its own, with a message that says what it does.**
   Separate logical units get separate commits; unrelated changes are never squashed
   together.
   - Verify: `git log --oneline` shows one commit per logical unit, and
     `git show --stat` for each contains only files from that unit.
-- [ ] **0.3b.4 Carry bucket (b) forward as the starting point for Phase 1, not as a
+- [x] **0.3b.4 Carry bucket (b) forward as the starting point for Phase 1, not as a
   discovery to be re-made.** Whatever the partial work already established about the book
   failure is evidence, and Phase 1.2 must reconcile its classification against it.
   - Verify: the parallel notes record what the partial work had already determined, and
     Phase 1.2's bucket choice either agrees with it or states specifically why it does not.
-- [ ] **0.3b.5 Park buckets (c) and (d) on a branch, never delete them.**
+- [x] **0.3b.5 Park buckets (c) and (d) on a branch, never delete them.**
   - Verify: `git branch --list` shows the parking branch and `git show <branch>` contains
     the scaffolding; the working tree no longer carries it.
-- [ ] **0.3b.6 Working tree is clean before Phase 1 begins.**
+- [x] **0.3b.6 Working tree is clean before Phase 1 begins.**
   - Verify: `cd $R && git status --porcelain` produces no output.
 
-- [ ] **0.4 Baseline green — measured AFTER 0.3b, not before.** Establish the post-
+- [x] **0.4 Baseline green — measured AFTER 0.3b, not before.** Establish the post-
   reconciliation state of the test suite so later failures are attributable. A baseline
   taken over a dirty tree would attribute someone else's half-finished work to this loop.
   - Verify: `cd $R && git status --porcelain` is empty AND
     `cd $R && npm test 2>&1 | tail -20` — record pass/fail counts verbatim in parallel
     notes.
-- [ ] **0.5 Read the predecessor spec.** Read `$R/docs/GOAL_LOOP.md`, `$R/README.md`, and
+- [x] **0.5 Read the predecessor spec.** Read `$R/docs/GOAL_LOOP.md`, `$R/README.md`, and
   `$R/config/interstice.config.default.json` end to end so this loop's additions match the
   system's existing vocabulary (rung, gap, ladder, actuator, companion) rather than
   inventing a parallel one.
   - Verify: parallel notes contain a table mapping each new concept in this loop (focus
     block, star, break event, video probe, latency ticker) onto the existing vocabulary,
     naming which existing module each new module will talk to and through which contract.
-- [ ] **0.6 Module contract sketch, before any implementation.** Per the operator's
+- [x] **0.6 Module contract sketch, before any implementation.** Per the operator's
   modularity rule, each new capability is a module that talks to the rest of the system
   only through a small protocol and plain data types, never by reaching into internals.
   - Suggested shape: `lib/focus/blocks.js` (state machine, pure), `lib/focus/store.js`
@@ -291,7 +291,7 @@ crashing. The diagnosis must therefore start from what that surface actually say
   that attempt.
   - Verify: parallel notes contain the literal failure string and a log excerpt with
     timestamps; `test -s` on the captured log file returns true.
-- [ ] **1.2 Classify the failure into exactly one of these buckets** (add a bucket if the
+- [x] **1.2 Classify the failure into exactly one of these buckets** (add a bucket if the
   evidence fits none, rather than forcing a fit):
   - (a) **Not signed in** — `signedInToReader(probe)` in `$R/lib/reader.js:122` returns
     false; the carried Chrome session in `$R/logs/reader-profile` has expired.
@@ -333,7 +333,7 @@ crashing. The diagnosis must therefore start from what that surface actually say
   opens at the synced position with no intervention.
   - Verify: a scripted run performs three cold starts and asserts a non-blank rendered page
     plus a page number matching the Kindle-synced position each time; exit code 0.
-- [ ] **1.8 Add the observed failure to the bug/issue prevention checklist.** Per the
+- [x] **1.8 Add the observed failure to the bug/issue prevention checklist.** Per the
   operator's standing rule, append a brief-enough-to-work entry describing the issue and
   how to prevent it.
   - Verify: `grep -qi "reader" $R/docs/BUG_ISSUE_PREVENTION.md` (create the file if this is
