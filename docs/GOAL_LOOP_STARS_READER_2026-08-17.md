@@ -485,7 +485,7 @@ Per S4: Interstice's own panel never breaks a block.
   - Verify: a test seeds stars across a month boundary, a DST boundary, and a
     block-spanning-midnight case, and asserts each is credited to the day it completed in
     `America/Los_Angeles`.
-- [ ] **3.8 Star calendar UI, behind the Phase 2 menu.** Day view and month view; every
+- [x] **3.8 Star calendar UI, behind the Phase 2 menu.** Day view and month view; every
   star reveals the wall-clock start and end of the block that earned it.
   - Suggested route: apply the `dataviz` skill before writing the first line of calendar
     code — form heuristic, palette, and legend rules — so the calendar reads as part of the
@@ -542,7 +542,7 @@ Per S3: **browsers only**, tab URL plus play state.
     continuous playback.
   - Verify: a test asserts playback shorter than the threshold emits no break and playback
     longer than it emits exactly one.
-- [ ] **4.6 The forfeit is legible, not silent.** When a block is forfeited, the panel can
+- [x] **4.6 The forfeit is legible, not silent.** When a block is forfeited, the panel can
   say which cause did it and at what time. Silent forfeiture would make the star system
   untrustworthy.
   - Verify: a test asserts the forfeit record carries cause and timestamp and that the UI

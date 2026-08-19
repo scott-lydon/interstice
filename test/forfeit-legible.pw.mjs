@@ -1,0 +1,29 @@
+// 4.6: a forfeited block is legible, not silent. The panel surfaces both the cause and the
+// wall-clock time of the forfeit. Drives window.__focus.forfeit with a blockForfeited record.
+import { chromium } from '@playwright/test';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
+const PANEL = pathToFileURL(path.resolve('web/panel.html')).href;
+const browser = await chromium.launch({ channel: 'chrome' });
+const fails = [];
+try {
+  const page = await browser.newPage({ viewport: { width: 640, height: 900 } });
+  page.on('pageerror', () => {});
+  await page.goto(PANEL);
+  await page.evaluate(() => { if (typeof setView === 'function') setView('reading'); });
+  // a real blockForfeited record from lib/focus/blocks.js
+  const rec = { type: 'blockForfeited', cause: 'video', at: '2026-08-19T14:07:00-07:00', elapsedMs: 1234000 };
+  const shown = await page.evaluate((r) => {
+    window.__focus.forfeit(r);
+    const el = document.getElementById('forfeit-note');
+    return { visible: el.classList.contains('show'), text: el.textContent, causeAttr: el.querySelector('.fn-cause')?.dataset.cause, when: el.querySelector('.fn-when')?.textContent };
+  }, rec);
+  if (!shown.visible) fails.push('4.6: forfeit banner not visible');
+  if (shown.causeAttr !== 'video') fails.push(`4.6: cause not surfaced (got ${shown.causeAttr})`);
+  if (shown.when !== '14:07') fails.push(`4.6: wall-clock time not surfaced (got "${shown.when}")`);
+  if (!/forfeited/i.test(shown.text)) fails.push('4.6: banner does not name the forfeit');
+  await browser.close();
+  if (fails.length) { console.log('FAIL:\n' + fails.join('\n')); process.exit(1); }
+  console.log('4.6 PASS: forfeit surfaces cause ("video") and wall-clock time (14:07), not silent');
+  process.exit(0);
+} catch (e) { console.log('error:', e.message); await browser.close(); process.exit(2); }

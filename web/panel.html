@@ -149,6 +149,51 @@
     color: var(--ground); background: var(--accent); border-radius: 999px; padding: 6px 10px;
   }
   .arrival-note.show { display: inline-block; }
+  /* 4.6 Legible forfeit: a bounded, dismissible banner naming the cause and the wall-clock
+     time. Silent forfeiture would make the star system untrustworthy, so a lost block says so. */
+  .forfeit-note {
+    position: absolute; top: 44px; left: 8px; right: 8px; z-index: 27; display: none;
+    max-height: min(40vh, 240px); overflow-y: auto; overscroll-behavior: contain;
+    padding: 10px 12px; border-radius: 10px; border: 1px solid var(--warn);
+    background: color-mix(in srgb, var(--warn) 14%, var(--raised)); color: var(--ink);
+    font: 500 12px/1.4 system-ui, sans-serif;
+  }
+  .forfeit-note.show { display: block; }
+  .forfeit-note .fn-cause { font-weight: 700; }
+  .forfeit-note .fn-dismiss {
+    float: right; margin-left: 8px; border: none; background: none; color: var(--muted);
+    font-size: 14px; cursor: pointer; line-height: 1;
+  }
+  /* 3.8 Star calendar: same calm system as the panel. One accent for earned days, the ground for
+     empty ones, a legend, and a bounded scroll so a long month never traps the close control. */
+  .star-cal-overlay { display: none; }
+  body.immersive .star-cal-overlay.open, .star-cal-overlay.open {
+    display: flex; flex-direction: column; gap: 10px; position: absolute; inset: 0; z-index: 31;
+    padding: 16px; overflow-y: auto; overscroll-behavior: contain;
+    background: color-mix(in srgb, var(--ground) 94%, transparent); backdrop-filter: blur(8px);
+  }
+  .star-cal-overlay header { position: sticky; top: -16px; background: var(--ground);
+    padding: 4px 0; display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+  .star-cal-overlay h3 { margin: 0; font-size: 14px; letter-spacing: .02em; }
+  .cal-controls { display: flex; gap: 6px; align-items: center; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-dow { font: 600 9px/1 system-ui; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); text-align: center; padding: 2px 0; }
+  .cal-cell { min-height: 44px; border: 1px solid var(--rule); border-radius: 8px; padding: 3px 4px;
+    background: var(--raised); display: flex; flex-direction: column; gap: 2px; }
+  .cal-cell.empty { opacity: .35; }
+  .cal-cell .cal-day { font: 600 10px/1 ui-monospace, Menlo, monospace; color: var(--muted); }
+  .cal-star { align-self: flex-start; border: 1px solid var(--accent); border-radius: 6px;
+    background: color-mix(in srgb, var(--accent) 12%, var(--raised)); color: var(--accent);
+    font-size: 11px; line-height: 1; padding: 2px 4px; cursor: pointer; }
+  .cal-star:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .cal-reveal { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px;
+    background: var(--raised); font: 500 12px/1.4 system-ui; }
+  .cal-reveal[hidden] { display: none; }
+  .cal-legend { display: flex; gap: 12px; font: 500 10px/1 system-ui; color: var(--muted); align-items: center; }
+  .cal-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+    border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--raised)); margin-right: 4px; }
+  .cal-empty-copy { color: var(--muted); font: 500 12px/1.5 system-ui; padding: 8px 0; }
 
   h2 { font: 600 13px/1.3 Charter, Georgia, serif; margin: 0; }
   .label {
@@ -380,6 +425,7 @@
       <!-- Immersive affordances (Phase 2C): shown only while body.immersive. -->
       <div class="latency-chip" id="latency-chip" aria-live="polite"></div>
       <div class="arrival-note" id="arrival-note" role="status">Response landed</div>
+      <div class="forfeit-note" id="forfeit-note" role="alert" aria-live="assertive"></div>
       <button class="reader-menu" id="reader-menu" type="button" aria-label="Reading menu" aria-expanded="false" aria-controls="reader-menu-overlay">&#8943;</button>
       <div class="reader-pager-overlay" aria-label="Turn the page">
         <button class="act" id="page-prev-imm" type="button">&#8249; Back</button>
@@ -387,7 +433,22 @@
       </div>
       <div class="reader-menu-overlay" id="reader-menu-overlay" role="dialog" aria-modal="true" aria-label="Reading menu">
         <button class="act om-close" id="reader-menu-close" type="button">Close &times;</button>
+        <button class="act" id="open-star-cal" type="button">Star calendar &#9733;</button>
         <div id="reader-menu-slot"></div>
+      </div>
+      <div class="star-cal-overlay" id="star-cal-overlay" role="dialog" aria-modal="true" aria-label="Star calendar">
+        <header>
+          <h3 id="cal-title">Stars</h3>
+          <div class="cal-controls">
+            <button class="act" id="cal-prev" type="button" aria-label="Previous month">&#8249;</button>
+            <button class="act" id="cal-view-toggle" type="button">Day view</button>
+            <button class="act" id="cal-next" type="button" aria-label="Next month">&#8250;</button>
+            <button class="act om-close" id="cal-close" type="button">Close &times;</button>
+          </div>
+        </header>
+        <div class="cal-legend"><span><span class="swatch"></span>an earned 25-minute block</span></div>
+        <div id="cal-body"></div>
+        <div class="cal-reveal" id="cal-reveal" hidden></div>
       </div>
     </section>
 
@@ -1716,6 +1777,135 @@ window.addEventListener('load', () => {
     },
     tick(nowMs) { _renderLatency(nowMs); },            // for tests to advance time deterministically
     waiting: (sessionId) => _lat.has(sessionId),
+  };
+
+  // ------------------------------------------------------------- forfeit legibility (4.6) ---
+  // A lost block is never silent. The forfeit record already carries {cause, at, elapsedMs}
+  // (lib/focus/blocks.js); this surfaces both the cause and the wall-clock time it happened.
+  function _wallClock(iso) {
+    // The recorded local time, read straight from the ISO string's own offset so it is stable
+    // regardless of where the panel is viewed.
+    const m = String(iso).match(/T(\d{2}):(\d{2})/);
+    return m ? `${m[1]}:${m[2]}` : String(iso);
+  }
+  const _causeWords = { app: 'a blacklisted app came to the front', lock: 'the screen locked',
+    video: 'non-whitelisted video played', manual: 'you ended the block' };
+  window.__focus = {
+    // A real forfeit event calls this; a test calls it directly with a blockForfeited record.
+    forfeit(record) {
+      const el = document.getElementById('forfeit-note');
+      if (!el || !record) return;
+      const cause = record.cause || 'unknown';
+      const words = _causeWords[cause] || cause;
+      el.innerHTML = '<button class="fn-dismiss" type="button" aria-label="Dismiss">&times;</button>'
+        + `Block forfeited at <span class="fn-when">${_wallClock(record.at)}</span>: `
+        + `<span class="fn-cause" data-cause="${cause}">${words}</span>.`;
+      el.classList.add('show');
+      el.querySelector('.fn-dismiss').onclick = () => el.classList.remove('show');
+    },
+  };
+
+  // ------------------------------------------------------------- star calendar (3.8) ---
+  // Day and month views behind the Phase 2 menu. Every star reveals the wall-clock start and end
+  // of the block that earned it. Data is real: production loads it from /api/stars; a test injects
+  // it via render(). Nothing is stubbed (3.9) — an empty history renders an honest empty calendar.
+  const _cal = { view: 'month', key: null, stars: [] };
+  function _openStarCal() {
+    document.getElementById('star-cal-overlay').classList.add('open');
+    document.getElementById('cal-close').focus();
+    // If nothing has been rendered yet, try the live surface; fall back to an empty month.
+    if (_cal.key === null) _loadStarCal(_thisMonth());
+  }
+  function _closeStarCal() {
+    document.getElementById('star-cal-overlay').classList.remove('open');
+    document.getElementById('reader-menu')?.focus();
+  }
+  function _thisMonth() {
+    // Derived from the newest star if present, else left null so callers can pass one in.
+    if (_cal.stars.length) return _cal.stars[_cal.stars.length - 1].day.slice(0, 7);
+    return _cal.key || null;
+  }
+  async function _loadStarCal(yyyyMM) {
+    if (!yyyyMM) { _renderStarCal('month', null, []); return; }
+    try {
+      const r = await fetch(`/api/stars/month?month=${yyyyMM}`);
+      const body = await r.json();
+      _renderStarCal('month', yyyyMM, Array.isArray(body.stars) ? body.stars : []);
+    } catch { _renderStarCal('month', yyyyMM, []); } // offline/file:// — honest empty, never stubbed
+  }
+  function _shiftMonth(yyyyMM, delta) {
+    let [y, m] = yyyyMM.split('-').map(Number);
+    m += delta; if (m < 1) { m = 12; y -= 1; } if (m > 12) { m = 1; y += 1; }
+    return `${y}-${String(m).padStart(2, '0')}`;
+  }
+  function _reveal(star) {
+    const r = document.getElementById('cal-reveal');
+    r.hidden = false;
+    r.innerHTML = `A block earned on ${star.day}: began <strong>${_wallClock(star.startedAt)}</strong> `
+      + `&middot; ended <strong>${_wallClock(star.endedAt)}</strong>.`;
+  }
+  function _renderStarCal(view, key, stars) {
+    _cal.view = view; _cal.key = key; _cal.stars = stars.slice();
+    document.getElementById('cal-view-toggle').textContent = view === 'month' ? 'Day view' : 'Month view';
+    const title = document.getElementById('cal-title');
+    const body = document.getElementById('cal-body');
+    document.getElementById('cal-reveal').hidden = true;
+    const starsFor = (day) => stars.filter((s) => s.day === day);
+    function starButton(star, idx) {
+      const b = document.createElement('button');
+      b.className = 'cal-star'; b.type = 'button';
+      b.textContent = '\u2605';
+      b.setAttribute('aria-label', `Star earned ${star.day}, reveal times`);
+      b.dataset.day = star.day; b.dataset.idx = String(idx);
+      b.onclick = () => _reveal(star);
+      return b;
+    }
+    if (view === 'day') {
+      title.textContent = `Stars on ${key}`;
+      body.innerHTML = '';
+      const list = starsFor(key);
+      if (!list.length) { body.innerHTML = '<div class="cal-empty-copy">No stars earned this day yet.</div>'; return; }
+      const wrap = document.createElement('div'); wrap.className = 'cal-cell'; wrap.style.minHeight = 'auto';
+      list.forEach((st, i) => wrap.appendChild(starButton(st, i)));
+      body.appendChild(wrap);
+      return;
+    }
+    // month view
+    title.textContent = `Stars in ${key || '(no month)'}`;
+    body.innerHTML = '';
+    if (!key) { body.innerHTML = '<div class="cal-empty-copy">No stars earned yet. Complete a 25-minute block to earn your first.</div>'; return; }
+    const [y, mo] = key.split('-').map(Number);
+    const grid = document.createElement('div'); grid.className = 'cal-grid';
+    ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach((d) => { const c = document.createElement('div'); c.className = 'cal-dow'; c.textContent = d; grid.appendChild(c); });
+    const firstDow = new Date(Date.UTC(y, mo - 1, 1)).getUTCDay();
+    const days = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+    for (let i = 0; i < firstDow; i += 1) { const c = document.createElement('div'); c.className = 'cal-cell empty'; grid.appendChild(c); }
+    for (let d = 1; d <= days; d += 1) {
+      const day = `${key}-${String(d).padStart(2, '0')}`;
+      const cell = document.createElement('div'); cell.className = 'cal-cell'; cell.dataset.day = day;
+      const lab = document.createElement('div'); lab.className = 'cal-day'; lab.textContent = String(d); cell.appendChild(lab);
+      starsFor(day).forEach((st, i) => cell.appendChild(starButton(st, i)));
+      grid.appendChild(cell);
+    }
+    body.appendChild(grid);
+    const empty = stars.length === 0;
+    if (empty) { const e = document.createElement('div'); e.className = 'cal-empty-copy'; e.textContent = 'No stars earned this month yet.'; body.appendChild(e); }
+  }
+  document.getElementById('open-star-cal')?.addEventListener('click', _openStarCal);
+  document.getElementById('cal-close')?.addEventListener('click', _closeStarCal);
+  document.getElementById('star-cal-overlay')?.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); _closeStarCal(); } });
+  document.getElementById('cal-view-toggle')?.addEventListener('click', () => {
+    if (_cal.view === 'month') { const day = _cal.stars.length ? _cal.stars[_cal.stars.length - 1].day : `${_cal.key || _thisMonth()}-01`; _renderStarCal('day', day, _cal.stars); }
+    else { _renderStarCal('month', (_cal.key || '').slice(0, 7) || _thisMonth(), _cal.stars); }
+  });
+  document.getElementById('cal-prev')?.addEventListener('click', () => { if (_cal.view === 'month' && _cal.key) _renderStarCal('month', _shiftMonth(_cal.key, -1), _cal.stars); });
+  document.getElementById('cal-next')?.addEventListener('click', () => { if (_cal.view === 'month' && _cal.key) _renderStarCal('month', _shiftMonth(_cal.key, 1), _cal.stars); });
+  // Injectable surface: production wires _loadStarCal to the live routes; a test drives render()
+  // directly with seeded stars so the calendar is exercised without a running server.
+  window.__stars = {
+    render: (view, key, stars) => _renderStarCal(view, key, stars),
+    open: _openStarCal,
+    load: _loadStarCal,
   };
 
   setView('flashcards');
