@@ -580,7 +580,7 @@ path). This phase surfaces that knowledge inside the panel.
   indicator.
   - Verify: a test asserts the arrival notification appears exactly once per completion
     event and is visually and structurally distinct from the elapsed indicator.
-- [ ] **5.5 It works on both surfaces.** Cowork and Claude Code both drive the indicator and
+- [x] **5.5 It works on both surfaces.** Cowork and Claude Code both drive the indicator and
   the notification.
   - Verify: separate tests inject a Cowork-shaped and a Claude-Code-shaped event and assert
     identical downstream behaviour.
