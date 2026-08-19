@@ -751,7 +751,7 @@ rules against it in one pass.
   - Verify: `grep -rnE "catch\s*\(\s*\w*\s*\)\s*\{\s*\}" $R/lib` returns no matches, and
     `grep -rnE "throw new Error\('[a-z ]{0,25}'\)" $R/lib/focus $R/lib/video $R/lib/latency`
     returns no matches.
-- [ ] **8.4 `doctor` proves every new dependency.** The frontmost-app signal, the
+- [x] **8.4 `doctor` proves every new dependency.** The frontmost-app signal, the
   display/lock subscription, the browser video probe, and the reading rung all appear as
   doctor checks that fail loudly and specifically.
   - Verify: `node $R/bin/interstice.js doctor` lists all four, and each has a test proving
@@ -762,7 +762,7 @@ rules against it in one pass.
   stated plainly rather than left to be discovered.
   - Verify: every key present in `$R/config/interstice.config.default.json` under `focus`
     appears in `$R/README.md`, checked by a script rather than by eye.
-- [ ] **8.6 Internal consistency sweep.** No document in the repo contradicts another or
+- [x] **8.6 Internal consistency sweep.** No document in the repo contradicts another or
   contradicts the code — the operator's standing expectation that a project is consistent
   within itself.
   - Verify: an agent with fresh context reads `$R/README.md`, `$R/docs/GOAL_LOOP.md`, this
