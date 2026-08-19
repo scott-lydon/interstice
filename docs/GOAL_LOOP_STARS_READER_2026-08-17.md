@@ -510,7 +510,7 @@ Per S4: Interstice's own panel never breaks a block.
 
 Per S3: **browsers only**, tab URL plus play state.
 
-- [ ] **4.1 Video probe module.** Reports currently-playing online video as a list of plain
+- [x] **4.1 Video probe module.** Reports currently-playing online video as a list of plain
   `{ browser, url, host, playing }` records.
   - Suggested route: `$R/lib/video/probe.js`. Chromium-family via the existing
     `$R/lib/cdp.js` attach; Safari via its own scripting interface. Detect play state from
@@ -518,7 +518,7 @@ Per S3: **browsers only**, tab URL plus play state.
   - Verify: a test with a fixture page containing a playing `<video>` asserts a record with
     `playing:true`; a paused video asserts `playing:false`; a tab with no media asserts no
     record.
-- [ ] **4.2 The probe never opens, focuses, or disturbs a browser.** Consistent with the
+- [x] **4.2 The probe never opens, focuses, or disturbs a browser.** Consistent with the
   project's "nothing is ever quit, hidden or closed" rule.
   - Verify: a test asserts the probe performs no navigation, no window activation, and no
     tab creation; and that it returns an empty list rather than launching anything when no
@@ -547,7 +547,7 @@ Per S3: **browsers only**, tab URL plus play state.
   untrustworthy.
   - Verify: a test asserts the forfeit record carries cause and timestamp and that the UI
     surfaces both.
-- [ ] **4.7 Whitelist is editable without editing code.**
+- [x] **4.7 Whitelist is editable without editing code.**
   - Verify: a test writes a new host into `$R/config/interstice.config.json`, reloads
     config, and asserts the new host now passes — with no restart required, if the config
     module already supports live reload; otherwise with a documented restart.
