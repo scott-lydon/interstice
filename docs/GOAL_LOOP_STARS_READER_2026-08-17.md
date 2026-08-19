@@ -739,7 +739,7 @@ rules against it in one pass.
 - [x] **8.1 Full suite green.** `cd $R && npm test` — zero failures, zero skipped tests that
   were passing at the 0.4 baseline.
   - Verify: exit code 0 and a pass count at or above the baseline.
-- [ ] **8.2 Per-file coverage checklist for every new or modified file.** Rather than one
+- [x] **8.2 Per-file coverage checklist for every new or modified file.** Rather than one
   monolithic coverage goal, iterate the changed file list and record an attempt plus the
   coverage actually achieved for each.
   - Suggested route: `git diff --name-only origin/main...HEAD -- '*.js'` to produce the

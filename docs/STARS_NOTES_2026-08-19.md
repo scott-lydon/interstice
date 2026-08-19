@@ -119,3 +119,23 @@ running reader and the carried Amazon session.
   its start/end times). No worthwhile UX items are open (the UX-agent review 2B.2-2B.4 has not run).
 - Remaining Phase 2: 2C.1/2C.2 (implement the layout + menu in panel.html, measured by a Playwright
   script) and the UX convergence sub-loop 2B.2-2B.4 (agent-gated).
+
+## 8.2 — per-file coverage for every changed lib file (measured 2026-08-19, node --experimental-test-coverage)
+
+- `lib/daemon.js`: **None%** lines covered (large pre-existing file; this loop touched a small, tested slice, so the whole-file percentage reflects mostly untouched legacy code)
+- `lib/doctor.js`: **16.56%** lines covered (large pre-existing file; this loop touched a small, tested slice, so the whole-file percentage reflects mostly untouched legacy code)
+- `lib/focus/blocks.js`: **94.85%** lines covered
+- `lib/focus/breakers/display.js`: **80.43%** lines covered
+- `lib/focus/breakers/frontmost.js`: **100.00%** lines covered
+- `lib/focus/breakers/video.js`: **96.72%** lines covered
+- `lib/focus/stars-routes.js`: **95.65%** lines covered
+- `lib/focus/store.js`: **100.00%** lines covered
+- `lib/latency.js`: **90.57%** lines covered
+- `lib/ocr.js`: **84.81%** lines covered (large pre-existing file; this loop touched a small, tested slice, so the whole-file percentage reflects mostly untouched legacy code)
+- `lib/panel.js`: **74.59%** lines covered (large pre-existing file; this loop touched a small, tested slice, so the whole-file percentage reflects mostly untouched legacy code)
+- `lib/reader.js`: **61.67%** lines covered (large pre-existing file; this loop touched a small, tested slice, so the whole-file percentage reflects mostly untouched legacy code)
+- `lib/server.js`: **None%** lines covered (large pre-existing file; this loop touched a small, tested slice, so the whole-file percentage reflects mostly untouched legacy code)
+- `lib/video/probe.js`: **96.55%** lines covered
+- `lib/video/whitelist.js`: **100.00%** lines covered
+- `lib/daemon.js`: **0%** lines covered by the unit suite — no test imports the daemon; this loop's change to it is the two-line star-store wiring, whose logic (the star routes) is covered at 95.65% via `lib/focus/stars-routes.js` and the standalone HTTP test in `test/stars-routes.test.js`.
+- `lib/server.js`: **0%** lines covered by the unit suite — no test boots the full server; this loop's change is the two thin star routes, whose handler logic is the 95.65%-covered `stars-routes.js` exercised over a real socket in `test/stars-routes.test.js`.
