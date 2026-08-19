@@ -137,12 +137,12 @@ would otherwise need the operator is pre-resolved in "Settled decisions" below.
 
 ## Phase 0 — Preflight: unblock everything before writing a line
 
-- [ ] **0.0a Environment is exported and proven, before any other item.** Every later
+- [x] **0.0a Environment is exported and proven, before any other item.** Every later
   `Verify` line depends on it.
   - Verify: `test -d "$R" && command -v node && command -v npm && command -v git` all
     succeed in the shell the loop will actually use. If `node` is missing, the shell is
     non-login; re-run under `zsh -lc` or export `/opt/homebrew/bin` and record which.
-- [ ] **0.0b Resolve S7 in the files, not just in this table.** Correct `README.md` line 50
+- [x] **0.0b Resolve S7 in the files, not just in this table.** Correct `README.md` line 50
   from "There are no npm dependencies" to the precise claim, so the repo does not ship a
   false sentence the moment a devDependency appears.
   - Verify: `grep -n "no runtime dependencies" $R/README.md` returns a match AND
@@ -154,7 +154,7 @@ would otherwise need the operator is pre-resolved in "Settled decisions" below.
   - Verify: `cd $R && npx playwright --version` succeeds, AND — proving Interstice still
     runs without its test tooling — `mv node_modules /tmp/pw-parked && node ./bin/interstice.js doctor; rc=$?; mv /tmp/pw-parked node_modules; exit $rc`
     exits 0.
-- [ ] **0.0d Create `$R/CLAUDE.md` so a fresh session inherits this loop's constraints.**
+- [x] **0.0d Create `$R/CLAUDE.md` so a fresh session inherits this loop's constraints.**
   Without it, a new agent opening this repo does not know that idle must not break a focus
   block (S2), that the panel never breaks its own block (S4), or that the reader failure
   path must throw remedy-bearing errors.
@@ -183,7 +183,7 @@ would otherwise need the operator is pre-resolved in "Settled decisions" below.
     OR the diagnosis in 1.2 proves the existing carried session in
     `$R/logs/reader-profile` is still valid and no credential is needed. Exactly one of
     these two must be recorded, with evidence.
-- [ ] **0.3 Deployment asymmetry check.** Before debugging anything, confirm the working
+- [x] **0.3 Deployment asymmetry check.** Before debugging anything, confirm the working
   tree is not behind a deploy branch.
   - Verify: `cd $R && git rev-list --left-right --count origin/main...HEAD` — record both
     counts. If HEAD is behind, merge before diagnosing.
@@ -833,3 +833,7 @@ rules against it in one pass.
 
 Working notes for this loop live at: _(link to be added by the agent working this loop;
 this is the one addition permitted to this file besides checking boxes)_
+
+---
+
+**Parallel notes:** [`docs/STARS_NOTES_2026-08-19.md`](STARS_NOTES_2026-08-19.md)
