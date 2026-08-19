@@ -413,7 +413,7 @@ crashing. The diagnosis must therefore start from what that surface actually say
 
 ### 2C. Implementation
 
-- [ ] **2C.1 Implement the immersive layout in `$R/web/panel.html`.**
+- [x] **2C.1 Implement the immersive layout in `$R/web/panel.html`.**
   - Verify: a `webapp-testing` Playwright script measures the rendered page region and
     asserts ≥90% of both usable panel dimensions while `#view-reading` is active.
 - [ ] **2C.2 Implement the single menu affordance** housing everything displaced in 2A.1
@@ -427,7 +427,7 @@ crashing. The diagnosis must therefore start from what that surface actually say
 - [ ] **2C.4 Menu is accessible.** Focus is trapped while open, `Escape` closes it, the
   trigger has an accessible name, and focus returns to the trigger on close.
   - Verify: automated accessibility assertions on the four behaviours above.
-- [ ] **2C.5 Non-reading rungs are unharmed.** Flashcards, queue_prompt and todo views
+- [x] **2C.5 Non-reading rungs are unharmed.** Flashcards, queue_prompt and todo views
   render and behave exactly as before.
   - Verify: `cd $R && npm test` — `panel.test.js` and the rung tests pass with no
     regressions against the 0.4 baseline.

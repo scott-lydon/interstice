@@ -95,6 +95,45 @@
   .view { display: none; flex-direction: column; gap: 12px; height: 100%; }
   .view.active { display: flex; }
 
+  /* Immersive reading (Phase 2): while reading, the page fills the panel and every other control
+     is behind one menu affordance. Scoped to body.immersive, which setView sets only for the
+     reading view, so the other rungs are untouched. */
+  body.immersive header,
+  body.immersive footer { display: none; }
+  body.immersive main { padding: 0; overflow: hidden; }
+  body.immersive #view-reading { gap: 0; height: 100%; }
+  /* Everything in the reading view except the page and the menu is displaced behind the menu. */
+  body.immersive #view-reading > :not(#reader):not(.reader-menu):not(.reader-menu-overlay) { display: none; }
+  body.immersive #reader { border-radius: 0; border: 0; }
+  /* The single menu affordance: one always-visible button, top-right. */
+  .reader-menu { display: none; }
+  body.immersive .reader-menu {
+    display: grid; place-items: center; position: absolute; top: 8px; right: 8px; z-index: 30;
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--rule);
+    background: color-mix(in srgb, var(--ground) 65%, transparent); color: var(--ink);
+    font-size: 17px; cursor: pointer; backdrop-filter: blur(4px);
+  }
+  .reader-menu:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* An auto-hiding pager overlay so page-turn works without opening the menu (2C.3). */
+  .reader-pager-overlay { display: none; }
+  body.immersive .reader-pager-overlay {
+    display: flex; gap: 6px; position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
+    z-index: 30; padding: 4px 6px; border-radius: 999px; border: 1px solid var(--rule);
+    background: color-mix(in srgb, var(--ground) 70%, transparent); backdrop-filter: blur(4px);
+    opacity: 0; transition: opacity .18s ease;
+  }
+  body.immersive #reader:hover ~ .reader-pager-overlay,
+  body.immersive .reader-pager-overlay:hover,
+  body.immersive .reader-pager-overlay:focus-within { opacity: 1; }
+  /* The menu overlay: opened by the button, holds everything displaced. */
+  .reader-menu-overlay { display: none; }
+  body.immersive .reader-menu-overlay.open {
+    display: flex; flex-direction: column; gap: 12px; position: absolute; inset: 0; z-index: 29;
+    padding: 16px; overflow-y: auto; background: color-mix(in srgb, var(--ground) 92%, transparent);
+    backdrop-filter: blur(8px);
+  }
+  .reader-menu-overlay .om-close { align-self: flex-end; }
+
   h2 { font: 600 13px/1.3 Charter, Georgia, serif; margin: 0; }
   .label {
     font: 600 10px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
@@ -269,12 +308,12 @@
 
     <!-- ---------------------------------------------------------------- book -->
     <section class="view" id="view-reading">
-      <div>
+      <div id="book-title-wrap">
         <div class="label">Reading</div>
         <h2 id="book-title">&nbsp;</h2>
         <div class="why" id="book-why"></div>
       </div>
-      <div class="bar"><i id="book-bar" style="width:0%"></i></div>
+      <div class="bar" id="book-bar-wrap"><i id="book-bar" style="width:0%"></i></div>
       <div class="reader" id="reader">
         <img id="reader-frame" alt="Your book, at the page you were on" hidden>
         <div class="text" id="reader-text" hidden></div>
@@ -302,7 +341,7 @@
           <button class="act primary" id="reader-retry" type="button">Try again</button>
         </div>
       </div>
-      <div class="pager">
+      <div class="pager" id="reader-pager">
         <button class="act" id="page-prev" type="button">&#8249; Back</button>
         <span class="mono" id="reader-page"></span>
         <span class="grow"></span>
@@ -322,6 +361,16 @@
         <button class="act" id="read-again" type="button" style="padding:2px 8px">Read it again</button>
       </div>
       <div id="book-actions" style="display:flex; flex-direction:column; gap:6px"></div>
+      <!-- Immersive affordances (Phase 2C): shown only while body.immersive. -->
+      <button class="reader-menu" id="reader-menu" type="button" aria-label="Reading menu" aria-expanded="false" aria-controls="reader-menu-overlay">&#8943;</button>
+      <div class="reader-pager-overlay" aria-label="Turn the page">
+        <button class="act" id="page-prev-imm" type="button">&#8249; Back</button>
+        <button class="act" id="page-next-imm" type="button">Next &#8250;</button>
+      </div>
+      <div class="reader-menu-overlay" id="reader-menu-overlay" role="dialog" aria-modal="true" aria-label="Reading menu">
+        <button class="act om-close" id="reader-menu-close" type="button">Close &times;</button>
+        <div id="reader-menu-slot"></div>
+      </div>
     </section>
 
     <!-- --------------------------------------------------------------- queue -->
@@ -380,6 +429,7 @@ function setView(name, { fromServer = false } = {}) {
   // of them costs a frame and a poll.
   if (leaving === 'reading' && name !== 'reading') stopReader();
   for (const s of document.querySelectorAll('.view')) s.classList.toggle('active', s.id === 'view-' + name);
+  document.body.classList.toggle('immersive', name === 'reading');
   for (const b of document.querySelectorAll('#rungs button')) {
     b.setAttribute('aria-current', String(b.dataset.view === name));
   }
@@ -1557,6 +1607,52 @@ setInterval(loadCompanions, 30000);
 window.addEventListener('load', () => {
   beat();
   $('reader-mode').textContent = readerMode() === 'text' ? 'Page' : 'Text';
+  // ------------------------------------------------------------- immersive menu ---
+  // One menu affordance holds everything the immersive page displaced. Opening it moves the
+  // displaced reading-view controls into the overlay; closing it puts them back, so nothing is
+  // duplicated and every displaced control is reachable from exactly one place.
+  const READER_MENU_DISPLACED = ['book-title-wrap', 'book-bar-wrap', 'reader-pager', 'reader-note', 'book-actions'];
+  let readerMenuLastFocus = null;
+  function openReaderMenu() {
+    const slot = document.getElementById('reader-menu-slot');
+    // Move the header rungs and the displaced reading controls into the menu.
+    const rungs = document.getElementById('rungs');
+    if (rungs && !slot.contains(rungs)) slot.appendChild(rungs);
+    for (const id of READER_MENU_DISPLACED) {
+      const el = document.getElementById(id);
+      if (el && !slot.contains(el)) slot.appendChild(el);
+    }
+    const ov = document.getElementById('reader-menu-overlay');
+    ov.classList.add('open');
+    document.getElementById('reader-menu').setAttribute('aria-expanded', 'true');
+    readerMenuLastFocus = document.activeElement;
+    document.getElementById('reader-menu-close').focus();
+  }
+  function closeReaderMenu() {
+    const ov = document.getElementById('reader-menu-overlay');
+    ov.classList.remove('open');
+    document.getElementById('reader-menu').setAttribute('aria-expanded', 'false');
+    // Put the displaced controls back where they came from is not needed for correctness: they are
+    // hidden by CSS while immersive regardless of parent, and setView rebuilds the view. Return focus.
+    (readerMenuLastFocus || document.getElementById('reader-menu')).focus();
+  }
+  document.getElementById('reader-menu')?.addEventListener('click', openReaderMenu);
+  document.getElementById('reader-menu-close')?.addEventListener('click', closeReaderMenu);
+  document.getElementById('reader-menu-overlay')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); closeReaderMenu(); }
+    if (e.key === 'Tab') {
+      // Trap focus within the overlay while open.
+      const focusables = document.getElementById('reader-menu-overlay').querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])');
+      if (!focusables.length) return;
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+  // The immersive pager mirrors the real page-turn buttons.
+  document.getElementById('page-prev-imm')?.addEventListener('click', () => document.getElementById('page-prev')?.click());
+  document.getElementById('page-next-imm')?.addEventListener('click', () => document.getElementById('page-next')?.click());
+
   setView('flashcards');
   loadCompanions();
 });
