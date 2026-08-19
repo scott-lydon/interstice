@@ -50,6 +50,77 @@ test('the page label is read from a page number, not from the word "Page"', () =
   assert.ok(PROBE.includes('Page [0-9,]+ of [0-9,]+'), 'the probe uses the anchored pattern');
 });
 
+/**
+ * Amazon's failure page is a page, so it rendered, transcribed and read back as
+ * prose in the panel's reading type under a progress bar still saying 39%. Nothing
+ * distinguished it from the book, which is why it took a screenshot to notice.
+ */
+test('Amazon\'s "something went wrong" page is recognised as a failure, not a page', () => {
+  const bookError = (text) =>
+    /Oops\b|Something Went Wrong/i.test(text) && /open this book from the library/i.test(text);
+  assert.ok(
+    bookError('Oops... Something Went Wrong\nPlease try to open this book from the library again.\nBack to Library'),
+    'the page seen on a real 403 from getDeviceToken'
+  );
+  assert.ok(!bookError('Kindle Library\nPage 80 of 220 ● 37%\n'), 'a book is not a failure');
+  assert.ok(
+    !bookError('Oops, I dropped something. Anyway, back to the library of Alexandria.'),
+    'and prose that happens to say both words is not one either'
+  );
+  assert.ok(PROBE.includes('bookError'), 'the probe reports it');
+  assert.ok(PROBE.includes('open this book from the library'), 'anchored on Amazon\'s own wording');
+});
+
+/**
+ * The retry throws away Amazon's storage and never the session.
+ *
+ * Measured: a profile that had been reading for weeks got four 403s from
+ * `getDeviceToken` and Amazon's failure page; a profile carrying nothing but the
+ * same cookies opened the same book at `Page 209 of 220` without asking for a device
+ * token at all. So the thing to remove is what Amazon wrote into local storage. The
+ * cookies are the session, and clearing those would turn a book that will not open
+ * into a sign-in page, which is a worse place to be.
+ */
+test('clearing Amazon\'s stored data never clears the session with it', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'lib', 'reader.js'), 'utf8');
+  const body = src.slice(src.indexOf('async clearSiteData('), src.indexOf('async retryBook('));
+  assert.match(body, /local_storage/, 'local storage is where the failed registration lives');
+  assert.match(body, /indexeddb/);
+  assert.ok(!/cookies/.test(body), 'and cookies are not in the list');
+});
+
+test('the retry is a route out that reopening the book cannot be', async () => {
+  // The registration Amazon refused lives in the profile, so a new browser on the
+  // same profile lands in exactly the same place. Clearing has to come first.
+  const src = fs.readFileSync(path.join(ROOT, 'lib', 'reader.js'), 'utf8');
+  const revive = src.slice(src.indexOf('async revive('), src.indexOf('async #applyViewport'));
+  assert.ok(
+    revive.indexOf('clearSiteData') < revive.indexOf("'Page.navigate'"),
+    'cleared before the book is loaded again, or the reopen finds the same refusal'
+  );
+  assert.ok(
+    revive.indexOf('#openTab') < revive.indexOf('clearSiteData'),
+    'and after a fresh tab exists, because the call is only answered on a page session'
+  );
+  assert.match(src, /retryBook[\s\S]{0,400}revive\(\{ clearFirst: true \}\)/);
+  // And it answers rather than throwing when there is no reader to retry.
+  const reader = new Reader({ config: { reading: {} } });
+  assert.equal((await reader.retryBook()).ok, false);
+});
+
+test('the panel offers that retry where Amazon\'s failure is shown', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  assert.match(html, /id="reader-failed"/, 'the failure is a state of its own, not a page of the book');
+  assert.match(html, /api\/reading\/retry/, 'and the button reaches the route that can clear it');
+  // The note strip is hidden by `hidden`, which an inline `display:flex` outranks:
+  // that is why a bare "Read it again" button sat under every page of the book.
+  assert.ok(
+    !/id="reader-note"[^>]*style="[^"]*display:/.test(html),
+    'nothing inline overrides [hidden] on the note'
+  );
+  assert.match(html, /\.note\[hidden\]\s*\{\s*display:\s*none/, 'and the class says so out loud');
+});
+
 test('the reader hides Amazon\'s floating title rather than deleting it', () => {
   // The reader rebuilds its own DOM on every page turn, so a node removed once is
   // back on the next page. A stylesheet survives the rebuild.

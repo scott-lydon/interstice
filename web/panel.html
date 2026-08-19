@@ -160,6 +160,15 @@
     overflow-y: auto; overscroll-behavior: contain;
   }
   .reader .over[hidden] { display: none; }
+  /* The per-page note, and the reason it is a class rather than an inline style.
+     `hidden` works by way of the user-agent rule `[hidden] { display: none }`, which
+     an inline `display: flex` on the same element outranks: the note was therefore
+     shown permanently, and because `readerNote('')` only sets `hidden`, what sat
+     under every page of the book was a bare "Read it again" button with nothing next
+     to it saying what to read again. Declared here so `[hidden]` can win. */
+  .note { display: flex; align-items: center; gap: 8px; }
+  .note[hidden] { display: none; }
+
   .pager { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
   .pager .grow { margin-left: auto; }
   .pager button.act { padding: 7px 12px; }
@@ -278,6 +287,20 @@
           </div>
           <div class="mono" id="reader-status">opening your book</div>
         </div>
+        <!--
+          Amazon's own failure, said rather than photographed.
+
+          Its failure page is a page like any other, so it was rendered, clipped,
+          transcribed and set here in the reading type as though it were the book:
+          "Oops... Something Went Wrong" arrived where page 79 belonged, under a
+          progress bar still reading 39%, with nothing anywhere saying the reader had
+          failed. This is that state, named, with the one thing worth pressing.
+        -->
+        <div class="over" id="reader-failed" hidden style="justify-content:flex-start; gap:10px">
+          <div class="label" style="color:var(--warn)">Amazon could not open this book</div>
+          <div class="why" id="reader-failed-why"></div>
+          <button class="act primary" id="reader-retry" type="button">Try again</button>
+        </div>
       </div>
       <div class="pager">
         <button class="act" id="page-prev" type="button">&#8249; Back</button>
@@ -294,7 +317,7 @@
         page that did not transcribe and said nothing at all, which read as the view
         having silently given up and gone back to the cluttered one.
       -->
-      <div class="why" id="reader-note" hidden style="display:flex; align-items:center; gap:8px">
+      <div class="why note" id="reader-note" hidden>
         <span id="reader-note-text"></span>
         <button class="act" id="read-again" type="button" style="padding:2px 8px">Read it again</button>
       </div>
@@ -574,6 +597,9 @@ let readerAsin = null;
 let readerSeq = -1;
 let readerTimer = null;
 let readerSignedOut = false;
+// Whether the last poll found Amazon's failure page rather than a book. See the
+// `#reader-failed` block above, and `bookError` in the daemon's probe.
+let readerFailed = false;
 let readerViewport = { width: 0, height: 0 };
 let readerBusy = false;
 let readerTextSeq = -1;
@@ -775,8 +801,10 @@ function startReader(asin) {
   readerSeq = -1;
   readerTextSeq = -1;
   readerSignedOut = false;
+  readerFailed = false;
   readerShelf = null;
   readerNote('');
+  $('reader-failed').hidden = true;
   $('reader-frame').hidden = true;
   $('reader-text').hidden = readerMode() !== 'text';
   $('reader-text').innerHTML = '';
@@ -814,6 +842,36 @@ function renderReader(d) {
     $('reader-frame').hidden = true;
     $('reader-over').hidden = false;
     readerSay(d.error || 'the book could not be opened here');
+    return;
+  }
+
+  // Amazon opened something that is not the book. Said here, once, rather than left
+  // to arrive as a transcription of its error page in the middle of your reading.
+  // Everything below this is about a page of a book, and there is not one.
+  if (Boolean(d.bookError) !== readerFailed) {
+    readerFailed = Boolean(d.bookError);
+    $('reader-failed').hidden = !readerFailed;
+    if (readerFailed) {
+      $('reader-over').hidden = true;
+      $('reader-frame').hidden = true;
+      $('reader-text').hidden = true;
+      readerNote('');
+      $('reader-failed-why').textContent =
+        'Amazon’s reader answered with “Please try to open this book from the library '
+        + 'again”, which it says whether or not the book came from the library. You are '
+        + 'signed in and the book is yours: what Amazon refused was this reader’s '
+        + 'registration as a device. Trying again throws away what Amazon has stored '
+        + 'here, keeps your session, and opens the book fresh.';
+    } else {
+      // Back to a real page: everything held about the old one is about an error.
+      readerSeq = -1;
+      readerTextSeq = -1;
+      $('reader-over').hidden = false;
+      readerSay('opening your book', true);
+    }
+  }
+  if (readerFailed) {
+    $('reader-page').textContent = '';
     return;
   }
 
@@ -1385,6 +1443,24 @@ $('advance').addEventListener('click', async () => {
   say('');
 });
 
+// Not a reload, and not a new browser either. What Amazon refused was this profile's
+// registration as a device, and that outlives both; the daemon throws away what
+// Amazon has stored here, keeps the session, and opens the book in a new tab.
+$('reader-retry').addEventListener('click', async () => {
+  const b = $('reader-retry');
+  b.disabled = true;
+  b.textContent = 'Reopening';
+  try {
+    await fetch('/api/reading/retry', { method: 'POST' });
+  } catch {
+    /* the next tick reports whatever actually happened */
+  }
+  readerSeq = -1;
+  readerTextSeq = -1;
+  b.disabled = false;
+  b.textContent = 'Try again';
+  if (readerTimer) tickReader();
+});
 $('page-next').addEventListener('click', () => turnPage('next'));
 $('page-prev').addEventListener('click', () => turnPage('prev'));
 $('reader-mode').addEventListener('click', () => setReaderMode(readerMode() === 'text' ? 'image' : 'text'));

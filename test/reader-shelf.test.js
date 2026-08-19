@@ -289,7 +289,7 @@ test('a renderer that stops answering is reopened, not reported', () => {
   // itself a message to a renderer that has stopped reading its inbox. Closing the
   // tab is a browser-process operation and works when nothing inside the tab does.
   const src = fs.readFileSync(path.join(ROOT, 'lib', 'reader.js'), 'utf8');
-  const revive = src.slice(src.indexOf('async revive()'), src.indexOf('async #applyViewport()'));
+  const revive = src.slice(src.indexOf('async revive('), src.indexOf('async #applyViewport()'));
   assert.match(revive, /Target\.closeTarget/, 'the wedged tab is closed');
   assert.match(revive, /#openTab\(\)/, 'a fresh one takes its place');
   assert.match(revive, /Page\.navigate/, 'and the book is reopened');
