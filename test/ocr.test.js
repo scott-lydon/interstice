@@ -65,6 +65,53 @@ test('a heading spanning three lines is one heading, not three', () => {
   assert.equal(blocks[1].type, 'para');
 });
 
+/**
+ * The false heading, from the page it was found on.
+ *
+ * Real heights, measured off one page of Early Retirement Extreme at 92%: thirty
+ * lines of a single unbroken passage, no heading anywhere on it, ranging 0.99x to
+ * 1.40x of the same body type because Vision draws its box around whichever glyphs
+ * a line happens to carry. The two that crossed the 1.35x threshold were carrying
+ * "114" and "ff", and both were set in the panel as large bold headings in the
+ * middle of the sentences they belonged to.
+ */
+test('a tall line in the middle of a sentence is prose, not a heading', () => {
+  const blocks = toBlocks([
+    line('should be understood--very often people make', { y: 0.80, h: 0.02035 }),
+    line('simplifying assumptions to make a problem', { y: 0.76, h: 0.02207 }),
+    // Tall enough to pass the height test, and mid-sentence, which is where no
+    // heading has ever begun.
+    line('mathematically tractable.114 This works well', { y: 0.72, h: 0.02826 }),
+    line('in physics because the universe seems to be', { y: 0.68, h: 0.02035 }),
+  ]);
+  assert.equal(blocks.length, 1, 'one passage, not three');
+  assert.equal(blocks[0].type, 'para');
+  assert.match(blocks[0].text, /problem mathematically tractable\.114 This works well in physics/);
+});
+
+test('a tall line that starts a sentence in lower case is prose too', () => {
+  // The second one from the same page: the previous line ended "copying requires",
+  // and "no effort, the cost is zero and so the return" was set as a heading.
+  const blocks = toBlocks([
+    line('as the market index. Since copying requires', { y: 0.60, h: 0.02035 }),
+    line('no effort, the cost is zero and so the return', { y: 0.56, h: 0.02890 }),
+    line('on effort is undefined. In particular, "average"', { y: 0.52, h: 0.02495 }),
+  ]);
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].type, 'para');
+});
+
+test('a real heading after a finished sentence is still a heading', () => {
+  // The rule must not cost us the thing the height test is for.
+  const blocks = toBlocks([
+    line('the progression given in Gauging mastery.', { y: 0.80, h: 0.02, w: 0.72 }),
+    line('Strategy and tactics', { y: 0.70, h: 0.055, w: 0.5 }),
+    line('The development of a strategy follows', { y: 0.60, h: 0.02, w: 0.72 }),
+  ]);
+  assert.equal(blocks[1].type, 'heading');
+  assert.equal(blocks[1].text, 'Strategy and tactics');
+});
+
 test('on a justified page a short line ends the paragraph', () => {
   const blocks = toBlocks([
     line('a goal, such as getting out of debt,', { y: 0.60, w: 0.72 }),
