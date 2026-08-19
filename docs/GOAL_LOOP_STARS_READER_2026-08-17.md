@@ -324,7 +324,7 @@ crashing. The diagnosis must therefore start from what that surface actually say
     remedy }`, and render `remedy` into `#reader-failed-why`.
   - Verify: `grep -nE "throw new Error\('[a-z ]{0,25}'\)" $R/lib/reader.js` returns no
     matches, AND every reader throw site has a test asserting its message names a remedy.
-- [ ] **1.6 Extend `doctor` to prove the reading rung.** `doctor` already exists to prove
+- [x] **1.6 Extend `doctor` to prove the reading rung.** `doctor` already exists to prove
   dependencies that can silently null the system. The reader is now such a dependency.
   - Verify: `cd $R && node ./bin/interstice.js doctor` prints a reading-rung check that
     fails loudly and specifically when the session is expired, the browser is missing, or
