@@ -27,6 +27,7 @@
     "attention",
     "automation"
   ],
-  "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
 }

@@ -47,7 +47,9 @@ This is not a system that fires twice a day.
 
 ## Install
 
-Requires macOS and Node 20 or newer. There are no npm dependencies.
+Requires macOS and Node 20 or newer. There are no runtime dependencies (a
+devDependency, `@playwright/test`, is used only to drive automated UI tests
+and is never required to run Interstice itself).
 
 ```bash
 git clone https://github.com/scott-lydon/interstice.git
