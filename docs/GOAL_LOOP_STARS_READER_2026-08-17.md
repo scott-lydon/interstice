@@ -493,13 +493,13 @@ Per S4: Interstice's own panel never breaks a block.
   - Verify: a Playwright script opens the menu, opens the calendar, asserts a seeded star
     renders on the correct day cell, activates it, and asserts the revealed start and end
     times match the seeded values exactly.
-- [ ] **3.9 Star data is real, never stubbed.** No placeholder counts, no sample stars, no
+- [x] **3.9 Star data is real, never stubbed.** No placeholder counts, no sample stars, no
   demo month shipped in the UI. An empty history renders an empty calendar with honest
   copy.
   - Verify: `grep -rniE "mock|dummy|sample|placeholder|TODO" $R/lib/focus $R/web` returns
     no match inside star code paths, and a test asserts a fresh install renders zero stars
     rather than any seeded value.
-- [ ] **3.10 Server surface for stars.** `$R/lib/server.js` gains the routes the calendar
+- [x] **3.10 Server surface for stars.** `$R/lib/server.js` gains the routes the calendar
   needs, consistent with its existing route style.
   - Verify: an HTTP test hits each new route and asserts shape and status codes, including
     the error shape for a malformed date range.
