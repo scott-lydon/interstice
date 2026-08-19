@@ -729,7 +729,7 @@ rules against it in one pass.
   - Verify: the agent's written finding is either "no wrongly excluded rule found", with
     the specific exclusions it probed named, or a list of rules to reclassify — in which
     case the decision table is corrected and 7.1 through 7.4 re-run.
-- [ ] **7.6 Re-run the selector after the code lands.** Phases 3 through 5 add files; new
+- [x] **7.6 Re-run the selector after the code lands.** Phases 3 through 5 add files; new
   files can flip a probed fact and change which rules apply.
   - Verify: 7.1 re-run after Phase 5 exits 0 and produces a manifest whose selected set is
     either unchanged or changed with the delta explained.
