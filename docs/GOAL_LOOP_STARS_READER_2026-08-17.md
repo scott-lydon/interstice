@@ -345,7 +345,7 @@ crashing. The diagnosis must therefore start from what that surface actually say
 
 ### 2A. Design
 
-- [ ] **2A.1 Inventory what currently competes with the page.** Enumerate every element
+- [x] **2A.1 Inventory what currently competes with the page.** Enumerate every element
   rendered in `$R/web/panel.html` while `#view-reading` is active — `<header>`, `.rungs`
   nav, `#companions` aside, `#book-title`, `#book-why`, `#book-bar`, `#reader-page`,
   `#page-prev`, `#page-next`, `#reader-mode`, `#book-actions`, `#reader-note`, footer
@@ -353,14 +353,14 @@ crashing. The diagnosis must therefore start from what that surface actually say
   the default 640×900 panel size.
   - Verify: a measured table exists with a pixel figure per element and a computed
     "page gets N% of usable area" figure for the current build.
-- [ ] **2A.2 Define the target layout contract.** The page region occupies **≥90% of both
+- [x] **2A.2 Define the target layout contract.** The page region occupies **≥90% of both
   usable panel dimensions** while reading. Exactly one menu affordance exposes everything
   displaced. Page-turn must remain reachable without opening the menu (arrow keys already
   bind; the visible buttons may move into an auto-hiding overlay).
   - Verify: the contract is written down with the ≥90% figure and the list of what moves
     behind the menu, and it does not contradict the "one window, no second window" decision
     in `$R/docs/GOAL_LOOP.md`.
-- [ ] **2A.3 Cross-check the contract against the reader's own minimums.**
+- [x] **2A.3 Cross-check the contract against the reader's own minimums.**
   `$R/lib/reader.js` declares `MIN_WIDTH = 480`, `MIN_HEIGHT = 400`, and a `fitViewport`
   function. The immersive layout must not request a viewport below those.
   - Verify: a test asserts the immersive layout's computed viewport passes `fitViewport`
