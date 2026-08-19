@@ -306,12 +306,12 @@ crashing. The diagnosis must therefore start from what that surface actually say
   - (f) **CDP attach/port failure** — `$R/lib/cdp.js` cannot attach on `readerPort` 7421.
   - Verify: parallel notes name exactly one bucket and cite the specific line of evidence
     (log line, probe output, or DOM dump) that rules the other buckets out.
-- [ ] **1.3 Write the failing regression test first.** Before the fix, add a test to
+- [x] **1.3 Write the failing regression test first.** Before the fix, add a test to
   `$R/test/reader.test.js` (or a new `$R/test/reader-load.test.js`) that reproduces the
   classified bucket and fails against current `main`.
   - Verify: `cd $R && git stash && npm test 2>&1 | grep -c 'fail'` shows the new test
     failing on unmodified code, then `git stash pop`.
-- [ ] **1.4 Fix the classified root cause.** Fix the cause, not the symptom. A retry loop
+- [x] **1.4 Fix the classified root cause.** Fix the cause, not the symptom. A retry loop
   wrapped around a broken selector is a symptom fix and does not satisfy this item.
   - Verify: the test from 1.3 passes, and `npm test` shows zero regressions against the
     0.4 baseline.

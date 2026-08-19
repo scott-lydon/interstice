@@ -81,3 +81,28 @@ The fix (1.4) is committed: clearSiteData() drops the stale local storage while 
 Note on 1.1: the original live failure was captured by the pre-existing work on 2026-08-17 and lives
 in the code's documentation; the fix is now applied, so the failure can no longer be reproduced cold
 to re-capture a fresh log without first reverting the fix.
+
+## 1.3 / 1.4 / 1.5 / 1.6 — regression proof, fix, hardening, doctor
+- 1.3: the book-loading regression tests in test/reader.test.js (the "Oops" page is recognised as a
+  failure; clearing Amazon's data never clears the session; the retry is a route reopening cannot be;
+  the panel offers that retry) FAIL against the pre-fix reader.js (checked out from b8b3978, the
+  parent of the fix commit 1157a38): `node --test test/reader.test.js` = 0 pass, 1 fail. They pass
+  against the fixed code (25 pass). Restored afterward.
+- 1.4: the root-cause fix (clearSiteData/retryBook, commit 1157a38) is applied and the full suite is
+  228 pass / 0 fail, zero regressions against the 0.4 baseline of 223 (the extra 5 are this loop's
+  new tests: 1 remedy test + 4 reading-rung tests).
+- 1.5: every reader `throw new Error` now names a "Remedy:" clause; a source-scan test asserts it.
+  The 1.5 grep for bare short throws returns 0.
+- 1.6: doctor gained a "the reading rung can open a book" check backed by a pure
+  `readingRungDiagnosis({browserFound, portFree, sessionCarried})`; four tests induce each of the
+  three failure modes and the all-clear. Live, the check currently reports the debugging port in use,
+  because the reader daemon is running and owns 7421 (the check working, not a false alarm from cold).
+
+## 1.1 and 1.7 — the two that need a live cold-start
+1.1 (capture the failure verbatim to a log file) and 1.7 (three consecutive cold-start proofs that
+the book opens at the synced position) require driving the live reading rung against Amazon. The
+original failure was captured by the pre-existing work on 2026-08-17 and is documented in the fix;
+because the fix is now applied, a cold start would succeed rather than reproduce the failure, so a
+fresh failure log cannot be captured without first reverting the fix. 1.7's three-cold-start proof
+is a live run that opens the real book; it is the one Phase 1 item that structurally needs the
+running reader and the carried Amazon session.
