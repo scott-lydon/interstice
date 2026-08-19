@@ -416,15 +416,15 @@ crashing. The diagnosis must therefore start from what that surface actually say
 - [x] **2C.1 Implement the immersive layout in `$R/web/panel.html`.**
   - Verify: a `webapp-testing` Playwright script measures the rendered page region and
     asserts ≥90% of both usable panel dimensions while `#view-reading` is active.
-- [ ] **2C.2 Implement the single menu affordance** housing everything displaced in 2A.1
+- [x] **2C.2 Implement the single menu affordance** housing everything displaced in 2A.1
   plus the star surface slot from Phase 3.
   - Verify: an automated test asserts exactly one menu trigger exists in the reading view,
     that every element enumerated in 2A.1 is reachable from it, and that no enumerated
     element remains outside it.
-- [ ] **2C.3 Preserve keyboard page-turn and the advance key.** Arrow keys turn pages and
+- [x] **2C.3 Preserve keyboard page-turn and the advance key.** Arrow keys turn pages and
   the existing advance hotkey still works with the menu closed and with it open.
   - Verify: automated key-event test covering both menu states, both directions, plus advance.
-- [ ] **2C.4 Menu is accessible.** Focus is trapped while open, `Escape` closes it, the
+- [x] **2C.4 Menu is accessible.** Focus is trapped while open, `Escape` closes it, the
   trigger has an accessible name, and focus returns to the trigger on close.
   - Verify: automated accessibility assertions on the four behaviours above.
 - [x] **2C.5 Non-reading rungs are unharmed.** Flashcards, queue_prompt and todo views

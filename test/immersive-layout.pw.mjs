@@ -15,8 +15,8 @@ try {
   await page.goto(PANEL);
   // Force the immersive reading state directly, independent of setView's scope.
   await page.evaluate(() => {
-    for (const v of document.querySelectorAll('.view')) v.classList.toggle('active', v.id === 'view-reading');
-    document.body.classList.add('immersive');
+    if (typeof setView === 'function') setView('reading');
+    else { for (const v of document.querySelectorAll('.view')) v.classList.toggle('active', v.id === 'view-reading'); document.body.classList.add('immersive'); }
   });
   await page.waitForTimeout(150);
   const m = await page.evaluate(() => {

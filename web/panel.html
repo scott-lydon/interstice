@@ -394,7 +394,7 @@
     </section>
   </main>
 
-  <footer>
+  <footer id="footer-bar">
     <span id="status"></span>
     <span class="grow"></span>
     <!--
@@ -430,6 +430,7 @@ function setView(name, { fromServer = false } = {}) {
   if (leaving === 'reading' && name !== 'reading') stopReader();
   for (const s of document.querySelectorAll('.view')) s.classList.toggle('active', s.id === 'view-' + name);
   document.body.classList.toggle('immersive', name === 'reading');
+  if (name !== 'reading' && typeof closeReaderMenu === 'function' && document.getElementById('reader-menu-overlay')?.classList.contains('open')) closeReaderMenu();
   for (const b of document.querySelectorAll('#rungs button')) {
     b.setAttribute('aria-current', String(b.dataset.view === name));
   }
@@ -1611,16 +1612,19 @@ window.addEventListener('load', () => {
   // One menu affordance holds everything the immersive page displaced. Opening it moves the
   // displaced reading-view controls into the overlay; closing it puts them back, so nothing is
   // duplicated and every displaced control is reachable from exactly one place.
-  const READER_MENU_DISPLACED = ['book-title-wrap', 'book-bar-wrap', 'reader-pager', 'reader-note', 'book-actions'];
+  // Everything the immersive page displaces, moved into the one menu when it opens and restored to
+  // its exact original position when it closes, so nothing is duplicated and nothing is lost when
+  // the reading view is left. IDs cover every element enumerated in the 2A.1 inventory.
+  const READER_MENU_DISPLACED = ['rungs', 'book-title-wrap', 'book-bar-wrap', 'reader-pager', 'reader-note', 'book-actions', 'companions', 'footer-bar'];
   let readerMenuLastFocus = null;
+  const readerMenuHomes = new Map(); // el -> { parent, next }
   function openReaderMenu() {
     const slot = document.getElementById('reader-menu-slot');
-    // Move the header rungs and the displaced reading controls into the menu.
-    const rungs = document.getElementById('rungs');
-    if (rungs && !slot.contains(rungs)) slot.appendChild(rungs);
     for (const id of READER_MENU_DISPLACED) {
       const el = document.getElementById(id);
-      if (el && !slot.contains(el)) slot.appendChild(el);
+      if (!el || slot.contains(el)) continue;
+      readerMenuHomes.set(el, { parent: el.parentNode, next: el.nextSibling });
+      slot.appendChild(el);
     }
     const ov = document.getElementById('reader-menu-overlay');
     ov.classList.add('open');
@@ -1629,11 +1633,15 @@ window.addEventListener('load', () => {
     document.getElementById('reader-menu-close').focus();
   }
   function closeReaderMenu() {
+    // Restore every displaced element to exactly where it came from.
+    for (const [el, home] of readerMenuHomes) {
+      if (home.next && home.next.parentNode === home.parent) home.parent.insertBefore(el, home.next);
+      else home.parent.appendChild(el);
+    }
+    readerMenuHomes.clear();
     const ov = document.getElementById('reader-menu-overlay');
     ov.classList.remove('open');
     document.getElementById('reader-menu').setAttribute('aria-expanded', 'false');
-    // Put the displaced controls back where they came from is not needed for correctness: they are
-    // hidden by CSS while immersive regardless of parent, and setView rebuilds the view. Return focus.
     (readerMenuLastFocus || document.getElementById('reader-menu')).focus();
   }
   document.getElementById('reader-menu')?.addEventListener('click', openReaderMenu);
