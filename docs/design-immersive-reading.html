@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Immersive reading — design</title>
+<style>
+  :root{
+    --ground:#14110d; --raised:#1d1a15; --ink:#efe7d8; --muted:#a89f8c; --rule:#332e26;
+    --accent:#c99a4b; --warn:#d08a55;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --ground:#faf6ee; --raised:#fff; --ink:#221d15; --muted:#6b6252; --rule:#e6ded0; --accent:#a5751f; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#0a0908;color:var(--ink);
+    font:15px/1.5 Charter,"Iowan Old Style",Georgia,serif;padding:28px;display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+  h1{font:600 12px/1 "Avenir Next Condensed","Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);width:100%;margin:0 0 4px}
+  .cap{font:600 10px/1 "Avenir Next Condensed",sans-serif;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:10px 2px 6px}
+  /* a mock panel at the real 640x900 ratio, scaled down */
+  .panel{width:320px;height:450px;background:var(--ground);border:1px solid var(--rule);border-radius:8px;overflow:hidden;position:relative;box-shadow:0 20px 60px -30px #000}
+  .page{position:absolute;inset:0;background:var(--raised);border-radius:6px;padding:26px 30px;overflow:hidden}
+  .page p{margin:0 0 .8em;font-size:12.5px;line-height:1.7}
+  .page h3{font:600 13px/1.3 Charter,Georgia,serif;margin:0 0 .6em}
+  /* the one menu affordance: a single top-right button */
+  .menu-btn{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:6px;border:1px solid var(--rule);
+    background:rgba(20,17,13,.6);color:var(--ink);font-size:15px;line-height:24px;text-align:center;backdrop-filter:blur(4px)}
+  /* auto-hiding pager overlay, shown here in its hovered state */
+  .pager{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:6px;
+    background:rgba(20,17,13,.7);border:1px solid var(--rule);border-radius:999px;padding:4px 6px;backdrop-filter:blur(4px)}
+  .pager button{font:600 10px/1 "Avenir Next Condensed",sans-serif;text-transform:uppercase;letter-spacing:.1em;
+    background:none;border:0;color:var(--muted);padding:5px 9px;border-radius:999px;cursor:pointer}
+  .pager .now{color:var(--ink)}
+  .note{position:absolute;left:10px;bottom:44px;font:600 9px/1.3 "Avenir Next Condensed",sans-serif;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  /* the menu overlay, open */
+  .overlay{position:absolute;inset:0;background:rgba(10,9,8,.82);backdrop-filter:blur(6px);padding:16px;display:flex;flex-direction:column;gap:12px}
+  .overlay .row{display:flex;align-items:center;gap:8px}
+  .overlay .brand{font:600 11px/1 "Avenir Next Condensed",sans-serif;text-transform:uppercase;letter-spacing:.16em;color:var(--muted)}
+  .overlay .x{margin-left:auto;color:var(--ink);border:1px solid var(--rule);border-radius:6px;width:24px;height:24px;text-align:center;line-height:22px}
+  .overlay .rungs{display:flex;gap:4px;flex-wrap:wrap}
+  .overlay .rungs b{font:600 10px/1 "Avenir Next Condensed",sans-serif;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border:1px solid var(--rule);border-radius:4px;padding:6px 8px}
+  .overlay .rungs b.on{color:var(--ink);background:var(--raised);border-color:var(--accent)}
+  .title{font:600 15px/1.2 Charter,Georgia,serif}
+  .why{font-size:11px;color:var(--muted)}
+  .bar{height:3px;background:var(--rule);border-radius:2px;overflow:hidden}
+  .bar>i{display:block;height:100%;width:39%;background:var(--accent)}
+  /* the star calendar, behind the same menu */
+  .cal{margin-top:2px}
+  .cal .mh{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+  .cal .mh .m{font:600 11px/1 "Avenir Next Condensed",sans-serif;text-transform:uppercase;letter-spacing:.12em;color:var(--ink)}
+  .cal .mh .t{margin-left:auto;font-size:10px;color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+  .grid .d{aspect-ratio:1;border:1px solid var(--rule);border-radius:4px;position:relative;font-size:8px;color:var(--muted);padding:2px}
+  .grid .d .s{position:absolute;right:2px;bottom:2px;color:var(--accent);font-size:9px;letter-spacing:-1px}
+  .grid .d.today{border-color:var(--accent)}
+  .legend{font-size:10px;color:var(--muted)}
+  .star-detail{border:1px solid var(--rule);border-radius:6px;padding:8px 10px;font-size:11px}
+  .star-detail .k{color:var(--muted)}
+</style>
+</head>
+<body>
+<h1>Immersive reading — target design (Phase 2)</h1>
+
+<div>
+  <div class="cap">Reading: the page fills the window</div>
+  <div class="panel" aria-label="Immersive reading state">
+    <div class="page">
+      <h3>Strategy, tactics, and guiding principles</h3>
+      <p>The distinction is older than the vocabulary that now carries it. A tactic answers the
+        question in front of you; a strategy chooses which questions you will let yourself be asked.</p>
+      <p>What survives the translation into practice is rarely the elegant half. The principle that
+        reads well on the page is the one that bends first under a real constraint, and the crude rule
+        that no one wanted to write down is the one still standing at the end of the day.</p>
+      <p>So the useful question is not which principle is true, but which one is load-bearing: remove
+        it, and does the plan fall down, or merely look less tidy on the slide.</p>
+    </div>
+    <div class="menu-btn" title="Menu">&#8943;</div>
+    <div class="note">&#8592; &#8594; turn the page</div>
+    <div class="pager"><button>&#8249; Back</button><button class="now">Page&nbsp;79</button><button>Next &#8250;</button></div>
+  </div>
+  <div class="legend" style="margin-top:8px;max-width:320px">The page region is &gt;=90% of both
+    dimensions. The only always-visible control is the single menu button, top-right; the pager
+    fades in on hover or key focus and arrow keys always work.</div>
+</div>
+
+<div>
+  <div class="cap">The one menu, open</div>
+  <div class="panel" aria-label="Menu overlay open">
+    <div class="page"></div>
+    <div class="overlay">
+      <div class="row"><span class="brand">Interstice</span><span class="x">&times;</span></div>
+      <div class="rungs"><b>Flashcards</b><b class="on">Reading</b><b>Queue next</b><b>To-do</b></div>
+      <div class="title">Strategy, tactics, and guiding principles</div>
+      <div class="why">Beckwith · resumes at your synced position</div>
+      <div class="bar"><i></i></div>
+      <div class="row" style="gap:6px"><span class="why">Page as Amazon drew it</span><span class="why" style="margin-left:auto">Retry book</span></div>
+      <div class="cal">
+        <div class="mh"><span class="m">August 2026</span><span class="t">14 stars</span></div>
+        <div class="grid" id="grid"></div>
+      </div>
+    </div>
+  </div>
+  <div class="legend" style="margin-top:8px;max-width:320px">Everything the reading view hid lives
+    here, once: the rungs, the title block, the progress bar, the retry and page-mode actions, and the
+    star calendar. No second menu is ever added.</div>
+</div>
+
+<div>
+  <div class="cap">A star, inspected</div>
+  <div class="panel" style="height:auto;padding:16px" aria-label="Star detail">
+    <div class="cal">
+      <div class="mh"><span class="m">Today, Aug 19</span><span class="t">3 stars</span></div>
+      <div class="grid" style="grid-template-columns:1fr">
+        <div class="star-detail"><span class="k">Star 1</span> &nbsp; 09:12 &rarr; 09:37 &nbsp;<span class="k">(25m unbroken)</span></div>
+        <div class="star-detail"><span class="k">Star 2</span> &nbsp; 10:04 &rarr; 10:29</div>
+        <div class="star-detail"><span class="k">Star 3</span> &nbsp; 14:41 &rarr; 15:06</div>
+      </div>
+    </div>
+    <div class="legend" style="margin-top:10px">A star is 25 unbroken minutes of focus. Each one
+      reveals the wall-clock start and end of the block that earned it.</div>
+  </div>
+</div>
+
+<script>
+  // fill an illustrative month grid
+  const g = document.getElementById('grid');
+  const stars = {1:1,3:2,4:1,6:1,7:3,8:1,11:2,12:1,13:1,14:2,15:3,18:1,19:3};
+  for (let d = 1; d <= 31; d++) {
+    const cell = document.createElement('div');
+    cell.className = 'd' + (d === 19 ? ' today' : '');
+    cell.innerHTML = d + (stars[d] ? '<span class="s">' + '★'.repeat(Math.min(stars[d],3)) + '</span>' : '');
+    g.appendChild(cell);
+  }
+</script>
+</body>
+</html>

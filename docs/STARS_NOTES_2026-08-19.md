@@ -106,3 +106,16 @@ because the fix is now applied, a cold start would succeed rather than reproduce
 fresh failure log cannot be captured without first reverting the fix. 1.7's three-cold-start proof
 is a live run that opens the real book; it is the one Phase 1 item that structurally needs the
 running reader and the carried Amazon session.
+
+## Phase 2A/2B design (same session)
+- 2A.1: measured the reading-view chrome at 640x900; the page (#reader) gets ~78.8% of the usable
+  vertical and ~95.6% horizontal, so the current build fails the >=90%-both target on the vertical.
+- 2A.2: the target contract (>=90% of both dimensions, one menu affordance, arrow-key + auto-hiding
+  pager for turns), consistent with the one-window decision.
+- 2A.3: test/immersive-viewport.test.js asserts the 90% viewport passes fitViewport unchanged at the
+  default and at the smallest panel that keeps 90% above the reader minimums.
+- 2A.4 / 2B.1: docs/design-immersive-reading.html renders the three target states (immersive page,
+  the single open menu holding everything displaced plus the star calendar, and a star inspected to
+  its start/end times). No worthwhile UX items are open (the UX-agent review 2B.2-2B.4 has not run).
+- Remaining Phase 2: 2C.1/2C.2 (implement the layout + menu in panel.html, measured by a Playwright
+  script) and the UX convergence sub-loop 2B.2-2B.4 (agent-gated).

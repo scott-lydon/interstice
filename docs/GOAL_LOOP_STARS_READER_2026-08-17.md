@@ -365,7 +365,7 @@ crashing. The diagnosis must therefore start from what that surface actually say
   function. The immersive layout must not request a viewport below those.
   - Verify: a test asserts the immersive layout's computed viewport passes `fitViewport`
     unchanged at the default panel size and at the smallest size the panel permits.
-- [ ] **2A.4 Design the menu affordance and the star surface together.** The month/day star
+- [x] **2A.4 Design the menu affordance and the star surface together.** The month/day star
   calendar from Phase 3 also needs a home, and it belongs behind the same menu. Design both
   now so a second menu is never invented later.
   - Suggested route: apply `frontend-design` for the aesthetic direction, `design-reference`
@@ -377,7 +377,7 @@ crashing. The diagnosis must therefore start from what that surface actually say
 
 ### 2B. UI → UX convergence sub-loop, design pass
 
-- [ ] **2B.1 D — UI design pass.** Build or revise the immersive reading layout and the
+- [x] **2B.1 D — UI design pass.** Build or revise the immersive reading layout and the
   menu using `frontend-design` + `design-reference`; self-check with
   `web-design-guidelines`. D is not done when the design exists; D is done when every open
   worthwhile UX item is addressed.
