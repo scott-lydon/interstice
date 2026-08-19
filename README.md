@@ -398,3 +398,19 @@ the line that says which page you are on.
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Focus blocks and stars
+
+A completed 25-minute unbroken focus block earns one star. Configure it under `focus` in
+`config/interstice.config.json`:
+
+- `focus.blockMinutes` — minutes of unbroken focus that earn one star (default `25`).
+- `focus.blacklistApps` — apps whose coming frontmost forfeits the block (default: Slack, Discord,
+  Messages, Mail, X, Twitter, Instagram, TikTok). The Interstice panel itself never forfeits a block.
+- `focus.videoWhitelist` — video source domains that do not forfeit a block; matched on registrable
+  domain, so `www.udemy.com` and `sub.udemy.com` pass and a lookalike does not (default: Udemy).
+- `focus.videoBreakAfterMs` — how long non-whitelisted video must play continuously before it
+  forfeits the block, so a one-frame autoplay costs nothing (default `4000`).
+
+**Scope (S3): browsers only.** Video detection covers Chromium-family and Safari browser tabs via
+tab URL plus real play state. Native video apps (a desktop Netflix app, QuickTime) are out of scope.

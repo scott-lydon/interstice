@@ -736,7 +736,7 @@ rules against it in one pass.
 
 ## Phase 8 — Integration, coverage, documentation
 
-- [ ] **8.1 Full suite green.** `cd $R && npm test` — zero failures, zero skipped tests that
+- [x] **8.1 Full suite green.** `cd $R && npm test` — zero failures, zero skipped tests that
   were passing at the 0.4 baseline.
   - Verify: exit code 0 and a pass count at or above the baseline.
 - [ ] **8.2 Per-file coverage checklist for every new or modified file.** Rather than one
@@ -746,7 +746,7 @@ rules against it in one pass.
     list, then one entry per file in the parallel notes.
   - Verify: every file in that diff list has an entry naming its measured coverage
     percentage, and no entry is blank or estimated.
-- [ ] **8.3 Every failure path throws a specific error.** Sweep the new modules for generic
+- [x] **8.3 Every failure path throws a specific error.** Sweep the new modules for generic
   errors, silent catches, and swallowed rejections.
   - Verify: `grep -rnE "catch\s*\(\s*\w*\s*\)\s*\{\s*\}" $R/lib` returns no matches, and
     `grep -rnE "throw new Error\('[a-z ]{0,25}'\)" $R/lib/focus $R/lib/video $R/lib/latency`
@@ -756,7 +756,7 @@ rules against it in one pass.
   doctor checks that fail loudly and specifically.
   - Verify: `node $R/bin/interstice.js doctor` lists all four, and each has a test proving
     it fails with a remedy-bearing message when its dependency is induced to fail.
-- [ ] **8.5 README and config documentation match the shipped behaviour.** New config keys
+- [x] **8.5 README and config documentation match the shipped behaviour.** New config keys
   (`focus.blockMinutes`, `focus.blacklistApps`, `focus.videoWhitelist`,
   `focus.videoBreakAfterMs`) are documented, and the "browsers only" scope limit from S3 is
   stated plainly rather than left to be discovered.
@@ -768,7 +768,7 @@ rules against it in one pass.
   - Verify: an agent with fresh context reads `$R/README.md`, `$R/docs/GOAL_LOOP.md`, this
     file, and `$R/config/interstice.config.default.json`, and reports a written finding of
     zero contradictions, citing each claim it checked.
-- [ ] **8.7 Bug/issue prevention checklist updated for every fix in this loop.** Each fix
+- [x] **8.7 Bug/issue prevention checklist updated for every fix in this loop.** Each fix
   gets a brief-enough-to-work entry: what went wrong and how to prevent it.
   - Verify: `$R/docs/BUG_ISSUE_PREVENTION.md` has one entry per fix made in Phases 1
     through 5, and a new-feature pass has been run against the whole checklist.

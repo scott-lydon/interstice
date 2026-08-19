@@ -18,3 +18,21 @@ set in the reading type as though it were page 79, under a progress bar still re
    `Reader.retryBook()`. Never clear cookies, which would turn a stuck book into a sign-in page.
 3. When a book will not open, check the network for `getDeviceToken` 403s before assuming the
    session expired; a session probe alone will say the session is fine and send you the wrong way.
+
+## A debounce that returns on first sighting never fires at threshold zero (2026-08-19)
+**Cause.** The video breaker returned null on the first sighting of offending playback to start its
+debounce clock, so with `videoBreakAfterMs: 0` it never broke on that same call. **Prevention.** A
+debounce must set its start time and THEN check `now - start >= threshold` in the same pass, so a
+zero threshold fires immediately and a positive one still waits.
+
+## A comment word can fail a source-scan verify (2026-08-19)
+**Cause.** The latency module's own comment said it does not "re-parse transcripts", which tripped a
+verify that greps the module for the word "transcript" to prove it does not read session logs.
+**Prevention.** When a check greps a file for a forbidden token, keep that token out of the file
+entirely, comments included; describe the avoided thing without naming it.
+
+## Config edits in tests must preserve the user's file (2026-08-19)
+**Cause.** The whitelist-reload test writes `config/interstice.config.json` to prove a live reload.
+The repo already had a real user config there. **Prevention.** A test that writes a real config file
+must back up its prior contents and restore them in a `finally`, so the test leaves the repo exactly
+as it found it, and reload the config back to the original state afterward.
