@@ -100,7 +100,7 @@ clothes. The reason now quotes both commands it rests on, `git ls-files '*.py'` 
 
 ## Pre-existing dead code, reported rather than deleted (2026-08-20)
 
-Three exported symbols have no reference anywhere in `lib`, `bin`, `web`, `test`, `scripts`,
+Four exported symbols have no reference anywhere in `lib`, `bin`, `web`, `test`, `scripts`,
 `.githooks`, or `docs`. They predate the audits that found them, no change here orphaned them, and
 deleting code nobody asked to have deleted is its own risk, so they are recorded here instead. Check
 the list with `grep -rn '<name>' lib bin web test scripts .githooks`, which should return only the
@@ -108,9 +108,10 @@ definition line.
 
 | Symbol | Where |
 |---|---|
-| `OFFSETS_FILE` | `lib/paths.js:33` |
-| `panelCookies` | `lib/amazon-session.js:36` |
-| `toParagraphs` | `lib/ocr.js:279` |
+| `OFFSETS_FILE` | `lib/paths.js` |
+| `panelCookies` | `lib/amazon-session.js` |
+| `toParagraphs` | `lib/ocr.js` |
+| `RUNGS` | `lib/router.js` | the shipped default ladder order; `validate` checks against `KNOWN_RUNGS` in lib/config.js instead |
 
 If one of them is deliberately kept for a caller that does not exist yet, say so beside it here. An
 export with no reference and no note is indistinguishable from one that was forgotten.

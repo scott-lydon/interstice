@@ -150,6 +150,14 @@
      It is displaced like everything else, and it is still there in full inside the open menu. */
   body.immersive #companions { display: none; }
   body.immersive .reader-menu-overlay.open #companions.show { display: block; }
+  /* The footer is displaced into the menu like everything else, but `body.immersive footer` hides
+     it unconditionally, so it was not moved behind the menu, it was lost: the status line and the
+     "Different rung" button computed to none even inside the open overlay. Every other displaced
+     element is reachable there, and the contract above says all of them are. */
+  body.immersive .reader-menu-overlay.open #footer-bar { display: flex; }
+  /* Same for the reader note. Floated over the page while the menu is shut, it is displaced into
+     the menu when the menu opens, and the floating rule does not reach it there. */
+  body.immersive .reader-menu-overlay.open #reader-note { display: block; }
   body.immersive #view-reading { gap: 0; height: 100%; }
   /* Everything in the reading view except the page and the menu is displaced behind the menu.
      The floating affordances are named here rather than left to their own rules: this selector
@@ -2270,7 +2278,7 @@ window.addEventListener('load', () => {
     return m ? `${m[1]}:${m[2]}` : String(iso);
   }
   const _causeWords = { app: 'a blacklisted app came to the front', lock: 'the screen locked',
-    video: 'non-whitelisted video played', manual: 'you ended the block' };
+    video: 'non-whitelisted video played' };
   window.__focus = {
     // A real forfeit event calls this; a test calls it directly with a blockForfeited record.
     forfeit(record) {

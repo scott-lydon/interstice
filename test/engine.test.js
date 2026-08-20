@@ -208,8 +208,7 @@ test('advance with no open gap is a no-op, not a crash', async () => {
 });
 
 test('a failing actuator falls through to the next rung', async () => {
-  // The realistic case: App Nap has suspended Anki, so guiDeckReview throws at the
-  // exact moment we need it. You must still end up somewhere, not nowhere.
+  // The realistic case: App Nap has suspended Anki, so `leastStudiedQueue` throws at the exact moment we need it. You must still end up somewhere, not nowhere.
   const h = harness();
   const attempted = [];
   h.engine.doDeliver = async (rung) => {

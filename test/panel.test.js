@@ -170,7 +170,7 @@ test('the panel raises itself by process id, never by application name', () => {
 });
 
 test('long panel content scrolls inside the window instead of escaping it', () => {
-  // A gap can produce a 200-item to-do list. On a 620pt window that has to scroll,
+  // A gap can produce a 200-item to-do list. On a 900pt window that has to scroll,
   // and the header carrying the rung switcher has to stay reachable while it does.
   const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
   assert.match(html, /main\s*\{[^}]*overflow-y:\s*auto/, 'the content area scrolls');

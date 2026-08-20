@@ -54,7 +54,10 @@ test('a full unbroken block awards exactly one durable star', async () => {
 });
 
 test('each of the three settled break causes forfeits the block in progress', async () => {
-  for (const cause of ['frontmost-app', 'display-lock', 'video']) {
+  // The real vocabulary: `name()` is the breaker ('frontmost-app'), `cause` is what it emits
+  // ('app'). Iterating the names pinned nothing, because the fake breaker echoes whatever it
+  // is handed, so the test agreed with itself and not with the product.
+  for (const cause of ['app', 'lock', 'video']) {
     const stars = tmpStore();
     let fire = false;
     const t = createFocusTracker({

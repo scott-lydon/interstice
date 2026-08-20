@@ -217,3 +217,19 @@ test('the reader frame is fetched with the token, not loaded as a bare img src',
   const g = { method: 'GET', headers: { host: `127.0.0.1:${PORT}` } };
   assert.equal(checkRequest(g, { port: PORT, token: TOKEN, pathname: '/api/reading/frame' }).status, 401);
 });
+
+test('the hotkey apps substitute the token rather than sending it literally', () => {
+  // The regression: the header was built inside SINGLE quotes in the shell command, and sh does
+  // not substitute inside single quotes. Every hotkey press sent the six characters "$(cat " as
+  // the header value, got a 401, and `|| true` swallowed it, so the apps looked inert.
+  const src = fs.readFileSync(new URL('../lib/hotkeys.js', import.meta.url), 'utf8');
+  const line = src.match(/do shell script "curl[^\n]*/);
+  assert.ok(line, 'the generator must still emit a shell command');
+
+  // The token arrives through the `tokenRead` template, which is what holds the $(cat ...).
+  assert.match(src, /const tokenRead = '\$\(cat /, 'the token is read by the shell at fire time');
+  assert.doesNotMatch(line[0], /-H '[^']*\$\{tokenRead\}/,
+    'a $(cat ...) inside single quotes is never substituted by sh');
+  assert.match(line[0], /-H \\+"x-interstice-token: \$\{tokenRead\}\\+"/,
+    'the header must be double quoted so the shell reads the token file');
+});

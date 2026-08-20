@@ -6,13 +6,13 @@
 <title>Interstice</title>
 <style>
   /* ------------------------------------------------------------------ tokens ---
-     ONE token set, shared verbatim with web/panel.html, which is the source of truth.
+     ONE token set, shared verbatim with web/panel.html and web/debug.html, which is the source of truth.
      The two pages used to declare palettes of different sizes under the same names
      (--ground was #EEF0F2 here and #F1F3F5 there, --warn #9A6A12 here and #9E5C0E
      there), so the same word meant two colours depending on which window you were
      looking at. There is no build step to share a file through and no route that
      could serve one without the control token, so the block is copied byte for byte
-     instead; change it in panel.html and paste it here. */
+     instead; change it in panel.html and paste it into the other two. */
   :root {
     /* surfaces */
     --ground: #F1F3F5; --raised: #FFFFFF; --sunk: #E4E8EC;
@@ -114,12 +114,13 @@
   td.mono, th.mono { font-family: var(--mono); font-size: .76rem; font-variant-numeric: tabular-nums; }
   tr.synthetic td { color: var(--faint); font-style: italic; }
   .pill { font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: .6rem; font-weight: 600; padding: 2px 6px; border: 1px solid currentColor; border-radius: 2px; }
+  .linkish { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; }
   .p-ok { color: var(--ok); } .p-warn { color: var(--warn); } .p-crit { color: var(--crit); } .p-mute { color: var(--faint); }
-  /* Severity is never carried by hue alone. Under a Vienot deuteranopia simulation --warn
-     and --crit collapse onto each other (RGB distance 0.02 in dark theme), so every pill
-     also states its band in words and wears a mark whose SHAPE differs per band, and the
-     critical band takes a heavier border on top of that. Remove colour entirely and the
-     three bands still read apart. */
+  /* Severity is never carried by hue alone. Every threshold pill states its band in words and
+     wears a mark whose SHAPE differs per band, so the reading survives a grayscale print and
+     deuteranopia, under which --warn and --crit are close. The gap table's pills carry their
+     meaning in their own label ("stood down", "delivered", "quiet", "synthetic") rather than a
+     band word, which is the same redundancy by a different route. */
   .pill-mark { font-family: var(--mono); margin-right: 4px; }
   .pill-band { opacity: .85; }
   .pill.p-crit { border-width: 2px; padding: 1px 5px; }
@@ -209,7 +210,7 @@
 
   <footer>
     <span>Local only. Reads timestamps and structure from agent transcripts, never message content.</span>
-    <span><a href="/debug">Debug console</a> · <a href="/api/stats">Raw stats</a></span>
+    <span><a href="/debug">Debug console</a> · <button type="button" id="raw-stats" class="linkish">Raw stats</button></span>
   </footer>
 </div>
 
@@ -224,6 +225,20 @@ const clock = (ts) => new Date(ts).toLocaleString([], { month: 'short', day: 'nu
 // colour is the one a deuteranope cannot use, so it is never the only one present.
 const BAND_WORD = { 'p-ok': 'ok', 'p-warn': 'warn', 'p-crit': 'critical', 'p-mute': 'no data' };
 const BAND_MARK = { 'p-ok': '\u25cf', 'p-warn': '\u25b2', 'p-crit': '\u25a0', 'p-mute': '\u2013' };
+// A plain <a href="/api/stats"> carried no control token, so the link always landed on a 401.
+// Sub-resource and navigation requests do not go through the fetch wrapper the daemon injects,
+// so the JSON is fetched here and handed over as an object URL.
+document.addEventListener('click', async (e) => {
+  if (e.target.id !== 'raw-stats') return;
+  try {
+    const r = await fetch('/api/stats');
+    const url = URL.createObjectURL(new Blob([JSON.stringify(await r.json(), null, 2)],
+      { type: 'application/json' }));
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  } catch { /* the daemon is restarting; the page's own figures still stand */ }
+});
+
 function pillHtml(cls, value) {
   const word = BAND_WORD[cls] || '';
   const mark = BAND_MARK[cls] || '';

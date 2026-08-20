@@ -8,8 +8,9 @@
 # core.hooksPath is per-clone and cannot be shipped in the repository itself, so the same check
 # runs as a CI step too. The hook is the fast feedback; CI is the one that cannot be skipped.
 #
-# Only staged test files are checked, so a commit is judged on what it is actually adding rather
-# than on whatever else happens to be in the working tree. `--diff-filter=d` drops deletions,
+# Only staged test files are checked, so unrelated files in the tree are left alone. Their
+# content is read from the working tree rather than the index, so a partially staged file is
+# judged on all of it. `--diff-filter=d` drops deletions,
 # which have no content left to scan.
 set -e
 
