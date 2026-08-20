@@ -103,7 +103,7 @@ clothes. The reason now quotes both commands it rests on, `git ls-files '*.py'` 
 Four exported symbols have no reference anywhere in `lib`, `bin`, `web`, `test`, `scripts`,
 `.githooks`, or `docs`. They predate the audits that found them, no change here orphaned them, and
 deleting code nobody asked to have deleted is its own risk, so they are recorded here instead. Check
-the list with `grep -rn '<name>' lib bin web test scripts .githooks`, which should return only the
+the list with `grep -rnw '<name>' lib bin web test scripts .githooks docs`, which should return only the
 definition line.
 
 | Symbol | Where |

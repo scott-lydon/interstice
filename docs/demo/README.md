@@ -3,7 +3,7 @@
 `interstice-demo.mp4`, 640x900, recorded against the running daemon. `frames/` holds one still per
 marked moment, and `index.json` carries the same marks as data.
 
-Nothing here is drawn for the camera. The stars are the ones the tracker actually earned today, the
+Nothing here is drawn for the camera. The stars are the ones the tracker actually earned on 2026-08-20, the
 forfeit is a record the real video breaker produced against a real browser playing a real video
 file, and the latency cycle runs through the panel's own latency surface.
 
@@ -12,8 +12,8 @@ file, and the latency cycle runs through the panel's own latency surface.
 | 5.5s | 2. the reading view fills the panel | `#reader` measured at 640x900 of a 640x900 panel |
 | 10.7s | 2. the menu opened | the one menu, holding every displaced control |
 | 13.2s | 2. and closed | the page restored |
-| 17.5s | 4. the star calendar, month view | "Stars in 2026-08", 12 stars, all earned today by the running daemon |
-| 22.6s | 4. a star activated to reveal its times | "A block earned on 2026-08-20: began 06:41, ended 07:06" |
+| 17.5s | 4. the star calendar, month view | "Stars in 2026-08", 12 stars, all earned on 2026-08-20 by the running daemon |
+| 22.6s | 4. a star activated to reveal its times | "A block earned on 2026-08-20: began 06:41 · ended 07:06." |
 | 28.1s | 4. day view | "Stars on 2026-08-20", 12 stars |
 | 37.6s | 6. a prompt submitted, the indicator ticking | "your agent: 0:04" |
 | 41.7s | 6. still ticking | "your agent: 0:08" |

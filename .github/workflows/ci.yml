@@ -26,7 +26,7 @@ jobs:
       - name: No runtime dependencies
         run: |
           node -e "const d=Object.keys(require('./package.json').dependencies||{}); if (d.length) { console.error('runtime dependencies appeared '+d.join(', ')); process.exit(1); } console.log('zero runtime dependencies');"
-      # `node --test` picks the five test/*.pw.mjs specs up along with everything else, because
+      # `node --test` picks the test/*.pw.mjs specs up along with everything else, because
       # its default pattern includes all of test/, and each of them launches Playwright's
       # bundled Chromium against the real panel HTML. They are tests of the panel's rendering
       # rather than a separate suite that could reasonably be run elsewhere, so CI installs the

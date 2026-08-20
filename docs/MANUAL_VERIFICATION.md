@@ -19,8 +19,8 @@ export PATH="/opt/homebrew/bin:$PATH"
 npm test; echo "exit $?"
 ```
 
-**Expect** `344 pass`, `0 fail`, `exit 0`. That includes six browser specs which start a real
-Chromium, so it takes about a minute.
+**Expect** at least `344 pass`, `0 fail`, `exit 0`. That includes six browser specs which start a
+real Chromium, and the whole suite still finishes in about five seconds.
 
 **If it fails on the `.pw.mjs` specs**, the bundled browser is missing: `npx playwright install
 chromium`. It should not need a separately installed Chrome; if it asks for one, that is a
@@ -71,10 +71,12 @@ install is broken.
 
 Two lines are worth reading rather than skimming:
 
-- **`the browser video probe can attach`** should say either how many endpoints answered or, on a
+- **`the browser video probe endpoint answers`** should say either how many endpoints answered or, on a
   stock install, "no browsers are configured under `focus.videoBrowsers`, so video can never break
   a block". That second message is telling you something true and easy to miss: video detection is
-  off until you list a browser started with `--remote-debugging-port`.
+  off until you list a browser started with `--remote-debugging-port`. Note the name: it asks
+  whether the endpoint is there, not whether a play state can be read through it. That is
+  `node test/video-breaker.pw.mjs`, which drives a real browser playing a real file.
 - **`the reading rung can open a book`** reports on the browser, the port and the session
   separately. It can be green while the book still does not open, because it checks preconditions;
   step 8 is the real test.

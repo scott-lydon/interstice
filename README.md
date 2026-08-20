@@ -176,10 +176,10 @@ content area; what arrives is the picture, and what goes back is your clicks and
 keys. It is the reader, not a screenshot of one: arrow keys turn the page, links
 work, and the position you reach syncs the way it would anywhere else.
 
-Two things it does to the page it is showing. It renders at least 480 points wide, because Chrome will not lay out narrower; a panel already
-wider than that is rendered at its own width and and the parts
-the reader positions from the right edge otherwise land on top of the text; the
-panel scales the picture down. And it hides Amazon's floating copy of the book
+Two things it does to the page it is showing. It renders at least 480 points wide, because Chrome
+will not lay out narrower and the parts the reader positions from the right edge would otherwise
+land on top of the text. A panel already wider than that is rendered at its own width; a narrower
+one is rendered at 480 and the picture is scaled down to fit. And it hides Amazon's floating copy of the book
 title, with a stylesheet rather than by deleting the node, because the reader
 rebuilds its own DOM on every page turn.
 
@@ -508,7 +508,7 @@ Mac, under `logs/`. This is everything Interstice itself writes there:
 | `control-token` | the local API token, mode 0600 |
 | `reader-profile/` | a Chrome profile of its own, holding the carried amazon.com cookies. The most sensitive thing here, and the reason `carrySession: false` and deleting this directory are both documented above |
 | `panel-profile/` | a second Chrome profile, for the panel window itself. No account, no cookies worth anything |
-| `daemon.log`, `launchd.out.log`, `launchd.err.log` | operational lines: what started, what a rung decided, what failed. No prompt or reply text |
+| `launchd.out.log`, `launchd.err.log`, and `daemon.log` when started without `--foreground` | operational lines: what started, what a rung decided, what failed. No prompt or reply text |
 | `interstice.pid`, `panel.pid` | process ids, so a second start does not race the first |
 
 `logs/` is gitignored, so none of it is committed, and `interstice uninstall` leaves it
