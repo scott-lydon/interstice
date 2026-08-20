@@ -639,3 +639,92 @@ the panel went on timing it, which is exactly right.
 
 The parent box stays unticked because its text is "After you've finished everything", and four
 items are not finished.
+
+---
+
+# Item 9.2: the bar that was substituted, and why the box is still open
+
+**The box stays unticked.** 9.2's literal verify is "every item is fixed and re-scanned to zero
+findings by a second fresh-context pass". That was not met, and a substituted bar was not met
+either, so the box is open and the operator decides whether the substitution is acceptable.
+
+**The substituted bar, agreed with the loop lead:** two consecutive scans producing no finding
+above low severity, with every finding above low either fixed or refuted in writing against this
+repo. That is the same convergence idiom the loop already uses for the UI-to-UX sub-loops, two
+consecutive rounds adding nothing worthwhile.
+
+**Why literal zero was not the right target.** Sixteen fresh-context scans ran. Findings per scan,
+in order:
+
+```
+45, 15, 8, 7, 5, 10, 13, 5, 36, 12, 19, 24, 19, 10, 7, 17
+```
+
+That is not a convergence curve. The diagnosis: "re-scanned to zero" is a function of how hard the
+scanner looks, not a property of the code. This repo carries roughly six thousand lines of unusually
+dense explanatory comment, and every one of those sentences is a factual claim that can rot. A
+scanner that reads deeper than the last one will always find more, and roughly a third of each
+round's findings were defects introduced by the previous round's fixes. The jump from 5 to 36 at
+scan nine is the clearest evidence: that was the first scanner to read `lib/reader.js`,
+`lib/ocr.js` and `lib/engine.js` against their own doc blocks rather than concentrating on the
+README.
+
+**Why the scans were still worth their cost.** They were not finding taste. Eight defects they
+found were things that did not work at all, listed below.
+
+# The eight things that were broken, not merely documented wrong
+
+Recorded here rather than only in `docs/audit/findings_merged.json`, because a defect nobody reads
+about is a defect that comes back.
+
+1. **The focus feature had no caller.** `createMachine`, the three breakers and `createLatency`
+   were referenced only from their own files and from `test/`. The daemon opened the star store and
+   never called `award`. The README documented earning stars; no star could ever be earned.
+2. **The video breaker could not see video, for two independent reasons.** First it was invoked
+   with no arguments, so it threw on destructuring every fifteen seconds and its own
+   broken-sensor rule swallowed the throw: 736 warnings before the fix, zero after. Then, with that
+   fixed, it still detected nothing.
+3. **The reading rung was dead because installed is not working.** `findBrowser` returned the first
+   Chromium-family browser that EXISTED and the reader gave up when it did not answer. Chrome 151
+   on this machine starts, stays alive, and never opens a DevTools port; Brave, installed beside it,
+   opens it immediately.
+4. **The control surface had no authentication** on roughly thirty five handlers, verified live
+   with a cross-origin POST that was accepted.
+5. **The hotkey apps had not worked since that auth landed.** The token header was built inside
+   single quotes, where `sh` never substitutes, so every press sent the literal characters `$(cat `
+   as its header value, got a 401, and `|| true` swallowed it. Worth naming separately: the auth
+   work that broke it was correct, and the breakage went unnoticed *precisely because the failure
+   path was silenced*.
+6. **The reader frame returned 401** under the same auth, because an `<img src>` is issued by the
+   browser and never reaches the `fetch` wrapper the page installs. The book went blank.
+7. **The reading menu lost two of the eight controls** it claims to hold: the footer bar and the
+   reader note were displaced into it and then hidden by rules that did not except the open overlay.
+8. **The video whitelist failed open on multi-part TLDs.** Both host and entry were collapsed to
+   two labels, so `bbc.co.uk` became `co.uk` and whitelisting one BBC host whitelisted every
+   `.co.uk` host there is. The comment above the collapse claimed it "fails safe by being stricter".
+
+## The pattern underneath six of them: a check that could not fail
+
+- The doctor video probe passed a hard-coded zero and contacted nothing, so it printed a green tick
+  for a signal it had never reached.
+- The doctor screen-lock check probed through a wrapper that swallows every error by design, so it
+  could only ever see a boolean and its failure branch was unreachable.
+- The hotkey 401s were hidden by `|| true`.
+- The video breaker's throws were hidden by the tracker's treat-a-throw-as-a-broken-sensor rule,
+  which is correct behaviour that happened to conceal a real fault.
+- `focus.videoBrowsers` ships empty, so video cannot break a block on a stock install at all. The
+  old check could not say so; the fixed one now does, in as many words.
+- And the sharpest instance, worth keeping verbatim:
+
+  **The stub had invented a protocol and the probe agreed with the stub.**
+
+  `probeVideo` evaluated its play-state expression with `t.sessionId`, taken from
+  `Target.getTargets`, which returns no sessionId. The evaluate went to the browser-level session,
+  where there is no page and no `Runtime` domain, and Chrome answers `'Runtime.evaluate' wasn't
+  found`. The catch turned that into `playing = false` on every tab forever. Every unit test passed
+  throughout, because the fake session handed back a sessionId from `getTargets` and matched on it.
+  The test was not merely weak. It was actively agreeing with a fiction.
+
+  The lesson, now also in `docs/BUG_ISSUE_PREVENTION.md`: when a module speaks a wire protocol, at
+  least one test has to speak it to a real implementation. A stub is free to be wrong in exactly the
+  way the code is wrong, and then a green suite is evidence of nothing.
