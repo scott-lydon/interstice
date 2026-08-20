@@ -135,3 +135,20 @@ green suite is evidence of nothing. `test/video-breaker.pw.mjs` now drives a rea
 real debugging port and a real decoded video file, and the stub in `test/video-probe.test.js`
 models the real handshake (attach, evaluate, detach) including throwing the way a real browser
 throws when you skip the attach.
+
+## The reading rung was dead because "installed" is not "works" (2026-08-20)
+
+**Cause.** `findBrowser` returned the first Chromium-family browser that EXISTED, and the reader
+gave up when it did not answer. On this machine Google Chrome 151 starts, stays alive, and never
+opens a DevTools port: no `DevToolsActivePort` file written into the profile, no listening socket
+bound, nothing in its own `--enable-logging=stderr --v=1` output, no managed policy present, and
+the same result with a clean profile and `--remote-debugging-port=0`. Brave, installed beside it,
+opens the port immediately. So the rung was dead on a machine that had a working browser the whole
+time, and the error it raised, "the reader browser never opened its debugging port: fetch failed",
+named neither the browser it tried nor anything to do about it.
+
+**Prevention.** A dependency probe answers "does it work", not "is it there". Where several
+implementations can satisfy a dependency, try them in order and report every one that was tried
+with what each did. `launchFirstWorkingBrowser` does that, and both reader launch sites use it.
+The same lesson applies to `doctor`: its reading-rung check reported "browser present, port free,
+session carried" for a rung that could not open a browser at all.

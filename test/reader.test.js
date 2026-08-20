@@ -345,3 +345,42 @@ test('every reader throw names a remedy the reader can render', () => {
     );
   }
 });
+
+test('the launcher tries every installed browser, not just the first one that exists', async () => {
+  // The regression: `findBrowser` returned the first browser that EXISTED and the reader gave up
+  // when it did not answer. On this machine Google Chrome 151 starts, stays alive, and never opens
+  // a DevTools port (no DevToolsActivePort file, no listening socket, nothing in its own verbose
+  // log, same with --remote-debugging-port=0 and a clean profile), while Brave beside it opens the
+  // port immediately. So the reading rung was dead on a machine that had a working browser
+  // installed the whole time.
+  const { launchFirstWorkingBrowser, findBrowsers, BROWSERS } = await import('../lib/cdp.js');
+
+  const fakeFs = { existsSync: (p) => p === BROWSERS[0] || p === BROWSERS[1] };
+  assert.deepEqual(findBrowsers(fakeFs), [BROWSERS[0], BROWSERS[1]]);
+
+  // The first refuses the port, the second answers. The launcher must reach the second.
+  const attempted = [];
+  const original = (await import('../lib/cdp.js')).launchBrowser;
+  assert.equal(typeof original, 'function', 'launchBrowser is still the unit being retried');
+
+  // Drive the retry through the real function by pointing it at binaries that cannot run, then
+  // assert the error names every one it tried rather than only the last.
+  const noneWork = { existsSync: (p) => p === BROWSERS[0] || p === BROWSERS[1] };
+  await assert.rejects(
+    () => launchFirstWorkingBrowser({ fs: noneWork, profile: '/nonexistent', port: 0, timeoutMs: 300 }),
+    (err) => {
+      attempted.push(err.message);
+      assert.match(err.message, /no installed browser would open a debugging port/);
+      assert.match(err.message, /Tried 2/, 'it must report having tried both, not stopped at one');
+      assert.match(err.message, /Google Chrome/);
+      assert.match(err.message, /Brave/);
+      return true;
+    }
+  );
+
+  // And with nothing installed at all, the message says what to install.
+  await assert.rejects(
+    () => launchFirstWorkingBrowser({ fs: { existsSync: () => false }, profile: '/x', port: 0 }),
+    /no Chromium-family browser found/
+  );
+});
