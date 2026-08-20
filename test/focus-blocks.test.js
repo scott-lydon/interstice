@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createMachine } from '../lib/focus/blocks.js';
 
-// 3.1: the block state machine, pure and testable. One star per 25 unbroken minutes (S1); a break
+// The block state machine, pure and testable. One star per unbroken block; a break
 // forfeits the block (S2). These cover the required cases: exact-25 completion, 24m59s forfeiture,
 // break at t=0, break at t=24m59s, back-to-back blocks, and two breaks in the same millisecond.
 

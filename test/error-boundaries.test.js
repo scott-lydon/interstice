@@ -1,4 +1,4 @@
-// UC-ERR-001 and UC-ERR-002. Four boundaries in this repo used to answer a real fault with the
+// Four boundaries in this repo used to answer a real fault with the
 // same value they answer an ordinary absence with: a malformed line of logs/gaps.jsonl was skipped
 // in silence, a request body that would not parse became `{}`, a corrupt reading cache became the
 // same null as a cache that was never written, and a URL the probe could not parse became the host

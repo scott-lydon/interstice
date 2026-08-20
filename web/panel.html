@@ -173,7 +173,7 @@
      glyph itself, and it is bound to open with no toggle, so clicking the visible dismiss mark
      did nothing. It has nothing to offer while the thing it opens is already open. */
   body.immersive #view-reading:has(.reader-menu-overlay.open) .reader-menu { display: none; }
-  /* An auto-hiding pager overlay so page-turn works without opening the menu (2C.3). */
+  /* An auto-hiding pager overlay so page-turn works without opening the menu. */
   .reader-pager-overlay { display: none; }
   body.immersive .reader-pager-overlay {
     display: flex; gap: 6px; position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
@@ -624,7 +624,7 @@
             <button class="act om-close" id="cal-close" type="button">Close &times;</button>
           </div>
         </header>
-        <div class="cal-legend"><span><span class="swatch"></span>an earned 25-minute block</span></div>
+        <div class="cal-legend"><span><span class="swatch"></span><span id="cal-legend-block">an earned focus block</span></span></div>
         <div id="cal-body"></div>
         <div class="cal-reveal" id="cal-reveal" hidden></div>
       </div>
@@ -2071,6 +2071,7 @@ let _seenForfeitAt = null;
 let _seenDeliveryAt = null;
 function applyFocusBeat(d) {
   const f = d.focus;
+  if (f && window.__starCalendar) window.__starCalendar.setBlockMinutes(f.blockMinutes);
   if (f && f.lastForfeit && f.lastForfeit.at !== _seenForfeitAt) {
     _seenForfeitAt = f.lastForfeit.at;
     window.__focus.forfeit(f.lastForfeit);
@@ -2199,16 +2200,16 @@ window.addEventListener('load', () => {
     if (_latTimer) return;
     _latTimer = setInterval(() => _renderLatency(Date.now()), 1000);
   }
-  // The public, injectable surface. A real submit/completion event, from either surface (5.5), calls
+  // The public, injectable surface. A real submit/completion event, from either surface, calls
   // these; a test calls them directly. `nowMs` is optional so tests can control time.
   window.__latency = {
     submit(sessionId, nowMs = Date.now()) { _lat.set(sessionId, nowMs); _renderLatency(nowMs); _ensureTimer(); },
     complete(sessionId, nowMs = Date.now()) {
       if (!_lat.has(sessionId)) return;               // no phantom notification
       _lat.delete(sessionId);
-      _renderLatency(nowMs);                            // clears the chip when none remain (5.3)
+      _renderLatency(nowMs);                            // clears the chip when none remain
       const note = document.getElementById('arrival-note');
-      if (note) {                                      // the distinct arrival notification (5.4)
+      if (note) {                                      // the distinct arrival notification
         note.classList.add('show');
         setTimeout(() => note.classList.remove('show'), 2500);
       }
@@ -2217,7 +2218,7 @@ window.addEventListener('load', () => {
     waiting: (sessionId) => _lat.has(sessionId),
   };
 
-  // ------------------------------------------------------------- forfeit legibility (4.6) ---
+  // ------------------------------------------------------------- forfeit legibility ---
   // A lost block is never silent. The forfeit record already carries {cause, at, elapsedMs}
   // (lib/focus/blocks.js); this surfaces both the cause and the wall-clock time it happened.
   function _wallClock(iso) {
@@ -2248,10 +2249,10 @@ window.addEventListener('load', () => {
     },
   };
 
-  // ------------------------------------------------------------- star calendar (3.8) ---
+  // ------------------------------------------------------------- star calendar ---
   // Day and month views behind the Phase 2 menu. Every star reveals the wall-clock start and end
   // of the block that earned it. Data is real: production loads it from /api/stars; a test injects
-  // it via render(). Nothing is stubbed (3.9) — an empty history renders an honest empty calendar.
+  // it via render(). Nothing is stubbed: an empty history renders an honest empty calendar.
   const _cal = { view: 'month', key: null, stars: [] };
   function _openStarCal() {
     document.getElementById('star-cal-overlay').classList.add('open');
@@ -2339,6 +2340,21 @@ window.addEventListener('load', () => {
     const t = new Date(Date.UTC(y, m - 1, d + delta));
     return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
   }
+  // The block length is configuration, so the copy asks the daemon for it rather than stating a
+  // number. `focus.blockMinutes` rides the heartbeat; until the first beat lands the copy stays
+  // true by naming no length at all.
+  let _blockMinutes = null;
+  function _blockPhrase() {
+    return Number.isFinite(_blockMinutes) ? `a ${_blockMinutes}-minute block` : 'a focus block';
+  }
+  window.__starCalendar = window.__starCalendar || {};
+  window.__starCalendar.setBlockMinutes = (m) => {
+    if (!Number.isFinite(m)) return;
+    _blockMinutes = m;
+    const legend = document.getElementById('cal-legend-block');
+    if (legend) legend.textContent = `an earned ${m}-minute block`;
+  };
+
   function _reveal(star) {
     const r = document.getElementById('cal-reveal');
     r.hidden = false;
@@ -2385,7 +2401,7 @@ window.addEventListener('load', () => {
     title.textContent = `Stars in ${key || '(no month)'}`;
     count.textContent = key ? stated(stars.length) : '';
     body.innerHTML = '';
-    if (!key) { body.innerHTML = '<div class="cal-empty-copy">No stars earned yet. Complete a 25-minute block to earn your first.</div>'; return; }
+    if (!key) { body.innerHTML = `<div class="cal-empty-copy">No stars earned yet. Complete ${_blockPhrase()} of unbroken focus to earn your first.</div>`; return; }
     const [y, mo] = key.split('-').map(Number);
     const grid = document.createElement('div'); grid.className = 'cal-grid';
     ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach((d) => { const c = document.createElement('div'); c.className = 'cal-dow'; c.textContent = d; grid.appendChild(c); });

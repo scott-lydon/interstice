@@ -1,4 +1,4 @@
-// 3.8: star calendar behind the Phase 2 menu; day and month views; each star reveals the
+// The star calendar, behind the reader menu; day and month views; each star reveals the
 // wall-clock start and end of the block that earned it. Opens the menu, opens the calendar,
 // asserts a seeded star renders on the correct day cell, activates it, and checks the revealed
 // times match the seeded values exactly.
@@ -53,6 +53,6 @@ try {
 
   await browser.close();
   if (fails.length) { console.log('FAIL:\n' + fails.join('\n')); process.exit(1); }
-  console.log('3.8 PASS: calendar opens behind the menu, star renders on the right day, reveal shows 09:12 and 09:37 exactly');
+  console.log('PASS: calendar opens behind the menu, star renders on the right day, reveal shows 09:12 and 09:37 exactly');
   process.exit(0);
 } catch (e) { console.log('error:', e.message); await browser.close(); process.exit(2); }

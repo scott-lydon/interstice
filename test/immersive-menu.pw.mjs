@@ -1,6 +1,6 @@
-// 2C.2/2C.3/2C.4: the single menu houses every displaced control (2C.2); page-turn works via arrow
-// keys with the menu closed and open (2C.3); the menu is accessible: Escape closes it and focus
-// returns to the trigger, which has an accessible name (2C.4). Loads the real panel.html.
+// The single menu houses every displaced control; page-turn works via arrow
+// keys with the menu closed and open; the menu is accessible: Escape closes it and focus
+// returns to the trigger, which has an accessible name. Loads the real panel.html.
 import { chromium } from '@playwright/test';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
@@ -78,7 +78,7 @@ try {
 
   await browser.close();
   if (fails.length) { console.log('FAIL:\n' + fails.join('\n')); process.exit(1); }
-  console.log('2C.2 / 2C.3 / 2C.4 PASS: one menu houses every control, arrows turn pages both states, Escape closes and returns focus');
+  console.log('PASS: one menu houses every control, arrows turn pages both states, Escape closes and returns focus');
   process.exit(0);
 } catch (e) {
   console.log('error:', e.message); await browser.close(); process.exit(2);

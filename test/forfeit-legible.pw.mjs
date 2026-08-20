@@ -1,4 +1,4 @@
-// 4.6: a forfeited block is legible, not silent. The panel surfaces both the cause and the
+// A forfeited block is legible, not silent. The panel surfaces both the cause and the
 // wall-clock time of the forfeit. Drives window.__focus.forfeit with a blockForfeited record.
 import { chromium } from '@playwright/test';
 import { pathToFileURL } from 'node:url';
@@ -30,6 +30,6 @@ try {
   if (!/forfeited/i.test(shown.text)) fails.push('4.6: banner does not name the forfeit');
   await browser.close();
   if (fails.length) { console.log('FAIL:\n' + fails.join('\n')); process.exit(1); }
-  console.log('4.6 PASS: forfeit surfaces cause ("video") and wall-clock time (14:07), not silent');
+  console.log('PASS: forfeit surfaces cause ("video") and wall-clock time (14:07), not silent');
   process.exit(0);
 } catch (e) { console.log('error:', e.message); await browser.close(); process.exit(2); }

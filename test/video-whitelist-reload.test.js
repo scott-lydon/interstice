@@ -6,7 +6,7 @@ import { loadCached } from '../lib/config.js';
 import { isWhitelisted } from '../lib/video/whitelist.js';
 import { ROOT } from '../lib/paths.js';
 
-// 4.7: the whitelist is editable without editing code. This writes a new host into the user config
+// The whitelist is editable without editing code. This writes a new host into the user config
 // file, reloads config (force re-read), and asserts the new host now passes. The prior state of the
 // user config file is preserved and restored, so the test leaves the repo exactly as it found it.
 const CONFIG_FILE = path.join(ROOT, 'config', 'interstice.config.json');

@@ -18,11 +18,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      # This used to be `test ! -f package-lock.json`, a boast that the project had no
-      # dependencies at all. @playwright/test arrived as a devDependency and the lockfile
-      # became tracked, so the boast started exiting 1 and taking the whole job with it,
-      # before the test step below ever ran. Every push since has reported a red build for
-      # a claim about the repo rather than anything about the code.
       - name: Install dev dependencies
         run: npm ci
       # The invariant that is actually still true and still worth guarding: nothing the

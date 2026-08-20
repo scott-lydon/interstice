@@ -1,4 +1,4 @@
-// UC-MOD-001 and UC-CUPID-001. lib/server.js reached through the daemon into the Reader 33 times,
+// lib/server.js reached through the daemon into the Reader 33 times,
 // including at three plain fields (`seq`, `running`, `signingIn`) of a 1747-line class, and the
 // reader's own sequencing lived inside the route bodies. Understanding one HTTP route meant
 // holding lib/server.js, lib/daemon.js and the whole of lib/reader.js in mind at once.

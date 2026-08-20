@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fitViewport, MIN_WIDTH, MIN_HEIGHT } from '../lib/reader.js';
 
-// 2A.3: the immersive layout asks the reader for >=90% of the panel's usable area. That request
+// The immersive layout asks the reader for >=90% of the panel's usable area. That request
 // must never fall below the reader's own minimums, i.e. fitViewport must return it unchanged.
 function immersiveViewport({ panelWidth, panelHeight }) {
   // 90% of each usable dimension, rounded, which is what the immersive layout will request.

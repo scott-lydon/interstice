@@ -1,4 +1,4 @@
-// DEP-019. lib/server.js dispatches thirty-odd /api routes and three static HTML pages out of one
+// lib/server.js dispatches thirty-odd /api routes and three static HTML pages out of one
 // request handler, which is the shape where a catch-all quietly starts answering API calls with a
 // page. The route order is right (the exact-match table is consulted first, the three HTML paths
 // are equality checks rather than a wildcard, and everything else falls through to a JSON 404),

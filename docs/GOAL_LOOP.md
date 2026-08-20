@@ -1,5 +1,19 @@
 # GOAL_LOOP.md: Interstice
 
+> **Superseded. This is the original build checklist, kept as a record of what was planned.**
+>
+> It is not a description of the shipped system and it is not a live to do list. Read
+> `README.md` for what Interstice actually does, and `config/interstice.config.default.json`
+> for what it ships with. Where this file and the README disagree, the README is right.
+>
+> Four things in here were overtaken by the build and are flagged again where they appear:
+> the implementation language (this file plans Python and pytest; the shipped daemon is
+> JavaScript on Node with `node --test`), the config filename (`config/ladder.json` became
+> `config/interstice.config.json`), the to do surface (Obsidian became Apple Notes), and the
+> delivery mechanism (bringing other apps to the front was tried, found to be the problem
+> rather than the solution, and replaced by a single panel). The unticked boxes below are
+> unticked because this checklist was retired, not because the work is outstanding.
+
 **Goal.** Eliminate the decision that occurs in the gap between submitting a prompt
 (Cowork or Claude Code) and receiving the result, by automatically delivering a
 pre-committed productive activity into that gap and reliably reclaiming attention
@@ -21,7 +35,7 @@ person to look at, approve, or answer anything. All human-facing forks are pre-r
 by `config/ladder.json` defaults, which a human may edit at any time without blocking
 the loop.
 
-**Repo root.** `~/Developer/interstice` (referred to below as `$R`).
+**Repo root.** The checkout this file lives in, referred to below as `$R`.
 
 ---
 
@@ -30,15 +44,16 @@ the loop.
 | # | Decision | Value | Consequence for the build |
 |---|---|---|---|
 | 1 | Focus behaviour | **Take focus outright.** No countdown, no confirmation. | Misfires are expensive, so the idle veto (1.4) and the frontmost-app guard (3.5) are load bearing, not optional. |
-| 2 | Ladder order | **Flashcards, reading, queue-next-prompt, to-do list.** | `config/ladder.json` default order is fixed to this. |
+| 2 | Ladder order | **Flashcards, reading, queue-next-prompt, to-do list.** | The shipped config, `config/interstice.config.json`, fixes the default order to this. |
 | 2b | Switching | **One key advances to the next rung**, wrapping at the end. | A *next*, never a menu. A menu at delivery time reintroduces the decision this system exists to delete. See 3.7. |
 | 3 | To-do list placement | **Last rung**, fires only when everything above is empty. | Follows from 2. Still always reachable via the advance key. |
 
 | 4 | Surface scope | **Both.** Cowork via transcript watcher, Claude Code via hook, one queue. | Settled by the measured baseline: 1,883 CLI prompts and 139h of qualifying gap time. |
 | 5 | Distraction handling | **None. Nothing is blocked, delayed, logged as a vice, or policed.** | No blocker, no friction layer, no vice tracking. This project *is* the distraction answer: it competes by being there first. Do not add a second mechanism for the same problem. |
 
-Still open (a default holds until answered, and it does not block the loop): the project
-name and home.
+Still open when this was written (a default held until answered, and it did not block the
+loop): the project name and home. Both were settled shortly afterwards: the project is
+Interstice, and it lives in a directory of that name.
 
 ---
 
@@ -50,10 +65,10 @@ name and home.
 | Cowork transcript glob | `<root>/*/*/local_*/.claude/projects/*/*.jsonl` |
 | Submit event | JSONL line with `"type":"user"` carrying `promptId` + ISO `timestamp` |
 | Why host hooks fail in Cowork | Cowork uses a per-session `.claude` home containing **no** `settings.json` |
-| Claude Code CLI | `2.1.220`, hooks confirmed working (existing `PreToolUse` hook in `~/.claude/settings.json`) |
+| Claude Code CLI | hooks confirmed working against the CLI current when this was written, via an existing `PreToolUse` hook in the user settings file |
 | Anki bridge | AnkiConnect addon `2055492159`, HTTP `127.0.0.1:8765`, action `guiDeckReview` |
 | Kindle | registers `kindle` URL scheme |
-| To-do surface | Obsidian, single vault `~/Documents/Obsidian Vault`, `obsidian://` |
+| To-do surface | Obsidian, a single vault reached by URL scheme. **Superseded:** the shipped to do rung reads Apple Notes over Apple events. |
 | Idle signal | `ioreg -c IOHIDSystem` → `HIDIdleTime` (nanoseconds) |
 
 ### Measured baseline (from existing transcripts, timestamps only)
@@ -72,6 +87,12 @@ must stay per-surface tunable. The 3m rung is not an edge case. Phase 8.3 retune
 fresh data but must beat this baseline as its prior.
 
 ---
+
+> **Note on every verify command below.** They were written for a Python implementation that
+> was never built: `lib/router.py`, `python3 -m pytest`, `config/ladder.json`, and the
+> `test/*.py` and `test/*.sh` scripts they name do not exist. The shipped suite is JavaScript,
+> run with `npm test`. Read the verifies as a statement of what each item had to prove, not as
+> commands to run.
 
 ## Phase 0: Preflight (fail loud, before any feature work)
 
@@ -141,6 +162,12 @@ No later phase may be marked done while a 0.x item is unticked.
 
 ## Phase 3: Deliver
 
+> **Superseded in the build.** Items 3.1 to 3.4 below bring Anki, Kindle and Obsidian to the
+> front in turn. That was tried and it was the wrong design: four apps taking the screen in
+> sequence is four interruptions, which is the problem this project exists to remove. The
+> shipped build renders every rung inside one small panel and brings no other app forward.
+> The README section "One window" describes what replaced this.
+
 - [ ] **3.1 Flashcards actuator** lands on a *card*, not a deck list, and brings Anki forward.
   - Verify: `$R/test/verify_anki_delivery.sh`: calls the actuator, then asserts via AnkiConnect `guiCurrentCard` that a card is loaded AND frontmost process is `Anki`.
 - [ ] **3.2 Reading actuator** opens Kindle to the last book.
@@ -180,6 +207,10 @@ No later phase may be marked done while a 0.x item is unticked.
 ---
 
 ## Phase 5: Dashboard, design pass (UI → UX convergence loop #1)
+
+> **Note.** The four verify commands in Phases 5 and 6 read a `UX_FEEDBACK.md` at the repo
+> root. That file is the convergence loop's own scratch surface: it holds whatever the current
+> review round wrote, and it is rewritten each round rather than accumulated.
 
 Personas for U, derived from this spec:
 

@@ -1,4 +1,4 @@
-// 2C.1: measure that #reader occupies >=90% of both usable panel dimensions while the reading view
+// Measure that #reader occupies >=90% of both usable panel dimensions while the reading view
 // is active and immersive. Loads the real panel.html in a real browser and measures the rendered
 // bounding boxes. Run: node test/immersive-layout.pw.mjs (exit 0 = pass).
 import { chromium } from '@playwright/test';
@@ -32,7 +32,7 @@ try {
   const wFrac = m.rw / m.vw, hFrac = m.rh / m.vh;
   console.log(`#reader = ${Math.round(m.rw)}x${Math.round(m.rh)} of ${m.vw}x${m.vh}  (width ${(wFrac*100).toFixed(1)}%, height ${(hFrac*100).toFixed(1)}%)`);
   if (wFrac >= MIN && hFrac >= MIN) {
-    console.log('2C.1 PASS: the page occupies >=90% of both dimensions');
+    console.log('PASS: the page occupies >=90% of both dimensions');
     await browser.close();
     process.exit(0);
   }

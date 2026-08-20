@@ -12,7 +12,7 @@ function at(ms, base = Date.parse(`2026-08-19T09:00:00${OFF}`)) {
   return new Date(base + ms).toISOString().replace('.000Z', 'Z');
 }
 
-// 3.5: no idle breaker. A 25-minute block with zero input events still completes and awards a star.
+// No idle breaker. A 25-minute block with zero input events still completes and awards a star.
 test('a 25-minute block with zero input events still completes (no idle breaker)', () => {
   const m = createMachine({ blockMinutes: 25 });
   m.send({ type: 'start', at: at(0) });
@@ -22,7 +22,7 @@ test('a 25-minute block with zero input events still completes (no idle breaker)
   assert.equal(out[0].type, 'blockCompleted');
 });
 
-// 3.6: the machine imports no breaker; it is driven by a fake breaker to prove substitutability.
+// The machine imports no breaker; it is driven by a fake breaker to prove substitutability.
 test('the machine accepts any breaker that emits the plain {cause,at,detail} shape', () => {
   const fakeBreaker = {
     name: () => 'fake',
@@ -36,7 +36,7 @@ test('the machine accepts any breaker that emits the plain {cause,at,detail} sha
   assert.equal(out[0].cause, 'made-up-cause', 'the machine forfeits on any cause, knowing no breaker');
 });
 
-// 3.7: aggregation across a month boundary, a DST boundary, and a midnight-spanning block,
+// Aggregation across a month boundary, a DST boundary, and a midnight-spanning block,
 // each credited to the day it completed in America/Los_Angeles (its carried offset).
 test('stars aggregate to the local completion day across month, DST, and midnight boundaries', () => {
   const p = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'stars-')), 's.jsonl');

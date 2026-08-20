@@ -1,4 +1,4 @@
-# interstice — session constraints
+# interstice: session constraints
 
 This repo is under an active goal loop. Before changing anything, read the loop and its
 settled decisions; do not re-derive or re-ask what they already resolve.

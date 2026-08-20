@@ -32,9 +32,12 @@ will keep checking, and checking is the decision you were trying to delete.
 **It can prove itself wrong.** Every gap is logged. If the vice arrives anyway right
 after the flashcards, the dashboard will say so.
 
-## Measured on real usage
+## Measured before it was built
 
-Parsed from existing transcripts before a line was written (timestamps only):
+The thresholds below came from a count rather than a hunch. These figures were parsed from
+one person's own agent transcripts, on one machine, reading timestamps only and no message
+content, before any code existed. They are a sample of one operator's habits rather than a
+benchmark, and your own numbers will be different.
 
 | Surface | Prompts | Median turn | >=25s | >=3m | >=12m |
 |---|---|---|---|---|---|
@@ -160,8 +163,8 @@ decision fatigue the router exists to delete, one screen further in.
 For a while it opened in a window of its own, because the three obvious routes are
 all closed. Amazon sends `x-frame-options: SAMEORIGIN`, so the reader cannot be
 framed inside the panel. The text is encrypted, so it cannot be re-rendered from the
-file. Chrome 137 onwards ignores `--load-extension`, so the page cannot be given
-furniture of ours. A second window was what was left, and a second window is the
+file. Chrome ignores `--load-extension` on current releases, so the page cannot be
+given furniture of ours. A second window was what was left, and a second window is the
 interruption this project exists to remove.
 
 The fourth route is to run Amazon's reader where nobody is looking. A headless
@@ -191,8 +194,9 @@ A picture of a book is not a book. Scaled into a panel it is small, it is set in
 someone else's type at someone else's size, it does not reflow, and none of it can
 be selected. So the words are read back off the picture, on this machine, by the
 same engine macOS reads text out of photographs with: Vision, over the ObjC bridge.
-No dependency, nothing leaves the machine, and it measures 0.5 seconds a page at
-1.00 confidence on this book.
+No dependency and nothing leaves the machine. Timed on one book on one machine it took
+about half a second a page and returned every line at full confidence, which is a single
+reading rather than a benchmark.
 
 What comes back is set in the panel's own type. Getting from lines to prose is the
 part that is easy to get wrong, and three signals do it, none of which works alone:
@@ -310,12 +314,17 @@ verdict can be checked rather than trusted.
 interstice doctor          Prove every dependency. Exits non-zero on any failure.
 interstice install         Write config, install hooks and the LaunchAgent, which
                            starts Interstice at login and restarts it if it dies.
+interstice uninstall       Remove the hooks and the LaunchAgent. Leaves your logs.
 interstice start [--foreground]
 interstice stop
 interstice status          Current gap, armed rung, cooldown, counts.
 interstice advance         Move to the next rung (also bound to a hotkey).
 interstice standdown [--day]
 interstice dashboard       Open the log UI in your browser.
+interstice hotkeys         Build the advance and stand-down apps, and print how to
+                           bind a key to each.
+interstice stats [--tune]  Summarise your gaps. --tune suggests thresholds from
+                           your own data rather than the shipped defaults.
 interstice simulate <sec>  Drive a synthetic gap of N seconds. Debug route.
 ```
 
@@ -365,7 +374,7 @@ this project can least afford. `doctor` proves each of them rather than assuming
 | A read that blocks cannot be cancelled | node hands it to a four-thread pool and an `AbortSignal` will not take it back, so a stuck read every few seconds ends with no asynchronous I/O anywhere in the daemon | reads are abandoned rather than awaited, counted per file, and never more than two outstanding |
 | TCC access does not follow into a child process | so "run the read in a killable subprocess" trades a hang for a refusal: the child is denied where the parent is allowed | proved with a launchd job, and the read stays in-process |
 | Notes' own store is TCC protected | a direct read of `NoteStore.sqlite` returns "Operation not permitted" | Notes is read over Apple events, which needs only the Automation grant that is already required |
-| Reading Notes one property at a time | it works, so nothing looks wrong; it just takes 104s for 40 notes on this collection | properties are fetched in bulk, one event per property for all 3,349 notes, which measures 0.3s |
+| Reading Notes one property at a time | it works, so nothing looks wrong; it just gets slower with every note you own. Timed once here, 40 notes took 104 seconds | properties are fetched in bulk, one Apple event per property for the whole library, which returned in 0.3 seconds on that same reading |
 | Chrome drops window flags passed to an already-running instance | the panel opens somewhere other than where it was placed | the panel runs in its own `--user-data-dir`, so the flags reach a process that will honour them |
 | The LaunchAgent names a Homebrew node by version | `brew upgrade node` deletes that Cellar directory, the job then fails at every login, and the only symptom is Interstice never appearing, which looks like a quiet day | `install` writes the stable symlink after proving it is node 20 or newer, and `doctor` fails if the plist points at a path that is gone or versioned |
 | Be Focused publishes no timer state | it is not scriptable, its group container holds no running interval, and its status item has no `AXTitle`, so any state you infer from the app is a guess | the menu bar countdown is photographed three times, a second apart; a running timer differs across every pair and a paused one across none |
@@ -409,6 +418,53 @@ curl -H "x-interstice-token: $(cat logs/control-token)" http://127.0.0.1:7420/ap
 
 A request that is refused says which check refused it and how to satisfy it.
 
+## The panel while it is open
+
+Three things it does that are not a rung of the ladder.
+
+### It shows how long you have been waiting
+
+The moment a prompt goes out, the panel starts a clock for that session and shows the time
+waited so far. When the answer lands it says so and the clock stops. Two prompts in flight
+are two independent clocks, cleared independently, and the surface makes no difference: a
+Cowork submit and a Claude Code submit are the same event by the time the indicator sees
+them.
+
+### Reading gets the whole panel
+
+While the reading rung is up, the page itself takes at least 90% of the panel in both
+directions. Everything else, the rung buttons, the book title, the progress bar, the status
+line, moves behind one menu button in the corner. Arrow keys still turn the page, and a
+pager that fades in on hover or keyboard focus turns it with the mouse without opening the
+menu at all.
+
+### The stars are on a calendar
+
+The calendar lives behind that same menu button rather than adding a second one. It shows a
+month at a time or a single day, and each star opens to the block that earned it, with the
+clock times it ran between. A fresh install renders an empty calendar, never a sample one.
+
+## Focus blocks and stars
+
+A completed 25-minute unbroken focus block earns one star. Configure it under `focus` in
+`config/interstice.config.json`:
+
+- `focus.blockMinutes`: minutes of unbroken focus that earn one star (default `25`).
+- `focus.blacklistApps`: apps whose coming frontmost forfeits the block (default: Slack, Discord,
+  Messages, Mail, X, Twitter, Instagram, TikTok). The Interstice panel itself never forfeits a block.
+- `focus.videoWhitelist`: video source domains that do not forfeit a block; matched on registrable
+  domain, so `www.udemy.com` and `sub.udemy.com` pass and a lookalike does not (default: Udemy).
+- `focus.videoBreakAfterMs`: how long non-whitelisted video must play continuously before it
+  forfeits the block, so a one-frame autoplay costs nothing (default `4000`).
+- `focus.videoBrowsers`: the browsers to read play state from, as
+  `{ "name": "Chrome", "wsUrl": "ws://127.0.0.1:9222/devtools/browser/..." }` entries. Ships empty,
+  because a browser that was not started with `--remote-debugging-port` has no endpoint to read and
+  there is no way to discover one after the fact. With no entries the video breaker reads nothing
+  and forfeits nothing; the app and display breakers are unaffected.
+
+**Scope: browsers only.** Video detection covers Chromium-family and Safari browser tabs via
+tab URL plus real play state. Native video apps (a desktop Netflix app, QuickTime) are out of scope.
+
 ## Privacy
 
 Interstice reads message *timestamps and structure* from agent transcripts. It never
@@ -428,24 +484,3 @@ the line that says which page you are on.
 ## License
 
 MIT. See [LICENSE](LICENSE).
-
-## Focus blocks and stars
-
-A completed 25-minute unbroken focus block earns one star. Configure it under `focus` in
-`config/interstice.config.json`:
-
-- `focus.blockMinutes` — minutes of unbroken focus that earn one star (default `25`).
-- `focus.blacklistApps` — apps whose coming frontmost forfeits the block (default: Slack, Discord,
-  Messages, Mail, X, Twitter, Instagram, TikTok). The Interstice panel itself never forfeits a block.
-- `focus.videoWhitelist` — video source domains that do not forfeit a block; matched on registrable
-  domain, so `www.udemy.com` and `sub.udemy.com` pass and a lookalike does not (default: Udemy).
-- `focus.videoBreakAfterMs` — how long non-whitelisted video must play continuously before it
-  forfeits the block, so a one-frame autoplay costs nothing (default `4000`).
-- `focus.videoBrowsers` — the browsers to read play state from, as
-  `{ "name": "Chrome", "wsUrl": "ws://127.0.0.1:9222/devtools/browser/..." }` entries. Ships empty,
-  because a browser that was not started with `--remote-debugging-port` has no endpoint to read and
-  there is no way to discover one after the fact. With no entries the video breaker reads nothing
-  and forfeits nothing; the app and display breakers are unaffected.
-
-**Scope (S3): browsers only.** Video detection covers Chromium-family and Safari browser tabs via
-tab URL plus real play state. Native video apps (a desktop Netflix app, QuickTime) are out of scope.

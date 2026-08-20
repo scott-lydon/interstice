@@ -1,7 +1,7 @@
 # Recurring_goals selection for Interstice
 
-Source tree : `/Users/scottlydon/Developer/Recurring_goals`
-Target repo : `/Users/scottlydon/Developer/interstice`
+Source tree : `Recurring_goals` (from RECURRING_GOALS_ROOT)
+Target repo : `interstice` (from TARGET_REPO)
 Total rules : 643 across 19 sheets (counted with a CSV reader; `wc -l` overcounts because agent_prompt contains newlines)
 
 **Selected 328 · conditional 18 · excluded 297**
@@ -101,7 +101,7 @@ Total rules : 643 across 19 sheets (counted with a CSV reader; `wc -l` overcount
 | Design/Design_Fidelity | `projects with a Claude Design handoff bundle` | 1 | same precondition as DF-005: does a canonical design artifact exist here |
 | Design/Visual_Design | `design tokens` | 1 | applies only if phase 2 introduces a token layer; record which way it resolved |
 
-## Selected row ids
+## Row ids routed to workers (346: every included row plus every conditional one)
 
 - **Assignments** (1): AS-007
 - **Code/JavaScript_TypeScript_Development** (116): TS-001, TS-002, TS-003, TS-004, TS-005, TS-006, TS-007, TS-008, TS-009, TS-010, TS-011, TS-012, TS-013, TS-014, TS-015, TS-016, TS-017, TS-018, TS-019, TS-020, TS-021, TS-022, TS-023, TS-024, TS-025, TS-026, TS-027, TS-028, TS-029, TS-030, TS-031, TS-032, TS-033, TS-034, TS-035, TS-036, TS-037, TS-038, TS-039, TS-040, TS-041, TS-042, TS-043, TS-044, TS-045, TS-046, TS-047, TS-048, TS-049, TS-050, TS-051, TS-052, TS-053, TS-054, TS-055, TS-056, TS-057, TS-058, TS-059, TS-060, TS-061, TS-062, TS-063, TS-064, TS-065, TS-066, TS-067, TS-068, TS-069, TS-070, TS-071, TS-072, TS-073, TS-074, TS-075, TS-076, TS-077, TS-078, TS-079, TS-080, TS-081, TS-082, TS-083, TS-084, TS-085, TS-086, TS-087, TS-088, TS-089, TS-090, TS-091, TS-092, TS-093, TS-094, TS-095, TS-096, TS-097, TS-098, TS-099, TS-100, TS-101, TS-102, TS-103, TS-104, TS-105, TS-106, TS-107, TS-108, TS-109, TS-110, TS-111, TS-112, TS-113, TS-114, TS-PP-001, TS-PP-002

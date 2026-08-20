@@ -1,4 +1,4 @@
-// TC-010, applied to the gate added for TC-008. A check that cannot fail when the thing it guards
+// The literal detector is itself a gate, and a check that cannot fail when the thing it guards
 // is broken is worse than no check, because it reads as evidence. So the detector is pinned in
 // both directions: it must flag the shapes it exists for, and it must stay quiet on the ones it
 // deliberately does not, or the first false positive gets it deleted.

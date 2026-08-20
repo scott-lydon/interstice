@@ -1,4 +1,4 @@
-// UC-PRIN-001. Each focus default used to be stated three times: as a literal in the module that
+// Each focus default used to be stated three times: as a literal in the module that
 // consumes it, as a value in config/interstice.config.default.json, and again in README.md. Three
 // copies of one number is three chances to disagree, and the panel-size copy in the README had
 // already drifted from the config by 200 points before anyone noticed.

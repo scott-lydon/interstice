@@ -1,4 +1,4 @@
-// DI-010 and UC-PRIN-004. README.md quotes shipped configuration values and shipped product copy,
+// README.md quotes shipped configuration values and shipped product copy,
 // there is no generator that writes any of it, and one of the quotes had already gone stale: the
 // panel block said 440x620 months after the shipped default became 640x900, so the one document a
 // new reader trusts described a window nobody has.

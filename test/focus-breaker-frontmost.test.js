@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createFrontmostBreaker, decideFrontmost, PANEL_APPS } from '../lib/focus/breakers/frontmost.js';
 
-// 3.3: a synthetic frontmost signal for a blacklisted app emits exactly one break{cause:'app'};
+// A synthetic frontmost signal for a blacklisted app emits exactly one break{cause:'app'};
 // an allowlisted app and the Interstice panel itself emit none.
 
 const AT = '2026-08-19T09:10:00-07:00';

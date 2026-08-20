@@ -1,4 +1,4 @@
-// SEC-004. The control surface used to accept every request that could reach the port, and
+// The control surface used to accept every request that could reach the port, and
 // loopback binding is not access control: a page the user visits can POST to 127.0.0.1, and
 // `readBody` parses JSON regardless of content-type, so the request is not preflighted and lands
 // on a real handler. That surface reschedules Anki cards, writes to-do state, drives the daemon,

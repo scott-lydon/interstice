@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { starsHandler } from '../lib/focus/stars-routes.js';
 
-// 3.10: an HTTP test hits each new star route and asserts shape and status codes, including the
+// An HTTP test hits each star route and asserts shape and status codes, including the
 // error shape for a malformed date range. A tiny server wraps the same handler the real routes use.
 // The day the stub knows about, named once. Re-typing it on the assertion side made the same
 // value exist twice, and two copies of a fixture value drift the first time one of them moves.

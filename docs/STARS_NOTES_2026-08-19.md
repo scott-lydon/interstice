@@ -1,16 +1,24 @@
-# Stars reader loop — parallel notes (2026-08-19)
+# Stars reader loop: parallel notes
 
-## 0.0d — CLAUDE.md
-Created `/Users/scottlydon/Developer/interstice/CLAUDE.md`: references the goal loop, the
+Working record for the goal loop in `docs/GOAL_LOOP_STARS_READER_2026-08-17.md`, written as the
+work ran on 2026-08-19 and into 2026-08-20. It is a log, not a description of the product, and
+not a submission artifact: read `README.md` for what Interstice does.
+
+Every figure here (test counts, coverage percentages, timings, commit ranges) is the value
+measured on the date and at the commit stated beside it. None of them is a claim about the
+current tree, and none is re-checked when the tree moves.
+
+## 0.0d: CLAUDE.md
+Created `CLAUDE.md` at the repo root: references the goal loop, the
 predecessor spec, and the config as the sources of truth, and carries the environment PATH note.
 It does not duplicate the settled-decision text (the phrase "25 unbroken minutes" appears only in
 the goal loop, not in CLAUDE.md), so the two cannot drift.
 
-## 0.3 — Deployment asymmetry
+## 0.3: Deployment asymmetry
 `git rev-list --left-right --count origin/main...HEAD` = `0  5`. HEAD is 0 behind and 5 ahead of
 origin/main, so the working tree is NOT behind the deploy branch. No merge needed before diagnosis.
 
-## Status of the rest, stated honestly
+## Status of the remaining items
 The core of this loop (Phase 1: fix the book-loading failure) is gated on a live run of the Kindle
 reading rung, which authenticates against Amazon's web reader through Chrome + CDP against the
 carried session in `logs/reader-profile`. Items 1.1 (capture the failure verbatim from a cold
@@ -19,11 +27,12 @@ that live reader, which needs either a valid carried Amazon session or a fresh s
 
 There is also pre-existing uncommitted work across exactly the file set Phases 1 and 2 touch
 (`lib/reader.js`, `lib/ocr.js`, `lib/panel.js`, `lib/server.js`, the two reader tests, config, and
-`web/panel.html`), which 0.3b requires be reconciled — diff preserved, each hunk classified,
-finished parts committed, scaffolding parked, tree clean — BEFORE the 0.4 baseline. That is
-delicate work on someone else's 631-line diff and should not be rushed as a side effect.
+`web/panel.html`), which 0.3b requires be reconciled before the 0.4 baseline: diff preserved, each
+hunk classified, finished parts committed, scaffolding parked, tree clean. The diff runs to 631
+lines and none of it was written by this loop, so each hunk is classified on its own evidence
+rather than assumed.
 
-## 0.3b.2 — classification of the pre-existing uncommitted work
+## 0.3b.2: classification of the pre-existing uncommitted work
 Baseline sanity: `npm test` on the dirty tree = 223 pass, 0 fail, so the work is sound.
 
 | File | Bucket | Deciding hunk |
@@ -38,13 +47,13 @@ Baseline sanity: `npm test` on the dirty tree = 223 pass, 0 fail, so the work is
 No bucket (c) scaffolding and no bucket (d) unrelated-to-park: every hunk is a finished change or the
 substantial Phase 1 fix. Nothing is parked or discarded.
 
-## 0.3b.3-0.3b.6, 0.4 — committed and baselined
+## 0.3b.3-0.3b.6, 0.4: committed and baselined
 Six logical commits (5911bcd..5422d40), each `git show --stat` containing only its unit's files.
 Working tree clean afterward. 0.4 baseline on the clean tree: `npm test` = 223 pass, 0 fail.
 The partial book-loading work (commit 1157a38) is the Phase 1 starting point; Phase 1.2's bucket
 choice will be "device registration expired (getDeviceToken 403 -> Oops page)", agreeing with it.
 
-## 0.2 — reader credential / carried session
+## 0.2: reader credential / carried session
 No Amazon credential grant is needed. The committed diagnosis (lib/reader.js:855-875) establishes
 that the carried session in `logs/reader-profile` is valid: "the library itself listed the book, so
 the account was fine and the session was fine." The failure was NOT auth; it was a stale device
@@ -53,7 +62,7 @@ dropping local storage while keeping cookies. A control profile carrying only th
 opened the book at "Page 209 of 220" without calling getDeviceToken. So 0.2's second branch holds:
 the session is valid, no credential is required.
 
-## 0.5 — vocabulary mapping (new concepts onto the existing system)
+## 0.5: vocabulary mapping (new concepts onto the existing system)
 Read docs/GOAL_LOOP.md, README.md, and config/interstice.config.default.json. Existing vocabulary:
 **gap** (the moment between submitting a prompt and the answer arriving), **rung** (one activity on
 the ladder: flashcards, reading, queue-next, to-do), **ladder** (the ordered set of rungs, one key
@@ -67,22 +76,22 @@ advances), **actuator** (what performs a rung), **companion** (the panel process
 | video probe | a specialization of the break event, browser-only | reuses lib/cdp.js (tab URL + play state), Safari via its scripting interface |
 | latency ticker | a live readout on the companion of elapsed-since-submit, clearing on delivery | the panel (lib/panel.js, web/panel.html) fed by the hook events (hooks/on-submit.sh, on-stop.sh) |
 
-## 1.2 — failure classification (from the committed diagnosis)
-The failure is a NEW bucket beyond (a)-(f): **stale device registration** — four 403s from
+## 1.2: failure classification (from the committed diagnosis)
+The failure is a NEW bucket beyond (a)-(f): **stale device registration**, four 403s from
 `service/mobile/register/getDeviceToken` cause Amazon's "Oops... Something Went Wrong" page. Evidence
 ruling out the listed buckets, each cited to the committed diagnosis in lib/reader.js:
-- (a) not signed in — RULED OUT: the library listed the book; account and session fine (lib/reader.js:862).
-- (b) no browser — RULED OUT: the reader rendered the Oops page, so a Chromium browser was present.
-- (c) load timeout — RULED OUT: the Oops page is a settled page, not a 40s timeout (lib/reader.js:1056-1058).
-- (d) wrong/missing ASIN — RULED OUT: the book is in the library and a cookies-only control profile opened it at "Page 209 of 220" (lib/reader.js:866-869).
-- (e) markup drift — RULED OUT: the PROBE still matched and detected the Oops page (the new bookError field).
-- (f) CDP attach/port failure — RULED OUT: CDP attached and the probe evaluated on the page.
+- (a) not signed in, RULED OUT: the library listed the book; account and session fine (lib/reader.js:862).
+- (b) no browser, RULED OUT: the reader rendered the Oops page, so a Chromium browser was present.
+- (c) load timeout, RULED OUT: the Oops page is a settled page, not a 40s timeout (lib/reader.js:1056-1058).
+- (d) wrong/missing ASIN, RULED OUT: the book is in the library and a cookies-only control profile opened it at "Page 209 of 220" (lib/reader.js:866-869).
+- (e) markup drift, RULED OUT: the PROBE still matched and detected the Oops page (the new bookError field).
+- (f) CDP attach/port failure, RULED OUT: CDP attached and the probe evaluated on the page.
 The fix (1.4) is committed: clearSiteData() drops the stale local storage while keeping cookies.
 Note on 1.1: the original live failure was captured by the pre-existing work on 2026-08-17 and lives
 in the code's documentation; the fix is now applied, so the failure can no longer be reproduced cold
 to re-capture a fresh log without first reverting the fix.
 
-## 1.3 / 1.4 / 1.5 / 1.6 — regression proof, fix, hardening, doctor
+## 1.3 / 1.4 / 1.5 / 1.6: regression proof, fix, hardening, doctor
 - 1.3: the book-loading regression tests in test/reader.test.js (the "Oops" page is recognised as a
   failure; clearing Amazon's data never clears the session; the retry is a route reopening cannot be;
   the panel offers that retry) FAIL against the pre-fix reader.js (checked out from b8b3978, the
@@ -98,7 +107,7 @@ to re-capture a fresh log without first reverting the fix.
   three failure modes and the all-clear. Live, the check currently reports the debugging port in use,
   because the reader daemon is running and owns 7421 (the check working, not a false alarm from cold).
 
-## 1.1 and 1.7 — the two that need a live cold-start
+## 1.1 and 1.7: the two that need a live cold-start
 1.1 (capture the failure verbatim to a log file) and 1.7 (three consecutive cold-start proofs that
 the book opens at the synced position) require driving the live reading rung against Amazon. The
 original failure was captured by the pre-existing work on 2026-08-17 and is documented in the fix;
@@ -120,9 +129,9 @@ running reader and the carried Amazon session.
 - Remaining Phase 2: 2C.1/2C.2 (implement the layout + menu in panel.html, measured by a Playwright
   script) and the UX convergence sub-loop 2B.2-2B.4 (agent-gated).
 
-## 8.2 — per-file coverage for every changed lib file (measured 2026-08-19, node --experimental-test-coverage)
+## 8.2: per-file coverage for every changed lib file (measured 2026-08-19, node --experimental-test-coverage)
 
-- `lib/daemon.js`: **None%** lines covered (large pre-existing file; this loop touched a small, tested slice, so the whole-file percentage reflects mostly untouched legacy code)
+- `lib/daemon.js`: **0%** lines covered by the unit suite (large pre-existing file; this loop touched a small, tested slice). The note at the end of this list says which slice and where its logic is covered.
 - `lib/doctor.js`: **16.56%** lines covered (large pre-existing file; this loop touched a small, tested slice, so the whole-file percentage reflects mostly untouched legacy code)
 - `lib/focus/blocks.js`: **94.85%** lines covered
 - `lib/focus/breakers/display.js`: **80.43%** lines covered
@@ -134,23 +143,23 @@ running reader and the carried Amazon session.
 - `lib/ocr.js`: **84.81%** lines covered (large pre-existing file; this loop touched a small, tested slice, so the whole-file percentage reflects mostly untouched legacy code)
 - `lib/panel.js`: **74.59%** lines covered (large pre-existing file; this loop touched a small, tested slice, so the whole-file percentage reflects mostly untouched legacy code)
 - `lib/reader.js`: **61.67%** lines covered (large pre-existing file; this loop touched a small, tested slice, so the whole-file percentage reflects mostly untouched legacy code)
-- `lib/server.js`: **None%** lines covered (large pre-existing file; this loop touched a small, tested slice, so the whole-file percentage reflects mostly untouched legacy code)
+- `lib/server.js`: **0%** lines covered by the unit suite (large pre-existing file; this loop touched a small, tested slice). The note at the end of this list says which slice and where its logic is covered.
 - `lib/video/probe.js`: **96.55%** lines covered
 - `lib/video/whitelist.js`: **100.00%** lines covered
-- `lib/daemon.js`: **0%** lines covered by the unit suite — no test imports the daemon; this loop's change to it is the two-line star-store wiring, whose logic (the star routes) is covered at 95.65% via `lib/focus/stars-routes.js` and the standalone HTTP test in `test/stars-routes.test.js`.
-- `lib/server.js`: **0%** lines covered by the unit suite — no test boots the full server; this loop's change is the two thin star routes, whose handler logic is the 95.65%-covered `stars-routes.js` exercised over a real socket in `test/stars-routes.test.js`.
+- `lib/daemon.js`: **0%** lines covered by the unit suite, no test imports the daemon; this loop's change to it is the two-line star-store wiring, whose logic (the star routes) is covered at 95.65% via `lib/focus/stars-routes.js` and the standalone HTTP test in `test/stars-routes.test.js`.
+- `lib/server.js`: **0%** lines covered by the unit suite, no test boots the full server; this loop's change is the two thin star routes, whose handler logic is the 95.65%-covered `stars-routes.js` exercised over a real socket in `test/stars-routes.test.js`.
 
-## 9.3 — demo-URL / credential grep, each match justified
+## 9.3: demo-URL / credential grep, each match justified
 The grep `localhost:74[0-9]{2}|password|api[_-]?key|secret` over README + docs returns 13 lines, all
 intentional and safe; none is a demo URL or a leaked credential:
-- `README.md:76` `http://localhost:7420` — the Learn feature's real local render endpoint, documented,
+- `README.md:76` `http://localhost:7420`, the Learn feature's real local render endpoint, documented,
   not a demo placeholder. A localhost address is not a credential.
-- `README.md:215/221/251` — the word "password" appears in prose describing that the sign-in flow
+- `README.md:215/221/251`, the word "password" appears in prose describing that the sign-in flow
   types and stores NO password (session-carrying). Documentation about the absence of a stored
   credential, not a credential.
-- `docs/RECURRING_GOALS_SELECTION.md` and the goal-loop's copy of that table — "Security_and_Secrets"
+- `docs/RECURRING_GOALS_SELECTION.md` and the goal-loop's copy of that table, "Security_and_Secrets"
   is the NAME of a Recurring_goals rule folder, not a secret.
-- `docs/GOAL_LOOP_STARS_READER...` lines 67/176/178/181/691/807 — references to the Secrets Driver
+- `docs/GOAL_LOOP_STARS_READER...` lines 67/176/178/181/691/807, references to the Secrets Driver
   MCP mechanism, `get_secret`, and the verify command's own regex. No secret value appears.
 No actual demo URL or credential is present in any public-facing text.
 
@@ -159,9 +168,9 @@ No actual demo URL or credential is present in any public-facing text.
 # Session 2 notes (2026-08-19 into 2026-08-20)
 
 Everything below records a command that was actually run and its actual output. Where a literal
-`Verify:` command could not be run, that is stated plainly rather than papered over.
+`Verify:` command could not be run, the entry says so rather than papering over it.
 
-## 0.7 / 0.8 — Blocker Resolver Monitor
+## 0.7 / 0.8: Blocker Resolver Monitor
 
 The loop's suggested route is the Claude Code Remote MCP (`create_trigger` / `list_triggers`).
 **That MCP is not connected in this session**, so `list_triggers` cannot be run at all. Per the
@@ -204,7 +213,7 @@ so the first three attempts recorded `Warning: no stdin data received in 3s` ins
 Both call sites now redirect `< /dev/null`. The three stdin-broken attempts were discarded rather
 than counted, because a warning string is not a model's verdict.
 
-## 7.5 — adversarial spot-check of the exclusions, and the correction it forced
+## 7.5: adversarial spot-check of the exclusions, and the correction it forced
 
 A fresh-context agent was given the manifest's exclusion table and the repo and told to break it.
 It returned finding (b), a list of rules to reclassify, quoting 52 real row_ids it examined. Its
@@ -221,7 +230,7 @@ Two exclusion reasons that were falsifiable as written were also corrected: the 
 claimed "no Python source in this repo" while `docs/recurring_goals_selection.py` is 376 lines of
 Python, and the React reason claimed "every rule presumes a React component tree".
 
-## 7.1 — selector re-run after the correction
+## 7.1: selector re-run after the correction
 
 ```
 $ python3 docs/recurring_goals_selection.py > docs/RECURRING_GOALS_SELECTION.md
@@ -230,7 +239,7 @@ $ echo $?
 **Selected 328 · conditional 18 · excluded 297**
 ```
 
-## 7.2 — routed audit over the selected rules
+## 7.2: routed audit over the selected rules
 
 Routed with the `routed-audit-team` pattern, batched by target locality rather than one agent per
 row: `docs/audit/route.py` produced nine batches (ux-a 48, ux-b 47, js-a 58, js-b 58, perf-test 26,
@@ -247,11 +256,11 @@ extra    : 0 []
 duplicate: 0 []
 verdicts : {'FAIL': 131, 'NA': 70, 'PASS': 145}
 FAIL by severity: {'medium': 45, 'high': 50, 'blocker': 14, 'low': 22}
-SET CHECK: PASS — findings set is exactly the selected set
+SET CHECK: PASS, findings set is exactly the selected set
 EXIT=0
 ```
 
-## 7.4 — every conditional row resolved
+## 7.4: every conditional row resolved
 
 `docs/audit/CONDITIONAL_RESOLUTIONS.md` carries one row per conditional `row_id` (18 of them),
 each naming its precondition, whether it held, whether the rule therefore applies, and the verdict,
@@ -259,7 +268,7 @@ plus a per-row evidence line. No conditional is left unresolved. Resolutions: DE
 DEP-007, DEP-016 held and PASS; DEP-003 held and FAIL; DEP-006, DEP-008, DEP-011, DEP-013, DEP-014,
 DEP-015, DEP-017, DEP-018, CM-009, CM-010, DF-005, DF-006, VD-007 did not hold and are NA.
 
-## DI-007 — the blocker the audit found, fixed and deployed
+## DI-007: the blocker the audit found, fixed and deployed
 
 The audit's most severe finding was that the entire focus/star/latency feature was implemented,
 unit-tested, and **never wired into the running product**. Verified independently before acting:
@@ -322,7 +331,7 @@ One star in `logs/stars.jsonl` was awarded by the pre-fix build and still carrie
 that is pre-fix DATA, not live behaviour, and it is left as it is rather than rewritten, because
 editing a durable record to make a chart look right is exactly what the no-fake-data rule forbids.
 
-## 2B.2 / 2B.3 / 2B.4 and 6.1 / 6.2 / 6.3 / 6.4 — the UI-to-UX convergence sub-loops
+## 2B.2 / 2B.3 / 2B.4 and 6.1 / 6.2 / 6.3 / 6.4: the UI-to-UX convergence sub-loops
 
 Nine U passes and seven J rulings actually ran, each as a fresh-context agent, each verifying its
 claims in a real headless Chromium against the running daemon rather than by reading the diff.
@@ -362,7 +371,7 @@ $ node --test test/*.test.js
 Baseline at the start of this session was 275 passing. The six added are `test/focus-tracker.test.js`
 (five wiring and behaviour tests plus the timezone regression).
 
-Note carried forward honestly: the five `test/*.pw.mjs` Playwright specs are NOT in that count.
+Note carried forward: the five `test/*.pw.mjs` Playwright specs are NOT in that count.
 A bare `chromium.launch({channel:'chrome'})` times out on this machine even standalone, so
 `node --test` over the whole directory reports 5 failures for an environmental reason. Every
 browser verification recorded above therefore used the headless chromium shell explicitly, which
@@ -418,7 +427,7 @@ a view change independently of one another; 441/441 self-hits on both close butt
 forfeit causes rendering in plain words at the correct local wall clock; and the latency chip
 clearing on arrival with a distinct, non-overlapping arrival note.
 
-## What is NOT done, stated plainly
+## Items not completed
 
 - **1.1 and 1.7** (capture the original failure verbatim from a cold start; three consecutive
   cold-start proofs) remain open. Both need the live Amazon reading rung. Confirmed this session
@@ -461,7 +470,7 @@ e6c8a0a Immersive reading: fix the rule that hid every floating affordance
 Working tree clean after the fifth. The PR body names every box left open and what is missing
 from each, so the next session does not have to re-derive it.
 
-## 7.3 — every blocker and high finding fixed or refuted
+## 7.3: every blocker and high finding fixed or refuted
 
 64 rows. 58 fixed, 6 refuted, none left open. `docs/audit/merge_resolutions.py` folds the
 per-cluster resolution files into the findings and checks the bar by script, because a campaign

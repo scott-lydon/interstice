@@ -1,6 +1,6 @@
-// 5.2/5.3/5.4/5.7: the prompt-latency indicator increments while waiting (5.2), clears on the
-// response (5.3), fires a distinct arrival notification once per completion (5.4), and does not
-// break the immersive >=90% layout (5.7). Loads the real panel.html and drives the injectable
+// The prompt-latency indicator increments while waiting, clears on the
+// response, fires a distinct arrival notification once per completion, and does not break the
+// immersive >=90% layout. Loads the real panel.html and drives the injectable
 // window.__latency surface with controlled timestamps.
 import { chromium } from '@playwright/test';
 import { pathToFileURL } from 'node:url';
@@ -54,6 +54,6 @@ try {
 
   await browser.close();
   if (fails.length) { console.log('FAIL:\n' + fails.join('\n')); process.exit(1); }
-  console.log('5.2 / 5.3 / 5.4 / 5.7 PASS: indicator increments, clears on response, distinct arrival notice, layout intact');
+  console.log('PASS: indicator increments, clears on response, distinct arrival notice, layout intact');
   process.exit(0);
 } catch (e) { console.log('error:', e.message); await browser.close(); process.exit(2); }

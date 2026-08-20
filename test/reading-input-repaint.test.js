@@ -1,4 +1,4 @@
-// UC-CMT-001. POST /api/reading/input used to sleep a flat 350ms after a click and 250ms after a
+// POST /api/reading/input used to sleep a flat 350ms after a click and 250ms after a
 // key before forcing a capture, with nothing anywhere saying why the two differed or where either
 // number came from. They were the same guess at how long Amazon's reader takes to repaint.
 //

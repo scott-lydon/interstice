@@ -395,8 +395,11 @@ def main():
 
     print("# Recurring_goals selection for Interstice")
     print()
-    print(f"Source tree : `{ROOT}`")
-    print(f"Target repo : `{TARGET}`")
+    # Basenames, not absolute paths: the manifest is committed, and one machine's home
+    # directory in a committed document is noise to every other reader of it. Which trees
+    # these were is set by RECURRING_GOALS_ROOT and TARGET_REPO at run time.
+    print(f"Source tree : `{os.path.basename(ROOT)}` (from RECURRING_GOALS_ROOT)")
+    print(f"Target repo : `{os.path.basename(TARGET)}` (from TARGET_REPO)")
     print(f"Total rules : {len(rows)} across {len(by_sheet)} sheets "
           f"(counted with a CSV reader; `wc -l` overcounts because agent_prompt "
           f"contains newlines)")
@@ -446,7 +449,8 @@ def main():
     for (sheet, applies, reason), n in sorted(cseen.items(), key=lambda kv: -kv[1]):
         print(f"| {sheet} | `{applies[:60]}` | {n} | {reason} |")
     print()
-    print("## Selected row ids")
+    n_routed = sum(1 for _, v, _ in verdicts if v in ("include", "conditional"))
+    print(f"## Row ids routed to workers ({n_routed}: every included row plus every conditional one)")
     print()
     sel = defaultdict(list)
     for r, v, _ in verdicts:

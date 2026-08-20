@@ -1,4 +1,4 @@
-// DI-006. lib/stats.js computes every figure the dashboard shows (gaps, delivered, minutes
+// lib/stats.js computes every figure the dashboard shows (gaps, delivered, minutes
 // reclaimed, median and p90 turn, false-positive rate, stand-down rate, the rung bars) and no test
 // in this tree loaded it. A wrong aggregate would therefore ship in silence, and the numbers on
 // that page are the whole falsifiability claim the module's own header makes.
