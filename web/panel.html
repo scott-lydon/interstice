@@ -849,8 +849,9 @@ async function loadCards() {
 function ankiFixHtml() {
   return '<button class="act primary" id="anki-reconnect" type="button" style="width:100%;margin-top:8px">'
     + 'Reconnect to Anki</button>'
-    + '<div class="why" style="margin-top:6px">Wakes Anki in the background and waits for it. '
-    + 'Nothing comes to the front.</div>'
+    + '<div class="why" style="margin-top:6px">Wakes Anki and waits for it. Its deck list can '
+    + 'flash, because its launcher ignores the flags asking it to start hidden; Interstice puts '
+    + 'it straight back behind everything.</div>'
     + '<div class="why" id="anki-how"></div>';
 }
 

@@ -76,16 +76,16 @@ Five stages. Each hands a fact to the next.
 |---|---|
 | **Detect** | Cowork via a recursive FSEvents watch on the session transcripts. Claude Code via a `UserPromptSubmit` hook. Both push into one queue. No polling. |
 | **Decide** | At 25 seconds the gap is real. The router picks one rung, filtered by live state, and escalates at 3m and 12m if the current rung runs dry. |
-| **Deliver** | One small window, bottom right. The cards, the book, the lists and the capture box all render in it. Anki, Kindle and Notes are read over their own interfaces and never appear. Nothing is ever quit, hidden or closed. |
-| **Reclaim** | Agent finishes or asks for you: your window comes forward, the activity drops behind, the notification says which session and why. |
+| **Deliver** | One small window, bottom right. The cards, the book, the lists and the capture box all render in it. Anki, Kindle and Notes are read over their own interfaces. Nothing is ever quit or closed, and the only thing ever hidden is an Anki that Interstice started itself. |
+| **Reclaim** | Agent finishes or asks for you: your window comes forward, the activity drops behind, the notification says which surface and why. |
 | **Learn** | Every gap is logged and rendered at `http://localhost:7420`. |
 
 ### One window
 
 Everything arrives in the same small panel in the bottom right corner. That is the
 whole interface: no rung ever opens a second window, and no third-party app is ever
-brought to the front to deliver one. Signing in to Amazon is the single exception,
-and it is a recovery path you press rather than anything the router does to you.
+brought to the front to deliver one. Two things you press are exceptions, and the router does
+neither of them to you: signing in to Amazon, and "Open the Kindle app instead".
 
 This is a correction, not a preference. The first build activated Anki, then Kindle,
 then Obsidian, each in turn as the ladder escalated. Four apps taking the screen in
@@ -183,8 +183,9 @@ panel scales the picture down. And it hides Amazon's floating copy of the book
 title, with a stylesheet rather than by deleting the node, because the reader
 rebuilds its own DOM on every page turn.
 
-The browser shuts down after fifteen minutes with no reading in it, and no page is
-written to disk.
+The browser shuts down after fifteen minutes with no reading in it. The only page ever written
+to disk is the JPEG Vision has to be handed in order to read one, in a temporary directory that
+is removed as soon as it answers.
 
 ### The words, not a photograph of the words
 
@@ -298,7 +299,8 @@ one of four states, and three of them the cards rung can fix without you leaving
 panel, so it offers a **Reconnect** button: it starts Anki behind everything with
 `open -g`, turns off App Nap for both of the bundle ids Anki ships under, and then
 waits for the socket rather than declaring it dead at the 800ms the router allows
-itself. Anki never comes to the front.
+itself. Anki's own launcher ignores the flags that ask it to start hidden, so its deck list can
+flash; Interstice puts it straight back behind everything, and the panel says so when it will not go.
 
 The fourth state is yours: the addon is missing, or a dialog inside Anki is holding
 the collection. When that is what it is, the button says so and names the steps.
@@ -474,8 +476,10 @@ A completed 25-minute unbroken focus block earns one star. Configure it under `f
   there is no way to discover one after the fact. With no entries the video breaker reads nothing
   and forfeits nothing; the app and display breakers are unaffected.
 
-**Scope: browsers only.** Video detection covers Chromium-family and Safari browser tabs via
-tab URL plus real play state. Native video apps (a desktop Netflix app, QuickTime) are out of scope.
+**Scope: Chromium-family browsers only.** Video detection reads tab URL plus real play state over
+the DevTools protocol, so it sees any browser you started with `--remote-debugging-port` and listed
+under `focus.videoBrowsers`. Safari exposes no such endpoint and is out of scope, as are native
+video apps (a desktop Netflix app, QuickTime).
 
 ## Privacy
 
