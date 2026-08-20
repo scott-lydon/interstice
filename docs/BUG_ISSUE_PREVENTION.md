@@ -100,18 +100,20 @@ clothes. The reason now quotes both commands it rests on, `git ls-files '*.py'` 
 
 ## Pre-existing dead code, reported rather than deleted (2026-08-20)
 
-Four exported symbols have no reference anywhere in `lib`, `bin`, `web`, `test`, `scripts`,
-`.githooks`, or `docs`. They predate the audits that found them, no change here orphaned them, and
+Five exported symbols have no reference anywhere in `lib`, `bin`, `web`, `test`, `scripts` or
+`.githooks`. They predate the audits that found them, no change here orphaned them, and
 deleting code nobody asked to have deleted is its own risk, so they are recorded here instead. Check
-the list with `grep -rnw '<name>' lib bin web test scripts .githooks docs`, which should return only the
-definition line.
+the list with `grep -rnw '<name>' lib bin web test scripts .githooks`, which should return only
+the definition line. Adding `docs` also matches this table and the audit records, so it is not the
+command to run for this.
 
-| Symbol | Where |
-|---|---|
-| `OFFSETS_FILE` | `lib/paths.js` |
-| `panelCookies` | `lib/amazon-session.js` |
-| `toParagraphs` | `lib/ocr.js` |
+| Symbol | Where | Note |
+|---|---|---|
+| `OFFSETS_FILE` | `lib/paths.js` | |
+| `panelCookies` | `lib/amazon-session.js` | a fossil of the design that carried cookies into the panel profile; the reader profile is what the carry targets now |
+| `toParagraphs` | `lib/ocr.js` | |
 | `RUNGS` | `lib/router.js` | the shipped default ladder order; `validate` checks against `KNOWN_RUNGS` in lib/config.js instead |
+| `readingState` | `lib/state/reading.js` | the sole export of the module, which nothing imports. The question it answers, whether there is a book to go back to, is `bookInProgress` in lib/state/index.js now |
 
 If one of them is deliberately kept for a caller that does not exist yet, say so beside it here. An
 export with no reference and no note is indistinguishable from one that was forgotten.

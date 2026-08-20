@@ -35,5 +35,5 @@ containing its host and got no break.
 
 **Item 3, a block completing on camera, is shown by its result rather than its passage.** A block
 is 25 minutes and the recording is under a minute. What the calendar shows at 17.5s and 22.6s are
-twelve real blocks that really completed today, each 25 minutes apart to the second, with their
+twelve real blocks that really completed on 2026-08-20, each 25 minutes apart to the second, with their
 real start and end times legible when a star is activated.

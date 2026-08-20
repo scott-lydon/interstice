@@ -77,9 +77,10 @@ Two lines are worth reading rather than skimming:
   off until you list a browser started with `--remote-debugging-port`. Note the name: it asks
   whether the endpoint is there, not whether a play state can be read through it. That is
   `node test/video-breaker.pw.mjs`, which drives a real browser playing a real file.
-- **`the reading rung can open a book`** reports on the browser, the port and the session
-  separately. It can be green while the book still does not open, because it checks preconditions;
-  step 8 is the real test.
+- **`the reading rung's preconditions hold`** reports on the browser, the port and the session
+  separately, and is named for what it does. It can be green while the book still does not open,
+  because a browser being installed is not the same as a browser that works; step 8 is the real
+  test.
 
 ## 5. The panel, and the reading layout
 
