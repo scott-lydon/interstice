@@ -488,8 +488,9 @@ reads, stores, transmits or logs the content of your prompts or the agent's repl
 
 To render the rungs it does read content: your due cards, the title and position of
 your current book, and the text of the to-do lists it finds. None of it leaves the
-machine. Nothing is written back to Notes or Kindle, and the one write anywhere is the card
-review you answer, which lands in Anki's collection exactly as answering it in Anki would. It does stay on this
+machine. Nothing is written back to Notes or Kindle. Two things are written outside `logs/`:
+the card review you answer, which lands in Anki's collection exactly as answering it in Anki
+would, and the App Nap preference on Anki's two bundle ids, described under the traps below. It does stay on this
 Mac, under `logs/`. This is everything Interstice itself writes there:
 
 | file | what it holds |
