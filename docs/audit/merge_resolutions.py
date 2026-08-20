@@ -61,11 +61,29 @@ if "--conditionals" in sys.argv:
     sys.exit(0)
 
 merged = 0
-for p in sorted(glob.glob(os.path.join(HERE, "resolutions", "*.json"))):
+# Only the rule-resolution files. `resolutions/` also holds the professionalism-scan records,
+# which are keyed by finding number rather than by row_id: folding those in made this script abort
+# on its own inputs, and it is the script 7.3 is checked with. Named explicitly rather than
+# pattern-matched, so a new file has to be classified rather than silently included or skipped.
+RULE_FILES = {"a11y.json", "copy-design.json", "js-quality.json", "ops-ci.json",
+              "process.json", "universal.json", "ux-interaction.json"}
+NOT_RULE_FILES = {"professionalism.json", "professionalism-2.json"}
+
+present = {os.path.basename(p) for p in glob.glob(os.path.join(HERE, "resolutions", "*.json"))}
+unclassified = present - RULE_FILES - NOT_RULE_FILES
+if unclassified:
+    raise SystemExit(
+        f"FATAL: unclassified resolution file(s): {sorted(unclassified)}.\n"
+        "  Add each to RULE_FILES (keyed by row_id) or NOT_RULE_FILES (keyed by something else).\n"
+        "  A file nobody classified is one whose rows might be silently missing from the check."
+    )
+
+for name in sorted(RULE_FILES & present):
+    p = os.path.join(HERE, "resolutions", name)
     for rid, res in json.load(open(p)).items():
         if rid not in findings:
             raise SystemExit(f"FATAL: {os.path.basename(p)} resolves {rid}, which is not a finding.")
-        res["source"] = os.path.basename(p)
+        res["source"] = name
         findings[rid]["resolution"] = res
         merged += 1
 json.dump(findings, open(os.path.join(HERE, "findings_merged.json"), "w"), indent=1)
