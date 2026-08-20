@@ -83,8 +83,9 @@ Five stages. Each hands a fact to the next.
 ### One window
 
 Everything arrives in the same small panel in the bottom right corner. That is the
-whole interface: there is no second window, and no third-party app is ever brought
-to the front.
+whole interface: no rung ever opens a second window, and no third-party app is ever
+brought to the front to deliver one. Signing in to Amazon is the single exception,
+and it is a recovery path you press rather than anything the router does to you.
 
 This is a correction, not a preference. The first build activated Anki, then Kindle,
 then Obsidian, each in turn as the ladder escalated. Four apps taking the screen in
@@ -341,8 +342,9 @@ interstice simulate <sec>  Drive a synthetic gap of N seconds. Debug route.
 ## Debug route
 
 Real gaps depend on an agent actually running, which makes some states slow to reach.
-`interstice simulate` and the `/debug` page drive the daemon into any state directly:
-arm a gap, force any rung, trigger reclaim, fire a veto. Nothing there fabricates log
+`interstice simulate` and the `/debug` page drive the daemon into states that are slow
+to reach for real: arm a gap, walk the ladder, trigger reclaim, force any companion
+verdict. Nothing there fabricates log
 data; simulated gaps are tagged `synthetic: true` and excluded from the statistics.
 
 ## Configuration
@@ -386,7 +388,7 @@ this project can least afford. `doctor` proves each of them rather than assuming
 | Notes' own store is TCC protected | a direct read of `NoteStore.sqlite` returns "Operation not permitted" | Notes is read over Apple events, which needs only the Automation grant that is already required |
 | Reading Notes one property at a time | it works, so nothing looks wrong; it just gets slower with every note you own. Timed once here, 40 notes took 104 seconds | properties are fetched in bulk, one Apple event per property for the whole library, which returned in 0.3 seconds on that same reading |
 | Chrome drops window flags passed to an already-running instance | the panel opens somewhere other than where it was placed | the panel runs in its own `--user-data-dir`, so the flags reach a process that will honour them |
-| The LaunchAgent names a Homebrew node by version | `brew upgrade node` deletes that Cellar directory, the job then fails at every login, and the only symptom is Interstice never appearing, which looks like a quiet day | `install` writes the stable symlink after proving it is node 20 or newer, and `doctor` fails if the plist points at a path that is gone or versioned |
+| The LaunchAgent names a Homebrew node by version | `brew upgrade node` deletes that Cellar directory, the job then fails at every login, and the only symptom is Interstice never appearing, which looks like a quiet day | `install` writes the stable symlink after proving it is node 22 or newer, and `doctor` fails if the plist points at a path that is gone or versioned |
 | Be Focused publishes no timer state | it is not scriptable, its group container holds no running interval, and its status item has no `AXTitle`, so any state you infer from the app is a guess | the menu bar countdown is photographed three times, a second apart; a running timer differs across every pair and a paused one across none |
 | Something crosses the menu bar mid-reading | one changed pair looks exactly like one tick, so a window going full screen reads as a running timer | three samples, an obstruction check before any capture, and `unknown` for a mixed result |
 | Music refuses the Automation grant | the error reads as "nothing is loaded", which is a state, so the panel would nag you about music you have on | `-1743` is separated from a genuine empty player and reported as `unknown`, which never warns |
@@ -483,7 +485,7 @@ reads, stores, transmits or logs the content of your prompts or the agent's repl
 To render the rungs it does read content: your due cards, the title and position of
 your current book, and the text of the to-do lists it finds. None of it leaves the
 machine and none of it is written back to Anki, Notes or Kindle. It does stay on this
-Mac, under `logs/`, and here is everything that lands there:
+Mac, under `logs/`. This is everything Interstice itself writes there:
 
 | file | what it holds |
 |---|---|
@@ -494,9 +496,15 @@ Mac, under `logs/`, and here is everything that lands there:
 | `stars.jsonl` | one line per focus block you completed, with its start and end |
 | `gaps.jsonl`, `events.jsonl`, `hook-events.jsonl` | gap timings and rung decisions, never prompt or reply text |
 | `control-token` | the local API token, mode 0600 |
+| `reader-profile/` | a Chrome profile of its own, holding the carried amazon.com cookies. The most sensitive thing here, and the reason `carrySession: false` and deleting this directory are both documented above |
+| `panel-profile/` | a second Chrome profile, for the panel window itself. No account, no cookies worth anything |
+| `daemon.log`, `launchd.out.log`, `launchd.err.log` | operational lines: what started, what a rung decided, what failed. No prompt or reply text |
+| `interstice.pid`, `panel.pid` | process ids, so a second start does not race the first |
 
 `logs/` is gitignored, so none of it is committed, and `interstice uninstall` leaves it
-in place rather than deciding for you.
+in place rather than deciding for you. It is an ordinary directory rather than a
+private one, so a tool you point at it can leave files of its own alongside these;
+nothing above is written by anything but Interstice.
 
 Two exceptions to "nothing leaves the machine": AnkiConnect on localhost, and
 Amazon's own reader, which the reading rung loads in a browser of its own to draw
