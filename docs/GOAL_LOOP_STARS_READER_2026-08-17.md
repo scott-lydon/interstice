@@ -591,7 +591,7 @@ path). This phase surfaces that knowledge inside the panel.
 - [x] **5.7 The indicator does not break the immersive layout.** With the timer visible, the
   page region still meets the ≥90% contract from 2A.2.
   - Verify: the 2C.1 measurement script re-run with an active timer still asserts ≥90%.
-- [ ] **5.8 Conversational smoke test on the live path.** Per the project rule, before
+- [x] **5.8 Conversational smoke test on the live path.** Per the project rule, before
   calling any LLM-driven path demo-ready, run two real prompts in sequence: a substantive
   one, then an immediate follow-up requiring prior-turn context. Confirm the timer starts
   and clears correctly for **both**, and that the second is not treated as a repeat of the

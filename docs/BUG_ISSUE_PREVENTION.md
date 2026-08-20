@@ -115,3 +115,23 @@ definition line.
 
 If one of them is deliberately kept for a caller that does not exist yet, say so beside it here. An
 export with no reference and no note is indistinguishable from one that was forgotten.
+
+## The video breaker could not see any video (2026-08-20)
+
+**Cause.** `probeVideo` evaluated its play-state expression with `t.sessionId`, taken from
+`Target.getTargets`. That call returns target infos and no sessionId at all, so the value was
+always `undefined` and the evaluate went to the browser-level session, where there is no page and
+no `Runtime` domain. Chrome answers `'Runtime.evaluate' wasn't found`, the surrounding catch turned
+that into `playing = false`, and every tab in every browser was reported as not playing, forever.
+Success condition 5 was unreachable.
+
+Its unit tests all passed throughout, because the fake session handed back a sessionId from
+`getTargets` and matched on it. The stub had invented a protocol, and the probe agreed with the
+stub rather than with a browser.
+
+**Prevention.** When a module speaks a wire protocol, at least one test has to speak it to a real
+implementation. A stub is free to be wrong in exactly the way the code is wrong, and then the
+green suite is evidence of nothing. `test/video-breaker.pw.mjs` now drives a real Chromium with a
+real debugging port and a real decoded video file, and the stub in `test/video-probe.test.js`
+models the real handshake (attach, evaluate, detach) including throwing the way a real browser
+throws when you skip the attach.

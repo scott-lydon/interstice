@@ -532,3 +532,39 @@ against the known panel-size drift, and on being fixed it failed again on a bina
 that had also gone stale. That is the test doing its job on its first run.
 
 Suite: 336 passing, 0 failing, `npm test` exits 0. It was 275 at the start of the session.
+
+## 5.8, conversational smoke test on the live path
+
+Two real prompts, run through the real hooks into the real daemon. Nothing simulated: the hooks
+registered in `~/.claude/settings.json` are this repo's own `hooks/on-submit.sh` and
+`hooks/on-stop.sh`, they append to `logs/hook-events.jsonl`, the daemon's HookSource reads that,
+and `lib/latency.js` is fed from the same events the engine sees. The timings below are read back
+from `GET /api/focus`, which reports the daemon's own clock rather than anything the test kept.
+
+Full transcript at `docs/audit/smoke-test-5.8.log`. The two cycles:
+
+| | turn one | turn two (`--continue`) |
+|---|---|---|
+| timer started | `2026-08-20T14:30:25.916Z`, seen 84ms in | `2026-08-20T14:30:41.939Z`, seen 61ms in |
+| submitted | `14:30:25.880Z` | `14:30:41.903Z` |
+| arrived | `14:30:35.629Z` | `14:30:55.743Z` |
+| elapsed | 9,749ms | 13,840ms |
+| cleared | `waiting = []` | `waiting = []` |
+
+Two distinct cycles, not one repeated: different submit, different arrival, different elapsed, and
+the timer returned to empty between them.
+
+The second turn genuinely required the first's context, which is the part of this item that a
+canned pair of prompts would not test. It asked "what single function in that same file did I just
+ask you about", naming neither the file nor the function, and the answer came back
+`createFocusTracker` in `lib/focus/tracker.js`. It could only resolve "that same file" from the
+prior turn.
+
+Both turns ran in one session (`42a74228-9461-4bd7-bf41-0befe274d2e6`), which is what `--continue`
+means and is why the second is a follow-up rather than a fresh conversation. The clock still
+separates them because it pairs a submit with its own completion rather than keying on the session
+alone.
+
+Worth recording, since it was visible while setting this up: the daemon was already timing a real
+in-flight prompt from the session driving this work before the test started, which is the same
+mechanism answering for a third party. The clock was not stood up for the test.
