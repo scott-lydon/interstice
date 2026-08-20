@@ -18,9 +18,9 @@
     --ground: #F1F3F5; --raised: #FFFFFF; --sunk: #E4E8EC;
     /* ink */
     --ink: #12161C; --muted: #5A6673; --faint: #5E6977;
-    /* lines. --rule is a divider, drawn to be barely there: 1.32:1 on the ground. As the
-       only boundary of a button or a field that is under the 3:1 WCAG 1.4.11 bar for an
-       interface component, so interactive edges get their own token, measured at 3.2:1
+    /* --rule is a divider, drawn to be barely there: 1.32:1 on the ground. That is under the
+       3:1 WCAG 1.4.11 bar for an interface component, so it cannot be the only boundary of a
+       button or a field. Interactive edges get --edge instead, measured at 3.2:1 or better
        against every surface in both themes. */
     --rule: #CFD6DD; --edge: #6D8298;
     /* accent. --on-accent is the label that sits on a filled accent button; #fff
@@ -246,12 +246,12 @@
   }
   .latency-chip.show { display: inline-block; }
   /* The arrival notification is visually and structurally distinct: filled, accented, brief.
-     It sits beside the chip rather than on it: with two prompts in flight, one arriving must not
-     hide the timer still counting for the other, and the arrival has to stay its own
-     distinct notification, which it cannot be while it is covering the thing it is
-     distinct from. It sits beside the chip rather than under it, because the forfeit banner owns
-     the full width of the row below and never auto-hides, so anything parked there is covered for
-     the rest of the session once a block forfeits. */
+     It sits beside the chip, not on it and not under it. Not on it, because with two prompts in
+     flight one arriving must not hide the timer still counting for the other, and an arrival
+     cannot be its own distinct notification while it covers the thing it is distinct from. Not
+     under it, because the forfeit banner owns the full width of the row below and never
+     auto-hides, so anything parked there is covered for the rest of the session once a block
+     forfeits. */
   .arrival-note {
     position: absolute; top: 8px; left: 108px; z-index: 26; display: none;
     font: 600 10px/1 var(--display); text-transform: uppercase; letter-spacing: .1em;
@@ -499,7 +499,7 @@
     <!-- ---------------------------------------------------------------- cards -->
     <section class="view" id="view-flashcards">
       <div>
-        <div class="label">Least studied deck</div>
+        <div class="label" id="deck-label">Least studied deck</div>
         <h2 id="deck-name">&nbsp;</h2>
         <div class="why" id="deck-why"></div>
         <div id="deck-fix"></div>
@@ -718,12 +718,22 @@ function setView(name, { fromServer = false } = {}) {
 let queue = [];
 let cardIndex = 0;
 let answering = false;
+// How many cards the deck actually has due, which is not how many the panel loaded: the queue is
+// capped at `anki.queueSize`. Held so the end of the queue can tell the truth about which it was.
+let deckDue = 0;
 
 function renderCard(revealed) {
   const card = queue[cardIndex];
   const frame = $('cardframe');
   if (!card) {
-    frame.innerHTML = '<div class="empty" style="padding:16px">Deck finished. Nothing else is due here.</div>';
+    // Not "deck finished": the queue is capped at `anki.queueSize`, so a deck with more due
+    // cards than that runs out here with work still waiting in Anki.
+    const more = deckDue > queue.length;
+    frame.innerHTML = '<div class="empty" style="padding:16px">'
+      + (more
+        ? 'That is everything this panel took from the deck. Open Cards again for the next batch.'
+        : 'Deck finished. Nothing else is due here.')
+      + '</div>';
     $('card-controls').hidden = true;
     $('ease').hidden = true;
     $('card-meta').textContent = '';
@@ -826,10 +836,19 @@ async function loadCards() {
     // "<n> reviews per due card, the lowest of <m> decks with anything due · <k> due here of
     // <t> overall", which carried a ranking and a count in the same breath, and the middot in
     // the middle of it read as a third clause rather than a break.
+    // The chosen deck is the least studied one only when nothing is configured. `reason` and
+    // `rank` are computed for exactly this, and asserting the superlative regardless is a claim
+    // the API next to it contradicts.
+    deckDue = d.metric.due;
+    const leastStudied = d.reason === 'least_studied';
+    const decks = d.metric.decksWithDue + (d.metric.decksWithDue === 1 ? ' deck' : ' decks');
+    $('deck-label').textContent = leastStudied ? 'Least studied deck' : 'Your configured deck';
     $('deck-why').innerHTML =
       esc(d.metric.meanReps + (d.metric.meanReps === 1 ? ' review' : ' reviews')
-        + ' per due card, the fewest of your ' + d.metric.decksWithDue
-        + (d.metric.decksWithDue === 1 ? ' deck' : ' decks') + ' with work waiting.')
+        + ' per due card, '
+        + (leastStudied
+          ? 'the fewest of your ' + decks + ' with work waiting.'
+          : 'ranked ' + d.metric.rank + ' of your ' + decks + ' with work waiting.'))
       + '<div>' + esc(d.metric.due + ' of your ' + d.totalDue + ' due cards are here.') + '</div>';
     renderCard(false);
     say('');
@@ -2306,9 +2325,9 @@ window.addEventListener('load', () => {
   }
   // `showDay` steps day view into a day of another month: the stars of the month it belongs to
   // have to be loaded before that day can be rendered, or the day reads empty when it is not.
-  // While the month is in flight, and if it never arrives. Sending an unreachable route
-  // to the empty branch printed "No stars earned this month yet.", which is a claim about
-  // your history made from a request that was never answered.
+  // A month has three states, not two: loaded, in flight, and never answered. Sending an
+  // unreachable route to the empty branch printed "No stars earned this month yet.", which is a
+  // claim about your history made from a request that was never answered.
   function _calLoading(yyyyMM) {
     document.getElementById('cal-title').textContent = `Stars in ${yyyyMM}`;
     document.getElementById('cal-count').innerHTML = '<span class="spinner"></span> reading your stars';

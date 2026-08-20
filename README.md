@@ -214,10 +214,12 @@ part that is easy to get wrong, and four signals do it, none of which works alon
   over four of prose has no heading at all, and the title joins the first paragraph.
 - **A trailing hyphen is a word the renderer broke**, so it is rejoined. `--`, which
   this book uses for an em dash, is not that and is left alone.
+- **A gap wider than the usual line spacing ends a block**, measured per kind, because
+  a heading's lines sit further apart than a paragraph's and one threshold for the
+  whole page would either split every heading or join every paragraph.
 
-The picture stays one press away inside the reading menu, and it comes forward by itself when
-the
-reading was not confident: a diagram, an equation, or one of Amazon's own dialogs
+The picture stays one press away inside the reading menu, and it comes forward by itself
+when the reading was not confident: a diagram, an equation, or one of Amazon's own dialogs
 over a blurred page is exactly the thing you need to look at rather than read a
 confident transcription of.
 
