@@ -101,9 +101,18 @@
   body.immersive header,
   body.immersive footer { display: none; }
   body.immersive main { padding: 0; overflow: hidden; }
+  /* The setup check is a sibling of <main>, so the rule below that displaces the reading view's
+     own chrome never reached it: while reading it sat above the page and took up to 40vh of it.
+     It is displaced like everything else, and it is still there in full inside the open menu. */
+  body.immersive #companions { display: none; }
+  body.immersive .reader-menu-overlay.open #companions.show { display: block; }
   body.immersive #view-reading { gap: 0; height: 100%; }
-  /* Everything in the reading view except the page and the menu is displaced behind the menu. */
-  body.immersive #view-reading > :not(#reader):not(.reader-menu):not(.reader-menu-overlay) { display: none; }
+  /* Everything in the reading view except the page and the menu is displaced behind the menu.
+     The floating affordances are named here rather than left to their own rules: this selector
+     carries an id and three classes, so it outranks every `body.immersive .thing { display: … }`
+     below it, and the pager, the calendar, the latency chip, the arrival note and the forfeit
+     banner all computed to `display: none` even with their own state class applied. */
+  body.immersive #view-reading > :not(#reader):not(.reader-menu):not(.reader-menu-overlay):not(.reader-pager-overlay):not(.reader-hint):not(.star-cal-overlay):not(.latency-chip):not(.arrival-note):not(.forfeit-note) { display: none; }
   body.immersive #reader { border-radius: 0; border: 0; }
   /* The single menu affordance: one always-visible button, top-right. */
   .reader-menu { display: none; }
@@ -114,6 +123,11 @@
     font-size: 17px; cursor: pointer; backdrop-filter: blur(4px);
   }
   .reader-menu:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* The trigger stands down while the menu it opened is showing. At z-index 30 it sat over the
+     overlay's own Close button at 29 and swallowed the top-right corner of it, including the
+     glyph itself, and it is bound to open with no toggle, so clicking the visible dismiss mark
+     did nothing. It has nothing to offer while the thing it opens is already open. */
+  body.immersive #view-reading:has(.reader-menu-overlay.open) .reader-menu { display: none; }
   /* An auto-hiding pager overlay so page-turn works without opening the menu (2C.3). */
   .reader-pager-overlay { display: none; }
   body.immersive .reader-pager-overlay {
@@ -125,6 +139,23 @@
   body.immersive #reader:hover ~ .reader-pager-overlay,
   body.immersive .reader-pager-overlay:hover,
   body.immersive .reader-pager-overlay:focus-within { opacity: 1; }
+  /* Where you are, in the pager itself. The page label lives in #reader-page, which the menu
+     takes with it when it opens, so while reading there was nothing on screen saying the page. */
+  .reader-pager-overlay .now { align-self: center; padding: 0 4px; color: var(--ink); white-space: nowrap; }
+  /* The arrows are the page-turn that always works, and nothing said so. Quiet, persistent, and
+     out of the page's box, exactly as the design artifact carries it. */
+  .reader-hint { display: none; }
+  body.immersive .reader-hint {
+    display: block; position: absolute; left: 10px; bottom: 44px; z-index: 24;
+    font: 600 9px/1.3 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+  }
+  /* An overlay is the thing you are looking at: the affordances for the page underneath step
+     aside rather than float on top of it. */
+  body.immersive #view-reading:has(.reader-menu-overlay.open) .reader-pager-overlay,
+  body.immersive #view-reading:has(.reader-menu-overlay.open) .reader-hint,
+  body.immersive #view-reading:has(.star-cal-overlay.open) .reader-pager-overlay,
+  body.immersive #view-reading:has(.star-cal-overlay.open) .reader-hint { display: none; }
   /* The menu overlay: opened by the button, holds everything displaced. */
   .reader-menu-overlay { display: none; }
   body.immersive .reader-menu-overlay.open {
@@ -133,6 +164,10 @@
     backdrop-filter: blur(8px);
   }
   .reader-menu-overlay .om-close { align-self: flex-end; }
+  /* Was an inline style, which no stylesheet rule can outrank: it kept #book-actions on
+     screen while immersive, overlapping the pager and costing the page 33px of the >=90%
+     contract. Inline styles are unreachable by the displacement rule, so it lives here. */
+  #book-actions { display: flex; flex-direction: column; gap: 6px; }
   /* Prompt-latency indicator (Phase 5): a quiet chip, never in the page's way (position:absolute
      so it does not change the #reader box, satisfying the >=90% contract while visible). */
   .latency-chip {
@@ -142,9 +177,15 @@
     border: 1px solid var(--rule); border-radius: 999px; padding: 5px 9px; backdrop-filter: blur(4px);
   }
   .latency-chip.show { display: inline-block; }
-  /* The arrival notification is visually and structurally distinct: filled, accented, brief. */
+  /* The arrival notification is visually and structurally distinct: filled, accented, brief.
+     It sits below the chip rather than on it: with two prompts in flight, one arriving must not
+     hide the timer still counting for the other, and success condition 6 asks for the arrival to
+     be its own distinct notification, which it cannot be while it is covering the thing it is
+     distinct from. It sits beside the chip rather than under it, because the forfeit banner owns
+     the full width of the row below and never auto-hides, so anything parked there is covered for
+     the rest of the session once a block forfeits. */
   .arrival-note {
-    position: absolute; top: 8px; left: 8px; z-index: 26; display: none;
+    position: absolute; top: 8px; left: 108px; z-index: 26; display: none;
     font: 600 10px/1 "Avenir Next Condensed", sans-serif; text-transform: uppercase; letter-spacing: .1em;
     color: var(--ground); background: var(--accent); border-radius: 999px; padding: 6px 10px;
   }
@@ -172,9 +213,16 @@
     padding: 16px; overflow-y: auto; overscroll-behavior: contain;
     background: color-mix(in srgb, var(--ground) 94%, transparent); backdrop-filter: blur(8px);
   }
-  .star-cal-overlay header { position: sticky; top: -16px; background: var(--ground);
+  /* `body.immersive header` matches any <header>, this one included, and outranked a bare
+     `.star-cal-overlay header`: the calendar opened with its title and its close control
+     display:none. Named with the same weight so the dialog keeps a sticky header and the way
+     out stays one click away at any scroll position. */
+  body.immersive .star-cal-overlay header, .star-cal-overlay header {
+    position: sticky; top: -16px; z-index: 1; background: var(--ground);
     padding: 4px 0; display: flex; align-items: center; gap: 8px; justify-content: space-between; }
   .star-cal-overlay h3 { margin: 0; font-size: 14px; letter-spacing: .02em; }
+  /* The total, so "how am I doing this month" is read rather than counted across 31 cells. */
+  .star-cal-overlay .cal-count { font: 500 10px/1 system-ui; color: var(--muted); margin-right: auto; }
   .cal-controls { display: flex; gap: 6px; align-items: center; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
   .cal-dow { font: 600 9px/1 system-ui; text-transform: uppercase; letter-spacing: .08em;
@@ -421,14 +469,16 @@
         <span id="reader-note-text"></span>
         <button class="act" id="read-again" type="button" style="padding:2px 8px">Read it again</button>
       </div>
-      <div id="book-actions" style="display:flex; flex-direction:column; gap:6px"></div>
+      <div id="book-actions"></div>
       <!-- Immersive affordances (Phase 2C): shown only while body.immersive. -->
       <div class="latency-chip" id="latency-chip" aria-live="polite"></div>
       <div class="arrival-note" id="arrival-note" role="status">Response landed</div>
       <div class="forfeit-note" id="forfeit-note" role="alert" aria-live="assertive"></div>
       <button class="reader-menu" id="reader-menu" type="button" aria-label="Reading menu" aria-expanded="false" aria-controls="reader-menu-overlay">&#8943;</button>
+      <div class="reader-hint">&#8592; &#8594; turn the page</div>
       <div class="reader-pager-overlay" aria-label="Turn the page">
         <button class="act" id="page-prev-imm" type="button">&#8249; Back</button>
+        <span class="mono now" id="page-now-imm" aria-live="polite"></span>
         <button class="act" id="page-next-imm" type="button">Next &#8250;</button>
       </div>
       <div class="reader-menu-overlay" id="reader-menu-overlay" role="dialog" aria-modal="true" aria-label="Reading menu">
@@ -439,6 +489,7 @@
       <div class="star-cal-overlay" id="star-cal-overlay" role="dialog" aria-modal="true" aria-label="Star calendar">
         <header>
           <h3 id="cal-title">Stars</h3>
+          <span class="cal-count" id="cal-count"></span>
           <div class="cal-controls">
             <button class="act" id="cal-prev" type="button" aria-label="Previous month">&#8249;</button>
             <button class="act" id="cal-view-toggle" type="button">Day view</button>
@@ -509,7 +560,14 @@ function setView(name, { fromServer = false } = {}) {
   if (leaving === 'reading' && name !== 'reading') stopReader();
   for (const s of document.querySelectorAll('.view')) s.classList.toggle('active', s.id === 'view-' + name);
   document.body.classList.toggle('immersive', name === 'reading');
-  if (name !== 'reading' && typeof closeReaderMenu === 'function' && document.getElementById('reader-menu-overlay')?.classList.contains('open')) closeReaderMenu();
+  // Restore the displaced elements BEFORE the reading view goes dark, or they are hidden with it,
+  // and shut BOTH overlays. The star calendar is the second one: left open, it survives the view
+  // change and repaints a full-panel dialog over the page on the way back, with no keyboard route
+  // out, because its only Escape handler is bound to the overlay that no longer holds focus.
+  if (name !== 'reading') {
+    if (document.getElementById('reader-menu-overlay')?.classList.contains('open')) window.__closeReaderMenu?.();
+    if (document.getElementById('star-cal-overlay')?.classList.contains('open')) window.__closeStarCal?.();
+  }
   for (const b of document.querySelectorAll('#rungs button')) {
     b.setAttribute('aria-current', String(b.dataset.view === name));
   }
@@ -1002,6 +1060,7 @@ function renderReader(d) {
   }
   if (readerFailed) {
     $('reader-page').textContent = '';
+    $('page-now-imm').textContent = '';
     return;
   }
 
@@ -1026,6 +1085,8 @@ function renderReader(d) {
   $('reader-page').textContent = d.signedOut
     ? 'sign in'
     : (d.label || '') + (readerShelf?.ahead > 0 ? '  ·  ' + readerShelf.ahead + ' ready' : '');
+  // The same position, in the immersive pager, where the label is all that fits.
+  $('page-now-imm').textContent = d.signedOut ? 'sign in' : (d.label || '');
 
   if (d.seq && d.seq !== readerSeq) {
     readerSeq = d.seq;
@@ -1632,7 +1693,14 @@ document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
 
   if (currentView === 'reading') {
+    // The star calendar covers the page and shows no position anywhere, so a turn under it
+    // moved the reader with nothing on screen saying so. The calendar keeps its own keys.
+    // The reading menu is deliberately not guarded: item 2C.3 requires arrows to keep
+    // working with it open, and it can, because the menu is where #reader-page is displaced
+    // to, so the position change stays visible while it turns.
+    const calOpen = Boolean(document.querySelector('#view-reading .star-cal-overlay.open'));
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      if (calOpen) return;
       e.preventDefault();
       turnPage(e.key === 'ArrowLeft' ? 'prev' : 'next');
       return;
@@ -1678,7 +1746,37 @@ async function beat() {
       // it was dismissed in.
       loadCompanions({ force: true });
     }
+    applyFocusBeat(d);
   } catch { /* daemon restarting */ }
+}
+
+// The daemon is the only thing that knows a block forfeited or a prompt is still in flight, so
+// the panel learns both from the heartbeat and renders them through the same surfaces the tests
+// drive. `_seenForfeitAt` keeps the banner from re-raising itself every 1500ms for one forfeit.
+let _seenForfeitAt = null;
+let _seenDeliveryAt = null;
+function applyFocusBeat(d) {
+  const f = d.focus;
+  if (f && f.lastForfeit && f.lastForfeit.at !== _seenForfeitAt) {
+    _seenForfeitAt = f.lastForfeit.at;
+    window.__focus.forfeit(f.lastForfeit);
+  }
+  const lat = d.latency;
+  if (!lat) return;
+  // Feed the existing latency surface rather than a second one: `window.__latency` already owns
+  // the chip's format, its ticking timer and the arrival note, and its own comment says a real
+  // event calls it while a test calls it directly. This is that real event finally arriving.
+  const live = new Set();
+  for (const w of lat.waiting || []) {
+    live.add(w.sessionId);
+    if (!window.__latency.waiting(w.sessionId)) window.__latency.submit(w.sessionId, Date.now() - w.elapsedMs);
+  }
+  if (lat.lastDelivery && lat.lastDelivery.arrivedAt !== _seenDeliveryAt) {
+    _seenDeliveryAt = lat.lastDelivery.arrivedAt;
+    // `complete` no-ops on a session it never saw, so a delivery whose submit predates this
+    // window raises nothing rather than a phantom notification.
+    window.__latency.complete(lat.lastDelivery.sessionId);
+  }
 }
 
 setInterval(beat, 1500);
@@ -1723,6 +1821,13 @@ window.addEventListener('load', () => {
     document.getElementById('reader-menu').setAttribute('aria-expanded', 'false');
     (readerMenuLastFocus || document.getElementById('reader-menu')).focus();
   }
+  // Published so `setView` can reach it. Both menu functions are declared inside this load
+  // callback, so `setView`'s own `typeof closeReaderMenu === 'function'` guard was never true:
+  // leaving the reading view with the menu open left all eight displaced elements parked inside
+  // `#reader-menu-slot`, which the departing view then hid, taking the rung ladder and the footer
+  // with it. Pressing a rung button from inside the menu is the ordinary way to hit that, and a
+  // delivery arriving does it with no click at all, because `beat()` calls `setView` too.
+  window.__closeReaderMenu = closeReaderMenu;
   document.getElementById('reader-menu')?.addEventListener('click', openReaderMenu);
   document.getElementById('reader-menu-close')?.addEventListener('click', closeReaderMenu);
   document.getElementById('reader-menu-overlay')?.addEventListener('keydown', (e) => {
@@ -1799,7 +1904,12 @@ window.addEventListener('load', () => {
       const words = _causeWords[cause] || cause;
       el.innerHTML = '<button class="fn-dismiss" type="button" aria-label="Dismiss">&times;</button>'
         + `Block forfeited at <span class="fn-when">${_wallClock(record.at)}</span>: `
-        + `<span class="fn-cause" data-cause="${cause}">${words}</span>.`;
+        + `<span class="fn-cause" data-cause="${cause}">${words}</span>. `
+        // The minutes lost are the whole reason this stings, and the record already carries them.
+        // Naming what happens next matters as much: without it the banner reads as a punishment
+        // rather than a status, and a reader who thinks the day is spoiled stops reading.
+        + `<span class="fn-lost">${Math.round((record.elapsedMs || 0) / 60000)} minutes lost.</span> `
+        + `A fresh block starts on the next clear check.`;
       el.classList.add('show');
       el.querySelector('.fn-dismiss').onclick = () => el.classList.remove('show');
     },
@@ -1813,30 +1923,51 @@ window.addEventListener('load', () => {
   function _openStarCal() {
     document.getElementById('star-cal-overlay').classList.add('open');
     document.getElementById('cal-close').focus();
-    // If nothing has been rendered yet, try the live surface; fall back to an empty month.
-    if (_cal.key === null) _loadStarCal(_thisMonth());
+    // Always re-ask, and always open on the month that contains today. Loading only when nothing
+    // had been rendered yet meant a star earned during the session stayed invisible until the
+    // panel reloaded. Deriving the month from `_cal.key` instead is wrong twice over: in day view
+    // that key is a full date, which the server rejects as `bad_date`, and in month view it is
+    // wherever the last session happened to page to, not where the reader is now.
+    _loadStarCal(_today().slice(0, 7));
   }
   function _closeStarCal() {
     document.getElementById('star-cal-overlay').classList.remove('open');
-    document.getElementById('reader-menu')?.focus();
+    // Back to the button that opened it, not to the menu trigger two layers out.
+    (document.getElementById('open-star-cal') || document.getElementById('reader-menu'))?.focus();
+  }
+  function _today() {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
   }
   function _thisMonth() {
-    // Derived from the newest star if present, else left null so callers can pass one in.
+    // Derived from the newest star if present, then from whatever is already on screen, and
+    // finally from the actual calendar. Returning null here was a false zero: the first open
+    // short-circuited before any fetch and asserted "no stars earned yet" without ever asking.
     if (_cal.stars.length) return _cal.stars[_cal.stars.length - 1].day.slice(0, 7);
-    return _cal.key || null;
+    return _cal.key || _today().slice(0, 7);
   }
-  async function _loadStarCal(yyyyMM) {
+  // `showDay` steps day view into a day of another month: the stars of the month it belongs to
+  // have to be loaded before that day can be rendered, or the day reads empty when it is not.
+  async function _loadStarCal(yyyyMM, showDay = null) {
     if (!yyyyMM) { _renderStarCal('month', null, []); return; }
     try {
       const r = await fetch(`/api/stars/month?month=${yyyyMM}`);
       const body = await r.json();
-      _renderStarCal('month', yyyyMM, Array.isArray(body.stars) ? body.stars : []);
-    } catch { _renderStarCal('month', yyyyMM, []); } // offline/file:// — honest empty, never stubbed
+      const stars = Array.isArray(body.stars) ? body.stars : [];
+      if (showDay) _renderStarCal('day', showDay, stars); else _renderStarCal('month', yyyyMM, stars);
+    } catch { // offline/file:// — honest empty, never stubbed
+      if (showDay) _renderStarCal('day', showDay, []); else _renderStarCal('month', yyyyMM, []);
+    }
   }
   function _shiftMonth(yyyyMM, delta) {
     let [y, m] = yyyyMM.split('-').map(Number);
     m += delta; if (m < 1) { m = 12; y -= 1; } if (m > 12) { m = 1; y += 1; }
     return `${y}-${String(m).padStart(2, '0')}`;
+  }
+  function _shiftDay(yyyyMMdd, delta) {
+    const [y, m, d] = String(yyyyMMdd).split('-').map(Number);
+    const t = new Date(Date.UTC(y, m - 1, d + delta));
+    return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
   }
   function _reveal(star) {
     const r = document.getElementById('cal-reveal');
@@ -1848,8 +1979,13 @@ window.addEventListener('load', () => {
     _cal.view = view; _cal.key = key; _cal.stars = stars.slice();
     document.getElementById('cal-view-toggle').textContent = view === 'month' ? 'Day view' : 'Month view';
     const title = document.getElementById('cal-title');
+    const count = document.getElementById('cal-count');
     const body = document.getElementById('cal-body');
     document.getElementById('cal-reveal').hidden = true;
+    // The step buttons step whatever is on screen, and say which.
+    document.getElementById('cal-prev').setAttribute('aria-label', view === 'month' ? 'Previous month' : 'Previous day');
+    document.getElementById('cal-next').setAttribute('aria-label', view === 'month' ? 'Next month' : 'Next day');
+    const stated = (n) => (n === 1 ? '1 star' : `${n} stars`);
     const starsFor = (day) => stars.filter((s) => s.day === day);
     function starButton(star, idx) {
       const b = document.createElement('button');
@@ -1864,6 +2000,7 @@ window.addEventListener('load', () => {
       title.textContent = `Stars on ${key}`;
       body.innerHTML = '';
       const list = starsFor(key);
+      count.textContent = stated(list.length);
       if (!list.length) { body.innerHTML = '<div class="cal-empty-copy">No stars earned this day yet.</div>'; return; }
       const wrap = document.createElement('div'); wrap.className = 'cal-cell'; wrap.style.minHeight = 'auto';
       list.forEach((st, i) => wrap.appendChild(starButton(st, i)));
@@ -1872,6 +2009,7 @@ window.addEventListener('load', () => {
     }
     // month view
     title.textContent = `Stars in ${key || '(no month)'}`;
+    count.textContent = key ? stated(stars.length) : '';
     body.innerHTML = '';
     if (!key) { body.innerHTML = '<div class="cal-empty-copy">No stars earned yet. Complete a 25-minute block to earn your first.</div>'; return; }
     const [y, mo] = key.split('-').map(Number);
@@ -1893,15 +2031,43 @@ window.addEventListener('load', () => {
   }
   document.getElementById('open-star-cal')?.addEventListener('click', _openStarCal);
   document.getElementById('cal-close')?.addEventListener('click', _closeStarCal);
-  document.getElementById('star-cal-overlay')?.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); _closeStarCal(); } });
-  document.getElementById('cal-view-toggle')?.addEventListener('click', () => {
-    if (_cal.view === 'month') { const day = _cal.stars.length ? _cal.stars[_cal.stars.length - 1].day : `${_cal.key || _thisMonth()}-01`; _renderStarCal('day', day, _cal.stars); }
-    else { _renderStarCal('month', (_cal.key || '').slice(0, 7) || _thisMonth(), _cal.stars); }
+  document.getElementById('star-cal-overlay')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); _closeStarCal(); }
+    if (e.key === 'Tab') {
+      // Trap focus within the calendar while open, the same trap the reading menu has: a modal
+      // that Tab walks out of leaves the keyboard on controls nobody can see.
+      const focusables = document.getElementById('star-cal-overlay').querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])');
+      if (!focusables.length) return;
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
   });
-  document.getElementById('cal-prev')?.addEventListener('click', () => { if (_cal.view === 'month' && _cal.key) _renderStarCal('month', _shiftMonth(_cal.key, -1), _cal.stars); });
-  document.getElementById('cal-next')?.addEventListener('click', () => { if (_cal.view === 'month' && _cal.key) _renderStarCal('month', _shiftMonth(_cal.key, 1), _cal.stars); });
+  document.getElementById('cal-view-toggle')?.addEventListener('click', () => {
+    // Day view opens on today when today is in the month on screen, not on the newest star: the
+    // question the day view answers is "did today happen yet".
+    if (_cal.view === 'month') {
+      const month = _cal.key || _thisMonth() || _today().slice(0, 7);
+      const day = _today().slice(0, 7) === month ? _today() : `${month}-01`;
+      _renderStarCal('day', day, _cal.stars);
+    } else { _renderStarCal('month', (_cal.key || '').slice(0, 7) || _thisMonth(), _cal.stars); }
+  });
+  // Stepping loads the month it steps to. Re-rendering the month already in hand made every other
+  // month read "No stars earned this month yet." whatever it actually held.
+  function _step(delta) {
+    if (!_cal.key) return;
+    if (_cal.view === 'month') { _loadStarCal(_shiftMonth(_cal.key, delta)); return; }
+    const day = _shiftDay(_cal.key, delta);
+    if (day.slice(0, 7) === _cal.key.slice(0, 7)) _renderStarCal('day', day, _cal.stars);
+    else _loadStarCal(day.slice(0, 7), day);
+  }
+  document.getElementById('cal-prev')?.addEventListener('click', () => _step(-1));
+  document.getElementById('cal-next')?.addEventListener('click', () => _step(1));
   // Injectable surface: production wires _loadStarCal to the live routes; a test drives render()
   // directly with seeded stars so the calendar is exercised without a running server.
+  // Published for the same reason as __closeReaderMenu: `setView` must be able to shut this
+  // overlay when the reading view goes away, and it is declared out of that scope.
+  window.__closeStarCal = _closeStarCal;
   window.__stars = {
     render: (view, key, stars) => _renderStarCal(view, key, stars),
     open: _openStarCal,
