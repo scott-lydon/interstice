@@ -5,15 +5,43 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Interstice</title>
 <style>
+  /* ------------------------------------------------------------------ tokens ---
+     ONE token set, shared verbatim with web/dashboard.html and web/debug.html. This
+     block is the source of truth: the two pages used to declare palettes of different
+     sizes under the same names (--ground was #F1F3F5 here and #EEF0F2 there, --warn
+     #9E5C0E here and #9A6A12 there), so the same word meant two colours depending on
+     which window you were looking at. There is no build step to share a file through
+     and no route that could serve one without the control token, so the block is
+     copied byte for byte instead; change it here and paste it into the other two. */
   :root {
-    --ground: #F1F3F5; --ink: #12161C; --muted: #5A6673; --rule: #CFD6DD;
-    --accent: #2440E8; --raised: #FFFFFF; --ok: #1B7A4B; --warn: #A8620F;
+    /* surfaces */
+    --ground: #F1F3F5; --raised: #FFFFFF; --sunk: #E4E8EC;
+    /* ink */
+    --ink: #12161C; --muted: #5A6673; --faint: #5E6977;
+    /* lines. --rule is a divider, drawn to be barely there: 1.32:1 on the ground. As the
+       only boundary of a button or a field that is under the 3:1 WCAG 1.4.11 bar for an
+       interface component, so interactive edges get their own token, measured at 3.2:1
+       against every surface in both themes. */
+    --rule: #CFD6DD; --edge: #6D8298;
+    /* accent. --on-accent is the label that sits on a filled accent button; #fff
+       measured 2.71:1 on the dark accent, which is why it is a token and not a literal. */
+    --accent: #2440E8; --accent-soft: rgba(36,64,232,.10); --on-accent: #FFFFFF;
+    /* status */
+    --ok: #1B7A4B; --warn: #96580D; --crit: #A82B22;
+    /* the loading shimmer */
     --shim-a: rgba(0,0,0,.04); --shim-b: rgba(0,0,0,.09);
+    /* type, so a font stack is named once rather than retyped at every rule */
+    --display: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", sans-serif;
+    --body: Charter, "Iowan Old Style", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --ground: #0E1116; --ink: #E4E8EE; --muted: #939EAC; --rule: #262D37;
-      --accent: #8296FF; --raised: #161A21; --ok: #4FBF8B; --warn: #D9A05B;
+      --ground: #0E1116; --raised: #161A21; --sunk: #11151B;
+      --ink: #E4E8EE; --muted: #939EAC; --faint: #7B8693;
+      --rule: #262D37; --edge: #5A6B82;
+      --accent: #8296FF; --accent-soft: rgba(130,150,255,.13); --on-accent: #0E1116;
+      --ok: #4FBF8B; --warn: #D9A05B; --crit: #E0736A;
       --shim-a: rgba(255,255,255,.04); --shim-b: rgba(255,255,255,.09);
     }
   }
@@ -21,7 +49,7 @@
   html, body { height: 100%; margin: 0; }
   body {
     background: var(--ground); color: var(--ink);
-    font: 15px/1.5 Charter, "Iowan Old Style", Georgia, serif;
+    font: 15px/1.5 var(--body);
     display: flex; flex-direction: column; overflow: hidden;
     -webkit-font-smoothing: antialiased;
   }
@@ -35,12 +63,21 @@
     border-bottom: 1px solid var(--rule);
   }
   .brand {
-    font: 600 11px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    font: 600 11px/1 var(--display);
     text-transform: uppercase; letter-spacing: .16em; color: var(--muted);
   }
+  /* The persistent "why is this window here" line. It sits under the header rather than
+     inside it because it is a sentence, not a control, and the header row is already full
+     at the panel's 640px. `flex: 0 0 auto` keeps it out of <main>'s scroll. */
+  #why-open {
+    flex: 0 0 auto; margin: 0; padding: 7px 14px;
+    background: var(--ground); border-bottom: 1px solid var(--rule);
+    font-size: 11.5px; line-height: 1.4; color: var(--muted);
+  }
+  #why-open .elapsed { font-family: var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
   .rungs { display: flex; gap: 2px; margin-left: auto; }
   .rungs button {
-    font: 600 10px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    font: 600 10px/1 var(--display);
     text-transform: uppercase; letter-spacing: .1em;
     background: none; border: 1px solid transparent; color: var(--muted);
     padding: 5px 7px; border-radius: 3px; cursor: pointer;
@@ -53,18 +90,25 @@
      answer. Bounded and scrollable, because a warning you cannot scroll past is a
      warning that has taken the window. */
   #companions {
-    flex: 0 0 auto; display: none; padding: 10px 14px;
+    flex: 0 0 auto; display: none; padding: 0 14px 10px;
     background: var(--raised); border-bottom: 1px solid var(--rule);
     border-left: 2px solid var(--warn);
     max-height: 40vh; overflow-y: auto; overscroll-behavior: contain;
   }
   #companions.show { display: block; }
-  #companions .top { display: flex; align-items: baseline; gap: 8px; }
+  /* Recheck and Dismiss sit above a list that grows with every error a companion
+     reports, so at 40vh they scrolled out of reach and the banner could not be shut.
+     Pinned, with the aside's own opaque surface, so the way out is one click away at
+     any scroll position. Same shape as the star calendar's header. */
+  #companions .top {
+    display: flex; align-items: baseline; gap: 8px;
+    position: sticky; top: 0; z-index: 1; background: var(--raised); padding: 10px 0 4px;
+  }
   #companions .top .label { color: var(--warn); }
   #companions .top button {
-    font: 600 9px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    font: 600 9px/1 var(--display);
     text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
-    background: none; border: 1px solid var(--rule); border-radius: 3px;
+    background: none; border: 1px solid var(--edge); border-radius: 3px;
     padding: 3px 6px; cursor: pointer;
   }
   #companions .top button:hover { color: var(--ink); border-color: var(--accent); }
@@ -77,9 +121,9 @@
   /* The fix, next to the thing it fixes. A banner that can only tell you what is
      missing leaves the work exactly where it was. */
   #companions button.do {
-    font: 600 10px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    font: 600 10px/1 var(--display);
     text-transform: uppercase; letter-spacing: .08em; white-space: nowrap;
-    background: var(--accent); color: #fff; border: 1px solid var(--accent);
+    background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent);
     border-radius: 3px; padding: 4px 8px; cursor: pointer;
   }
   #companions button.do[disabled] { opacity: .5; cursor: default; }
@@ -88,7 +132,7 @@
   #companions .proof { display: flex; align-items: center; gap: 7px; margin-top: 3px; }
   #companions .proof img {
     height: 18px; width: auto; border: 1px solid var(--rule); border-radius: 2px;
-    background: #000; image-rendering: -webkit-optimize-contrast;
+    background: var(--ink); image-rendering: -webkit-optimize-contrast;
   }
 
   main { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 14px; }
@@ -99,6 +143,7 @@
      is behind one menu affordance. Scoped to body.immersive, which setView sets only for the
      reading view, so the other rungs are untouched. */
   body.immersive header,
+  body.immersive #why-open,
   body.immersive footer { display: none; }
   body.immersive main { padding: 0; overflow: hidden; }
   /* The setup check is a sibling of <main>, so the rule below that displaces the reading view's
@@ -112,13 +157,13 @@
      carries an id and three classes, so it outranks every `body.immersive .thing { display: … }`
      below it, and the pager, the calendar, the latency chip, the arrival note and the forfeit
      banner all computed to `display: none` even with their own state class applied. */
-  body.immersive #view-reading > :not(#reader):not(.reader-menu):not(.reader-menu-overlay):not(.reader-pager-overlay):not(.reader-hint):not(.star-cal-overlay):not(.latency-chip):not(.arrival-note):not(.forfeit-note) { display: none; }
+  body.immersive #view-reading > :not(#reader):not(.reader-menu):not(.reader-menu-overlay):not(.reader-pager-overlay):not(.reader-hint):not(#reader-note):not(.star-cal-overlay):not(.latency-chip):not(.arrival-note):not(.forfeit-note) { display: none; }
   body.immersive #reader { border-radius: 0; border: 0; }
   /* The single menu affordance: one always-visible button, top-right. */
   .reader-menu { display: none; }
   body.immersive .reader-menu {
     display: grid; place-items: center; position: absolute; top: 8px; right: 8px; z-index: 30;
-    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--rule);
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--edge);
     background: color-mix(in srgb, var(--ground) 65%, transparent); color: var(--ink);
     font-size: 17px; cursor: pointer; backdrop-filter: blur(4px);
   }
@@ -147,23 +192,46 @@
   .reader-hint { display: none; }
   body.immersive .reader-hint {
     display: block; position: absolute; left: 10px; bottom: 44px; z-index: 24;
-    font: 600 9px/1.3 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    font: 600 9px/1.3 var(--display);
     text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
   }
+  /* The per-page message, which is the only thing that ever says why the picture replaced
+     the text. It was inside the displacement rule above, so at the exact moment it applied
+     it could not be seen: the page swapped itself for a photograph and said nothing. It
+     floats like the other immersive affordances rather than sitting in the flow, so the
+     page keeps its >=90% of both viewport dimensions. Scoped to the direct child so that
+     when the menu takes it, it lays out normally inside the menu. */
+  body.immersive #view-reading > #reader-note {
+    position: absolute; left: 8px; right: 8px; bottom: 76px; z-index: 26;
+    display: flex; gap: 8px; align-items: center; justify-content: center;
+    max-height: min(30vh, 220px); overflow-y: auto; overscroll-behavior: contain;
+    margin: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--rule);
+    background: color-mix(in srgb, var(--ground) 88%, transparent); backdrop-filter: blur(4px);
+  }
+  body.immersive #view-reading > #reader-note[hidden] { display: none; }
   /* An overlay is the thing you are looking at: the affordances for the page underneath step
      aside rather than float on top of it. */
   body.immersive #view-reading:has(.reader-menu-overlay.open) .reader-pager-overlay,
   body.immersive #view-reading:has(.reader-menu-overlay.open) .reader-hint,
   body.immersive #view-reading:has(.star-cal-overlay.open) .reader-pager-overlay,
-  body.immersive #view-reading:has(.star-cal-overlay.open) .reader-hint { display: none; }
+  body.immersive #view-reading:has(.star-cal-overlay.open) .reader-hint,
+  body.immersive #view-reading:has(.reader-menu-overlay.open) > #reader-note,
+  body.immersive #view-reading:has(.star-cal-overlay.open) > #reader-note { display: none; }
   /* The menu overlay: opened by the button, holds everything displaced. */
   .reader-menu-overlay { display: none; }
   body.immersive .reader-menu-overlay.open {
     display: flex; flex-direction: column; gap: 12px; position: absolute; inset: 0; z-index: 29;
-    padding: 16px; overflow-y: auto; background: color-mix(in srgb, var(--ground) 92%, transparent);
+    padding: 0 16px 16px; overflow-y: auto; overscroll-behavior: contain;
+    background: color-mix(in srgb, var(--ground) 92%, transparent);
     backdrop-filter: blur(8px);
   }
-  .reader-menu-overlay .om-close { align-self: flex-end; }
+  /* This overlay holds all eight displaced controls inside a 620px panel, so it scrolls,
+     and Close was a plain first child that scrolled away with them. Its own header, pinned
+     and opaque, so the dismiss path never leaves the screen. */
+  .reader-menu-overlay .om-head {
+    position: sticky; top: 0; z-index: 1; flex: 0 0 auto;
+    display: flex; justify-content: flex-end; padding: 16px 0 8px; background: var(--ground);
+  }
   /* Was an inline style, which no stylesheet rule can outrank: it kept #book-actions on
      screen while immersive, overlapping the pager and costing the page 33px of the >=90%
      contract. Inline styles are unreachable by the displacement rule, so it lives here. */
@@ -172,7 +240,7 @@
      so it does not change the #reader box, satisfying the >=90% contract while visible). */
   .latency-chip {
     position: absolute; top: 8px; left: 8px; z-index: 25; display: none;
-    font: 600 10px/1 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .04em;
+    font: 600 10px/1 var(--mono); letter-spacing: .04em;
     color: var(--muted); background: color-mix(in srgb, var(--ground) 70%, transparent);
     border: 1px solid var(--rule); border-radius: 999px; padding: 5px 9px; backdrop-filter: blur(4px);
   }
@@ -186,7 +254,7 @@
      the rest of the session once a block forfeits. */
   .arrival-note {
     position: absolute; top: 8px; left: 108px; z-index: 26; display: none;
-    font: 600 10px/1 "Avenir Next Condensed", sans-serif; text-transform: uppercase; letter-spacing: .1em;
+    font: 600 10px/1 var(--display); text-transform: uppercase; letter-spacing: .1em;
     color: var(--ground); background: var(--accent); border-radius: 999px; padding: 6px 10px;
   }
   .arrival-note.show { display: inline-block; }
@@ -230,7 +298,7 @@
   .cal-cell { min-height: 44px; border: 1px solid var(--rule); border-radius: 8px; padding: 3px 4px;
     background: var(--raised); display: flex; flex-direction: column; gap: 2px; }
   .cal-cell.empty { opacity: .35; }
-  .cal-cell .cal-day { font: 600 10px/1 ui-monospace, Menlo, monospace; color: var(--muted); }
+  .cal-cell .cal-day { font: 600 10px/1 var(--mono); color: var(--muted); }
   .cal-star { align-self: flex-start; border: 1px solid var(--accent); border-radius: 6px;
     background: color-mix(in srgb, var(--accent) 12%, var(--raised)); color: var(--accent);
     font-size: 11px; line-height: 1; padding: 2px 4px; cursor: pointer; }
@@ -245,10 +313,10 @@
 
   h2 { font: 600 13px/1.3 Charter, Georgia, serif; margin: 0; }
   .label {
-    font: 600 10px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    font: 600 10px/1 var(--display);
     text-transform: uppercase; letter-spacing: .14em; color: var(--muted);
   }
-  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; color: var(--muted); }
+  .mono { font-family: var(--mono); font-size: 11px; color: var(--muted); }
   .why { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
 
   /* The card is a physical object on the ground: its own surface, its own edge.
@@ -257,18 +325,18 @@
     background: var(--raised); border: 1px solid var(--rule); border-radius: 4px;
     overflow: hidden; flex: 0 0 auto;
   }
-  .cardframe iframe { display: block; width: 100%; border: 0; background: #fff; }
+  .cardframe iframe { display: block; width: 100%; border: 0; background: var(--raised); }
 
   .ease { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   button.act {
-    font: 600 11px/1.1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    font: 600 11px/1.1 var(--display);
     text-transform: uppercase; letter-spacing: .08em;
     padding: 10px 6px; border-radius: 3px; cursor: pointer;
-    background: var(--raised); color: var(--ink); border: 1px solid var(--rule);
+    background: var(--raised); color: var(--ink); border: 1px solid var(--edge);
   }
   button.act:hover { border-color: var(--accent); }
   button.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  button.act.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.act.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
   button.act small { display: block; font-size: 9px; opacity: .7; letter-spacing: .04em; margin-top: 2px; }
   button.act[disabled] { opacity: .45; cursor: default; }
 
@@ -293,7 +361,7 @@
   .reader .text {
     position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain;
     padding: 16px 18px 20px; background: var(--raised);
-    font: 15.5px/1.62 Charter, "Iowan Old Style", Georgia, serif;
+    font: 15.5px/1.62 var(--body);
     -webkit-font-smoothing: antialiased; hyphens: auto;
   }
   .reader .text p { margin: 0 0 0.85em; text-align: left; }
@@ -353,8 +421,8 @@
   textarea {
     flex: 1 1 auto; min-height: 120px; resize: none; width: 100%; padding: 12px;
     background: var(--raised); color: var(--ink);
-    border: 1px solid var(--rule); border-radius: 3px;
-    font: 15px/1.55 Charter, "Iowan Old Style", Georgia, serif;
+    border: 1px solid var(--edge); border-radius: 3px;
+    font: 15px/1.55 var(--body);
   }
   textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 
@@ -362,7 +430,7 @@
     flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
     padding: 8px 14px; border-top: 1px solid var(--rule); background: var(--ground);
   }
-  #status { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10px; color: var(--muted); }
+  #status { font-family: var(--mono); font-size: 10px; color: var(--muted); }
   footer .grow { margin-left: auto; }
 
   /* Work in progress is always animated. A frozen word does not tell you whether
@@ -392,13 +460,30 @@
 <body>
   <header>
     <span class="brand">Interstice</span>
-    <nav class="rungs" id="rungs" aria-label="Activities">
+    <!--
+      One noun for a step on the ladder, and it is "rung", the word the rest of the
+      project already uses. This label used to say "Activities" while the footer said
+      "interstice" and the dashboard said "rung", which is three names for one thing.
+      The label enumerates them rather than glossing them, so a screen reader hears
+      what the four buttons are without a second vocabulary being introduced.
+    -->
+    <nav class="rungs" id="rungs" aria-label="Rungs: cards, book, queue, to-do">
       <button data-view="flashcards" type="button">Cards</button>
       <button data-view="reading" type="button">Book</button>
       <button data-view="queue_prompt" type="button">Queue</button>
       <button data-view="todo" type="button">To-do</button>
     </nav>
   </header>
+
+  <!--
+    The question every reader arrives holding, answered where they arrive: why is this
+    window here, and how long have I got. Nothing on this panel used to name the agent,
+    the prompt or the wait at all, so the panel read as having opened by itself. The
+    line is persistent rather than a toast, and it is also where "rung" is defined, so
+    the header's four buttons and the footer's button both have a stated meaning.
+  -->
+  <p id="why-open" role="status" aria-live="polite">Interstice opens this while your agent
+    works. Each rung above is something to do until it answers.</p>
 
   <aside id="companions" aria-live="polite">
     <div class="top">
@@ -473,13 +558,28 @@
           <div class="label" style="color:var(--warn)">Amazon could not open this book</div>
           <div class="why" id="reader-failed-why"></div>
           <button class="act primary" id="reader-retry" type="button">Try again</button>
+          <!--
+            Reopening calls revive({ clearFirst: true }), which deletes the device
+            registration Amazon has stored for this profile. That is not undoable and it
+            was one click away, so the click now only asks the question and a second one
+            answers it.
+          -->
+          <div id="reader-retry-confirm" hidden>
+            <div class="why">Reopening throws away the device registration Amazon has
+              stored here. Your sign-in stays, and the book opens fresh. There is no
+              way to put the old registration back.</div>
+            <div class="ease" style="grid-template-columns:1fr 1fr; margin-top:8px">
+              <button class="act primary" id="reader-retry-yes" type="button">Discard it and reopen</button>
+              <button class="act" id="reader-retry-no" type="button">Keep it</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="pager" id="reader-pager">
         <button class="act" id="page-prev" type="button">&#8249; Back</button>
         <span class="mono" id="reader-page"></span>
         <span class="grow"></span>
-        <button class="act" id="reader-mode" type="button" title="Show the page as Amazon drew it">Page</button>
+        <button class="act" id="reader-mode" type="button" title="Swap between the transcribed text and the page Amazon drew">See the real page</button>
         <button class="act" id="page-next" type="button">Next &#8250;</button>
       </div>
       <!--
@@ -497,17 +597,19 @@
       <div id="book-actions"></div>
       <!-- Immersive affordances (Phase 2C): shown only while body.immersive. -->
       <div class="latency-chip" id="latency-chip" aria-live="polite"></div>
-      <div class="arrival-note" id="arrival-note" role="status">Response landed</div>
+      <div class="arrival-note" id="arrival-note" role="status">Your agent answered. Go back to it.</div>
       <div class="forfeit-note" id="forfeit-note" role="alert" aria-live="assertive"></div>
       <button class="reader-menu" id="reader-menu" type="button" aria-label="Reading menu" aria-expanded="false" aria-controls="reader-menu-overlay">&#8943;</button>
-      <div class="reader-hint">&#8592; &#8594; turn the page</div>
+      <div class="reader-hint">Press &#8594; for the next page, &#8592; to go back. Everything else is behind &#8943;</div>
       <div class="reader-pager-overlay" aria-label="Turn the page">
         <button class="act" id="page-prev-imm" type="button">&#8249; Back</button>
         <span class="mono now" id="page-now-imm" aria-live="polite"></span>
         <button class="act" id="page-next-imm" type="button">Next &#8250;</button>
       </div>
       <div class="reader-menu-overlay" id="reader-menu-overlay" role="dialog" aria-modal="true" aria-label="Reading menu">
-        <button class="act om-close" id="reader-menu-close" type="button">Close &times;</button>
+        <div class="om-head">
+          <button class="act om-close" id="reader-menu-close" type="button">Close &times;</button>
+        </div>
         <button class="act" id="open-star-cal" type="button">Star calendar &#9733;</button>
         <div id="reader-menu-slot"></div>
       </div>
@@ -517,7 +619,7 @@
           <span class="cal-count" id="cal-count"></span>
           <div class="cal-controls">
             <button class="act" id="cal-prev" type="button" aria-label="Previous month">&#8249;</button>
-            <button class="act" id="cal-view-toggle" type="button">Day view</button>
+            <button class="act" id="cal-view-toggle" type="button">Switch to day view</button>
             <button class="act" id="cal-next" type="button" aria-label="Next month">&#8250;</button>
             <button class="act om-close" id="cal-close" type="button">Close &times;</button>
           </div>
@@ -545,7 +647,7 @@
     <section class="view" id="view-todo">
       <div>
         <div class="label">From your Notes</div>
-        <div class="why" id="todo-why">Read only. Ticking here is tracked by Interstice and never edits the note.</div>
+        <div class="why" id="todo-why">Tick anything you have already done. Interstice keeps the tick; your note is never changed.</div>
       </div>
       <div id="todo-lists"></div>
     </section>
@@ -560,7 +662,7 @@
       that do entirely different things is a coin toss, and on the book screen it was
       being read as a second, broken page-turn.
     -->
-    <button class="act" id="advance" type="button" title="Show me a different interstice">Something else</button>
+    <button class="act" id="advance" type="button" title="Show a different rung: cards, book, queue or to-do">Different rung</button>
   </footer>
 
 <script>
@@ -576,6 +678,14 @@ let assetStamp = null;
 
 function say(text, spin) {
   status.innerHTML = (spin ? '<span class="spinner"></span> ' : '') + esc(text);
+}
+
+/** View state that survives a refresh and travels in a link, written without a navigation. */
+function setUrlParam(key, value) {
+  const u = new URL(location.href);
+  if (value === null || value === undefined || value === '') u.searchParams.delete(key);
+  else u.searchParams.set(key, value);
+  history.replaceState(null, '', u);
 }
 
 function setView(name, { fromServer = false } = {}) {
@@ -646,6 +756,31 @@ function renderCard(revealed) {
     + (card.lapses ? ' · ' + card.lapses + ' lapse' + (card.lapses === 1 ? '' : 's') : '');
 }
 
+/**
+ * What to do about it, from what AnkiConnect said.
+ *
+ * "AnkiConnect unreachable: fetch failed" is true and useless. Each of these states
+ * has a different next move, and three of the four are fixed by the button directly
+ * below this line without leaving the panel.
+ */
+function ankiRemedy(reason) {
+  const r = String(reason || '');
+  if (/unreachable/i.test(r)) {
+    return 'Anki is not running, or AnkiConnect is not installed in it. Press Reconnect to '
+      + 'Anki below and Interstice will start it for you.';
+  }
+  if (/timed out/i.test(r)) {
+    return 'Anki is running but did not answer in time, usually because macOS put it to '
+      + 'sleep. Press Reconnect to Anki below to wake it.';
+  }
+  if (/HTTP/.test(r)) {
+    return 'AnkiConnect answered with an error. Press Reconnect to Anki below, and if it '
+      + 'says the same thing again, quit Anki and reopen it.';
+  }
+  return 'Anki refused the request. Press Reconnect to Anki below, and if it says the same '
+    + 'thing again, quit Anki and reopen it.';
+}
+
 async function loadCards() {
   say('reading your collection', true);
   $('cardframe').innerHTML = '<div class="skeleton" style="padding:14px">'
@@ -659,9 +794,15 @@ async function loadCards() {
       // panel, so the two cases are told apart here rather than shown as one.
       const unreachable = d.reason !== 'no_due_cards';
       $('deck-name').textContent = unreachable ? 'Anki is not answering' : 'Nothing due';
-      $('deck-why').textContent = unreachable
-        ? String(d.reason || '')
-        : 'No cards are due in any deck right now.';
+      if (unreachable) {
+        // The sentence says what to do; the string Anki actually returned stays on
+        // screen underneath it, because a remedy you cannot check is a remedy you
+        // have to take on faith.
+        $('deck-why').innerHTML = esc(ankiRemedy(d.reason))
+          + '<div class="mono" style="margin-top:4px">Anki said: ' + esc(String(d.reason || 'nothing')) + '</div>';
+      } else {
+        $('deck-why').textContent = 'No cards are due in any deck right now.';
+      }
       $('deck-fix').innerHTML = unreachable ? ankiFixHtml() : '';
       if (unreachable) {
         $('anki-reconnect').addEventListener('click', reconnectAnki);
@@ -680,15 +821,19 @@ async function loadCards() {
     cardIndex = 0;
     $('deck-fix').innerHTML = '';
     $('deck-name').textContent = d.deck;
-    // Show the arithmetic behind the choice, not just the conclusion.
-    $('deck-why').textContent =
-      d.metric.meanReps + (d.metric.meanReps === 1 ? ' review' : ' reviews') + ' per due card, the lowest of '
-      + d.metric.decksWithDue + ' decks with anything due · ' + d.metric.due
-      + ' due here of ' + d.totalDue + ' overall';
+    // Show the arithmetic behind the choice, not just the conclusion. Two ideas, two
+    // sentences on two lines: "4 reviews per due card, the lowest of 7 decks with anything
+    // due · 12 due here of 96 overall" was one line carrying a ranking and a count, and the
+    // middot in the middle of it read as a third clause rather than a break.
+    $('deck-why').innerHTML =
+      esc(d.metric.meanReps + (d.metric.meanReps === 1 ? ' review' : ' reviews')
+        + ' per due card, the fewest of your ' + d.metric.decksWithDue
+        + (d.metric.decksWithDue === 1 ? ' deck' : ' decks') + ' with work waiting.')
+      + '<div>' + esc(d.metric.due + ' of your ' + d.totalDue + ' due cards are here.') + '</div>';
     renderCard(false);
     say('');
   } catch (err) {
-    say('cards unavailable');
+    say('Cards did not load. The daemon did not answer: start it with interstice start, then press Cards again.');
   }
 }
 
@@ -703,8 +848,8 @@ async function loadCards() {
 function ankiFixHtml() {
   return '<button class="act primary" id="anki-reconnect" type="button" style="width:100%;margin-top:8px">'
     + 'Reconnect to Anki</button>'
-    + '<div class="why" style="margin-top:6px">Starts Anki behind everything, turns off App Nap, '
-    + 'and waits for AnkiConnect to answer. Nothing comes to the front.</div>'
+    + '<div class="why" style="margin-top:6px">Wakes Anki in the background and waits for it. '
+    + 'Nothing comes to the front.</div>'
     + '<div class="why" id="anki-how"></div>';
 }
 
@@ -786,7 +931,7 @@ async function answer(ease) {
     renderCard(false);
     say('reviewed');
   } catch (err) {
-    say('could not record that review');
+    say('That review was not recorded. Press the same ease button again.');
   } finally {
     answering = false;
   }
@@ -863,7 +1008,7 @@ function setReaderMode(mode) {
   } catch {
     /* a panel without storage just starts in text every time */
   }
-  $('reader-mode').textContent = mode === 'text' ? 'Page' : 'Text';
+  $('reader-mode').textContent = mode === 'text' ? 'See the real page' : 'Back to the text';
   $('reader-mode').title = mode === 'text'
     ? 'Show the page as Amazon drew it'
     : 'Back to the text, set in this window’s type';
@@ -939,6 +1084,29 @@ function readerNote(text, { again = false } = {}) {
 }
 
 /**
+ * How much of this page the reader was unsure of, as a count rather than a hedge.
+ *
+ * `weak` is the fraction of non-chrome lines that scored under the weak-line bar and
+ * `lines` is how many lines there were, both from lib/ocr.js. The old string said
+ * "some of this page read poorly" with those two numbers in the same object it was
+ * reading `confidence` out of, which asked the reader to go and look at the page
+ * without telling them how much of it was in doubt.
+ */
+function weakLinesPhrase(d) {
+  const lines = Number(d.lines) || 0;
+  const weak = Math.round((Number(d.weak) || 0) * lines);
+  if (weak > 0 && lines > 0) {
+    return ' \u00b7 ' + weak + ' of ' + lines + (lines === 1 ? ' line' : ' lines') + ' read poorly';
+  }
+  // No line was individually weak, but the typical line was still doubted. Said as the
+  // median it is, because there is no count to give.
+  if (d.confidence !== null && d.confidence !== undefined && d.confidence < 0.85) {
+    return ' \u00b7 the typical line read at ' + Math.round(d.confidence * 100) + '% confidence';
+  }
+  return '';
+}
+
+/**
  * Read the page that is on screen, once per page.
  *
  * Keyed to the frame it came from: the panel polls, and reading the same page twice
@@ -961,7 +1129,7 @@ async function loadReaderText({ force = false, fresh = false } = {}) {
     if (d.shelf) readerShelf = d.shelf;
     if (!d.ok || !d.blocks || !d.blocks.length) {
       host.innerHTML = '<p class="thin">Nothing could be read from this page. '
-        + 'Press <em>Page</em> to see what is actually on it.</p>';
+        + 'Press <em>See the real page</em> to see what is actually on it.</p>';
       readerNote('Nothing was legible on this page.', { again: true });
       readerTextSeq = readerSeq;
       return;
@@ -997,14 +1165,17 @@ async function loadReaderText({ force = false, fresh = false } = {}) {
       + '<p class="thin">Read from the page Amazon drew'
       // Said when any of it was doubted, which is a lower bar than sending you to
       // the picture and is the honest thing to say about a transcription.
-      + ((d.weak ?? 0) > 0 || (d.confidence !== null && d.confidence < 0.85)
-        ? ' · some of this page read poorly' : '')
+      // The exact figure, because it is already in hand: `weak` is the fraction of lines
+      // the reader was unsure of and `lines` is how many there were, so "some of this page"
+      // was vagueness chosen over a number sitting in the same object.
+      + weakLinesPhrase(d)
       + '.</p>';
     $('reader-frame').hidden = true;
     host.scrollTop = 0;
     readerTextSeq = readerSeq;
   } catch {
-    host.innerHTML = '<p class="thin">The daemon stopped answering.</p>';
+    host.innerHTML = '<p class="thin">The daemon stopped answering, so this page could not '
+      + 'be read. Restart it with <b>interstice start</b>, then turn the page.</p>';
   } finally {
     readerTextBusy = false;
   }
@@ -1013,6 +1184,9 @@ async function loadReaderText({ force = false, fresh = false } = {}) {
 function startReader(asin) {
   stopReader();
   readerAsin = asin;
+  // Which book you are reading lived only in this variable, so a refresh put you back
+  // on the daemon's default and the book you had chosen could not be linked to.
+  setUrlParam('asin', asin);
   readerSeq = -1;
   readerTextSeq = -1;
   readerSignedOut = false;
@@ -1071,12 +1245,17 @@ function renderReader(d) {
       $('reader-frame').hidden = true;
       $('reader-text').hidden = true;
       readerNote('');
+      // A new failure asks the question again rather than arriving mid-answer.
+      $('reader-retry').hidden = false;
+      $('reader-retry-confirm').hidden = true;
+      // Four sentences, the first 26 words long and wrapped around a quotation of
+      // Amazon's own wording, is a paragraph to decode at the moment the book failed to
+      // open. Three short ones, in the order the reader needs them: what happened, whose
+      // fault it is not, and what the button does.
       $('reader-failed-why').textContent =
-        'Amazon’s reader answered with “Please try to open this book from the library '
-        + 'again”, which it says whether or not the book came from the library. You are '
-        + 'signed in and the book is yours: what Amazon refused was this reader’s '
-        + 'registration as a device. Trying again throws away what Amazon has stored '
-        + 'here, keeps your session, and opens the book fresh.';
+        'Amazon would not open this book here. Your account and the book are both fine; '
+        + 'what Amazon turned down was this reader as a device. Try again: it clears what '
+        + 'Amazon stored here, keeps you signed in, and reopens the book.';
     } else {
       // Back to a real page: everything held about the old one is about an error.
       readerSeq = -1;
@@ -1107,11 +1286,15 @@ function renderReader(d) {
   }
 
   // The page, and how much of the book is already in hand behind it. The second half
-  // is the thing that makes the speed checkable: "2 ready" means the next two turns
-  // cost nothing, and its absence is why one of them did not.
+  // is the thing that makes the speed checkable: the next N turns cost nothing, and its
+  // absence is why one of them did not. It used to read "· 2 ready", a count with no
+  // noun, which left the reader to guess what was ready and whether it mattered.
+  const ahead = readerShelf?.ahead > 0 ? readerShelf.ahead : 0;
   $('reader-page').textContent = d.signedOut
     ? 'sign in'
-    : (d.label || '') + (readerShelf?.ahead > 0 ? '  ·  ' + readerShelf.ahead + ' ready' : '');
+    : (d.label || '') + (ahead
+      ? '  ·  ' + ahead + (ahead === 1 ? ' page' : ' pages') + ' ready to turn instantly'
+      : '');
   // The same position, in the immersive pager, where the label is all that fits.
   $('page-now-imm').textContent = d.signedOut ? 'sign in' : (d.label || '');
 
@@ -1315,9 +1498,18 @@ async function turnPage(direction) {
   await loadReaderText();
 }
 
+/**
+ * Where you are in the book, in words a reader has a use for.
+ *
+ * "ASIN B0..." is Amazon's own product identifier. It was here because the panel had it,
+ * not because anybody reading a book needs it, and there is nothing to do with it on this
+ * screen; it is still in /api/health and in this window's own ?asin= query, where an
+ * identifier belongs. "position" got its unit,
+ * which is Kindle's location number rather than a page.
+ */
 function bookLine(b) {
-  return b.percent + '% · position ' + b.position.toLocaleString()
-    + ' of ' + b.end.toLocaleString() + ' · ASIN ' + b.asin;
+  return b.percent + '% read · Kindle location ' + b.position.toLocaleString()
+    + ' of ' + b.end.toLocaleString();
 }
 
 async function loadBook() {
@@ -1336,10 +1528,18 @@ async function loadBook() {
         library_found_no_positions: 'This Kindle app does not record reading positions.',
         // Not "no book". macOS is refusing the read, and saying so is the
         // difference between a fixable state and an inexplicable one.
+        // macOS names the program by the runtime Interstice is built on, so the prompt
+        // says "node" and nothing on screen used to connect that word to Interstice. The
+        // reader is told which name to look for rather than left to recognise it.
         book_data_forbidden: 'macOS will not let Interstice read your Kindle library. '
-          + 'Answer the “node would like to access data from other apps” prompt, or add node '
-          + 'under Privacy & Security → Full Disk Access.',
-      }[d.reason]) || String(d.reason || '');
+          + 'macOS asks about this using the name of the program Interstice runs on, which '
+          + 'is “node”. Allow it when macOS asks, or add it yourself under Privacy & '
+          + 'Security, then Full Disk Access.',
+        // One sentence for every reason not named above, rather than the reason code
+        // itself. The code is kept out of the sentence and put where a code belongs.
+      }[d.reason]) || 'Interstice could not find a book to open. Run interstice doctor to see why.';
+      $('book-why').dataset.reason = String(d.reason || '');
+      if (d.reason) console.debug('[interstice] no book, reason:', d.reason);
       $('book-bar').style.width = '0%';
       $('reader-frame').hidden = true;
       $('reader-over').hidden = false;
@@ -1383,10 +1583,19 @@ async function loadBook() {
       say('opened in Kindle');
     };
 
-    if (readerAsin !== b.asin || !readerTimer) startReader(b.asin);
+    // A book named in the URL wins over the daemon's default, so a reload lands where
+    // you were. An asin that is not on your shelf is ignored rather than opened.
+    const wanted = new URLSearchParams(location.search).get('asin');
+    const linked = wanted ? [b].concat(d.shelf || []).find((x) => x && x.asin === wanted) : null;
+    if (linked && linked.asin !== b.asin) {
+      $('book-title').textContent = linked.title;
+      $('book-bar').style.width = (linked.percent || 0) + '%';
+    }
+    const target = linked ? linked.asin : b.asin;
+    if (readerAsin !== target || !readerTimer) startReader(target);
     say('');
   } catch {
-    say('book unavailable');
+    say('Your book did not load. Open the Kindle app once, then press Book again.');
   }
 }
 
@@ -1472,7 +1681,10 @@ async function loadTodos() {
         // Interstice will not start Notes for you. Say that plainly instead of
         // reporting a failure, because nothing failed.
         notes_not_running: 'Notes is closed, and Interstice will not open it. Open Notes once and your lists appear here.',
-      }[d.reason]) || String(d.reason || 'Nothing found.')) + '</div>';
+        // Same rule as the book and the deck: a sentence on screen, the code in the console
+        // and on the element, never the code as the explanation.
+      }[d.reason]) || 'Interstice could not read your notes. Open Notes once, then press To-do again.') + '</div>';
+      if (d.reason) console.debug('[interstice] no to-do lists, reason:', d.reason);
       say('');
       return;
     }
@@ -1504,7 +1716,8 @@ async function loadTodos() {
     }
     say('');
   } catch {
-    host.innerHTML = '<div class="empty">Notes could not be read.</div>';
+    host.innerHTML = '<div class="empty">Interstice could not read Notes. Open Notes once, '
+      + 'then press To-do again.</div>';
     say('');
   }
 }
@@ -1512,8 +1725,17 @@ async function loadTodos() {
 /* ------------------------------------------------------------------ queue --- */
 
 async function loadQueued() {
+  // Before the fetch settles this list was empty markup, which reads exactly like a
+  // queue with nothing in it. Three states: loading, failed, and genuinely empty.
+  if (!$('queued').children.length) {
+    $('queued').innerHTML = '<li><span class="skeleton" style="flex:1 1 auto">'
+      + '<i class="shimmer" style="width:70%"></i><i class="shimmer" style="width:45%"></i>'
+      + '</span></li>';
+  }
   try {
-    const d = await (await fetch('/api/queued')).json();
+    const r = await fetch('/api/queued');
+    if (!r.ok) throw new Error('refused');
+    const d = await r.json();
     const queued = d.queued || [];
     // A blank strip under the Save button read as a list that had failed to load.
     // Every other rung says what nothing looks like; this one says it too.
@@ -1522,7 +1744,11 @@ async function loadQueued() {
           .map((q) => '<li><label>' + esc(q.text.slice(0, 140)) + '</label></li>').join('')
       : '<li><span class="empty">Nothing queued yet. What you write above waits here '
         + 'until you want it.</span></li>';
-  } catch { /* daemon gone */ }
+  } catch {
+    $('queued').innerHTML = '<li><span class="empty">The daemon is not answering, so what '
+      + 'you have queued could not be read. Start it with interstice start, then press '
+      + 'Queue again. Nothing was lost.</span></li>';
+  }
 }
 
 /**
@@ -1638,7 +1864,7 @@ async function runFix(key, button) {
   if (!fix) return;
   button.disabled = true;
   const wasLabel = button.textContent;
-  button.textContent = 'working';
+  button.innerHTML = '<span class="spinner"></span> working';
   say(fix.doing, true);
   try {
     const d = await (await fetch(fix.route, { method: 'POST' })).json();
@@ -1697,10 +1923,20 @@ $('advance').addEventListener('click', async () => {
 // Not a reload, and not a new browser either. What Amazon refused was this profile's
 // registration as a device, and that outlives both; the daemon throws away what
 // Amazon has stored here, keeps the session, and opens the book in a new tab.
-$('reader-retry').addEventListener('click', async () => {
-  const b = $('reader-retry');
+function readerRetryAsk(show) {
+  $('reader-retry').hidden = show;
+  $('reader-retry-confirm').hidden = !show;
+  (show ? $('reader-retry-yes') : $('reader-retry')).focus();
+}
+$('reader-retry').addEventListener('click', () => readerRetryAsk(true));
+$('reader-retry-no').addEventListener('click', () => readerRetryAsk(false));
+$('reader-retry-yes').addEventListener('click', async () => {
+  const b = $('reader-retry-yes');
   b.disabled = true;
-  b.textContent = 'Reopening';
+  // A frozen word does not say whether the thing is thinking or has died, and this
+  // round trip drives a headless browser through a fresh registration.
+  b.innerHTML = '<span class="spinner"></span> Reopening';
+  say('discarding the old registration and reopening the book', true);
   try {
     await fetch('/api/reading/retry', { method: 'POST' });
   } catch {
@@ -1709,7 +1945,9 @@ $('reader-retry').addEventListener('click', async () => {
   readerSeq = -1;
   readerTextSeq = -1;
   b.disabled = false;
-  b.textContent = 'Try again';
+  b.textContent = 'Discard it and reopen';
+  readerRetryAsk(false);
+  say('');
   if (readerTimer) tickReader();
 });
 $('page-next').addEventListener('click', () => turnPage('next'));
@@ -1860,7 +2098,7 @@ setInterval(loadCompanions, 30000);
 
 window.addEventListener('load', () => {
   beat();
-  $('reader-mode').textContent = readerMode() === 'text' ? 'Page' : 'Text';
+  $('reader-mode').textContent = readerMode() === 'text' ? 'See the real page' : 'Back to the text';
   // ------------------------------------------------------------- immersive menu ---
   // One menu affordance holds everything the immersive page displaced. Opening it moves the
   // displaced reading-view controls into the overlay; closing it puts them back, so nothing is
@@ -1924,17 +2162,36 @@ window.addEventListener('load', () => {
   // ------------------------------------------------------------- prompt latency ---
   const _lat = new Map(); // sessionId -> submittedAtMs
   let _latTimer = null;
-  function _fmtElapsed(ms) {
+  function _clock(ms) {
     const s = Math.floor(ms / 1000); const m = Math.floor(s / 60);
-    return m > 0 ? `waited ${m}:${String(s % 60).padStart(2, '0')}` : `waited 0:${String(s).padStart(2, '0')}`;
+    return `${m}:${String(s % 60).padStart(2, '0')}`;
+  }
+  // "waited 2:14" named no waiter. The subject is the thing the reader is actually
+  // wondering about, and it is the only reason this window is open.
+  function _fmtElapsed(ms) { return `your agent: ${_clock(ms)}`; }
+  // The same fact, in the sentence under the header, where it is on every rung rather
+  // than only on the book. This is the question a reader arrives holding.
+  const WHY_IDLE = 'Interstice opens this while your agent works. '
+    + 'Each rung above is something to do until it answers.';
+  function _renderWhyOpen(waitingMs) {
+    const el = document.getElementById('why-open');
+    if (!el) return;
+    if (waitingMs === null) { el.textContent = WHY_IDLE; return; }
+    el.innerHTML = 'Your agent has been working <span class="elapsed">' + _clock(waitingMs) + '</span>. '
+      + 'Each rung above is something to do until it answers.';
   }
   function _renderLatency(nowMs) {
     const chip = document.getElementById('latency-chip');
-    if (!chip) return;
-    if (_lat.size === 0) { chip.classList.remove('show'); chip.textContent = ''; return; }
+    if (_lat.size === 0) {
+      _renderWhyOpen(null);
+      if (chip) { chip.classList.remove('show'); chip.textContent = ''; }
+      return;
+    }
     // Show the longest-waiting in-flight prompt; the concurrent map keeps them distinct.
     let oldest = Infinity;
     for (const t of _lat.values()) oldest = Math.min(oldest, t);
+    _renderWhyOpen(nowMs - oldest);
+    if (!chip) return;
     chip.textContent = _fmtElapsed(nowMs - oldest);
     chip.classList.add('show');
   }
@@ -2024,15 +2281,52 @@ window.addEventListener('load', () => {
   }
   // `showDay` steps day view into a day of another month: the stars of the month it belongs to
   // have to be loaded before that day can be rendered, or the day reads empty when it is not.
+  // While the month is in flight, and if it never arrives. Sending an unreachable route
+  // to the empty branch printed "No stars earned this month yet.", which is a claim about
+  // your history made from a request that was never answered.
+  function _calLoading(yyyyMM) {
+    document.getElementById('cal-title').textContent = `Stars in ${yyyyMM}`;
+    document.getElementById('cal-count').innerHTML = '<span class="spinner"></span> reading your stars';
+    document.getElementById('cal-reveal').hidden = true;
+    let cells = '';
+    for (let i = 0; i < 35; i += 1) {
+      cells += '<div class="cal-cell"><i class="shimmer" style="display:block;height:100%;min-height:34px"></i></div>';
+    }
+    document.getElementById('cal-body').innerHTML = '<div class="cal-grid">' + cells + '</div>';
+  }
+  function _calFailed(yyyyMM, showDay) {
+    _cal.view = showDay ? 'day' : 'month';
+    _cal.key = showDay || yyyyMM;
+    _cal.stars = [];
+    document.getElementById('cal-title').textContent = showDay ? `Stars on ${showDay}` : `Stars in ${yyyyMM}`;
+    document.getElementById('cal-count').textContent = '';
+    document.getElementById('cal-reveal').hidden = true;
+    document.getElementById('cal-prev').disabled = false;
+    document.getElementById('cal-next').disabled = false;
+    const body = document.getElementById('cal-body');
+    body.innerHTML = '<div class="cal-empty-copy" id="cal-failed">Your stars could not be read. '
+      + 'This is not an empty month, it is a question that went unanswered. If Interstice is '
+      + 'not running, start it with interstice start, then press Try again.</div>';
+    const b = document.createElement('button');
+    b.className = 'act'; b.type = 'button'; b.id = 'cal-retry'; b.textContent = 'Try again';
+    b.onclick = () => _loadStarCal(yyyyMM, showDay);
+    body.appendChild(b);
+  }
   async function _loadStarCal(yyyyMM, showDay = null) {
     if (!yyyyMM) { _renderStarCal('month', null, []); return; }
+    _calLoading(yyyyMM);
     try {
       const r = await fetch(`/api/stars/month?month=${yyyyMM}`);
+      if (!r.ok) throw new Error('http ' + r.status);
       const body = await r.json();
-      const stars = Array.isArray(body.stars) ? body.stars : [];
+      // A 200 with no list in it is still a month nobody answered for. Coercing a missing
+      // `stars` to [] was the last route by which an unmeasured month reached the grid
+      // looking exactly like a measured one.
+      if (!Array.isArray(body.stars)) throw new Error('no star list in the answer');
+      const stars = body.stars;
       if (showDay) _renderStarCal('day', showDay, stars); else _renderStarCal('month', yyyyMM, stars);
-    } catch { // offline/file:// — honest empty, never stubbed
-      if (showDay) _renderStarCal('day', showDay, []); else _renderStarCal('month', yyyyMM, []);
+    } catch {
+      _calFailed(yyyyMM, showDay);
     }
   }
   function _shiftMonth(yyyyMM, delta) {
@@ -2053,7 +2347,7 @@ window.addEventListener('load', () => {
   }
   function _renderStarCal(view, key, stars) {
     _cal.view = view; _cal.key = key; _cal.stars = stars.slice();
-    document.getElementById('cal-view-toggle').textContent = view === 'month' ? 'Day view' : 'Month view';
+    document.getElementById('cal-view-toggle').textContent = view === 'month' ? 'Switch to day view' : 'Switch to month view';
     const title = document.getElementById('cal-title');
     const count = document.getElementById('cal-count');
     const body = document.getElementById('cal-body');
@@ -2061,6 +2355,10 @@ window.addEventListener('load', () => {
     // The step buttons step whatever is on screen, and say which.
     document.getElementById('cal-prev').setAttribute('aria-label', view === 'month' ? 'Previous month' : 'Previous day');
     document.getElementById('cal-next').setAttribute('aria-label', view === 'month' ? 'Next month' : 'Next day');
+    // With no key there is no month to step from, and `_step` returned in silence: two
+    // arrows that looked live and did nothing, forever. Said in the control itself.
+    document.getElementById('cal-prev').disabled = !key;
+    document.getElementById('cal-next').disabled = !key;
     const stated = (n) => (n === 1 ? '1 star' : `${n} stars`);
     const starsFor = (day) => stars.filter((s) => s.day === day);
     function starButton(star, idx) {

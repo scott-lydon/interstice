@@ -1,0 +1,121 @@
+{
+  "DF-008": {
+    "state": "refuted",
+    "how": "The rule this row cites is conditional on a Claude Design handoff bundle existing, and Interstice ships none. Nothing in the tree is labelled, cited or treated as a Claude Design export: the goal loop prescribes the general-model route by name at docs/GOAL_LOOP_STARS_READER_2026-08-17.md:371-373 (frontend-design, design-reference, dataviz, web-design-guidelines), the selection manifest records the waiver at docs/RECURRING_GOALS_SELECTION.md:61 ('no design/claude-design bundle; the design phase here uses frontend-design and design-reference'), and the loop's own coverage table repeats it at :693 ('no Claude Design handoff bundle'). So the route was declared on the record before the artifact was made, not omitted; the finding's own mitigating note concedes the artifact 'is nowhere labelled a Claude Design export, so it misrepresents nothing'. No Claude Design run was fabricated. The one thing that was only inferable rather than stated is now stated on the artifact itself: docs/design-immersive-reading.html carries a provenance comment and a visible line saying it is a hand-authored design target and not a Claude Design export or handoff bundle.",
+    "verified": "BEFORE, docs/design-immersive-reading.html line 63 was '<h1>Immersive reading - target design (Phase 2)</h1>' with no provenance statement anywhere in the file (grep -in 'claude design' docs/design-immersive-reading.html returned nothing). AFTER, the same file renders 'Hand-authored design target, produced by the frontend-design and design-reference route the goal loop prescribes for this project. Not a Claude Design export, and not a Claude Design handoff bundle: Interstice ships neither.' Repo-wide grep for a Claude Design export still returns only the three records that state its absence (GOAL_LOOP:693, RECURRING_GOALS_SELECTION.md:61, recurring_goals_selection.py:83 'claude_design_bundle: os.path.isdir(target/design/claude-design)' which is False for this repo).",
+    "files": [
+      "docs/design-immersive-reading.html"
+    ]
+  },
+  "DV-002": {
+    "state": "fixed",
+    "how": "Severity is no longer carried by hue alone anywhere on the dashboard. Every verdict pill now renders through one pillHtml() helper that emits three redundant channels: a band WORD ('ok' / 'warn' / 'critical' / 'no data'), a band MARK whose SHAPE differs per band (filled circle, up triangle, filled square, en dash), and the colour. The critical band additionally takes a 2px border where the others take 1px. The false-positives tile, which was also colour-only, appends the band word to its key line. The band vocabulary lives in BAND_WORD / BAND_MARK so a fourth band cannot be added colour-only.",
+    "verified": "Measured in Chromium against the live daemon at localhost:7420 with its real 2,021-gap log. BEFORE the three verdict pills read '30.7%', '0.0%', '1349' and differed only by colour. AFTER they read '\u25a030.7% \u00b7 critical' (p-crit, border 2px, rgb(168,43,34)), '\u25cf0.0% \u00b7 ok' (p-ok, 1px, rgb(27,122,75)), '\u25b21360 \u00b7 warn' (p-warn, 1px, rgb(150,88,13)). With hue removed entirely (document.documentElement.style.filter='grayscale(1)') the same three strings still read '\u25a030.7% \u00b7 critical', '\u25cf0.0% \u00b7 ok', '\u25b21360 \u00b7 warn', so warn and critical are distinguishable with zero colour information. The false-positives tile went from '30.7%False positives' to '30.7%False positives \u00b7 critical'.",
+    "files": [
+      "web/dashboard.html"
+    ]
+  },
+  "DV-006": {
+    "state": "fixed",
+    "how": "An unmeasured month can no longer render as a measured empty one, by any of the three routes. Two were already closed earlier this session: _openStarCal now always derives the month from the client clock and re-asks the server on every open (so the first open no longer short-circuits to a false zero), and a thrown fetch or a non-2xx now renders _calFailed(), a distinct block with its own copy and a Try again button, behind a shimmer loading state rather than static text. The route still open was a 200 whose body carried no star list: 'Array.isArray(body.stars) ? body.stars : []' coerced it to an empty month. That coercion is replaced by a throw into the same failure state. The failure copy was also corrected: it claimed 'The daemon did not answer', which is untrue of the no-list case, and now reads as a question that went unanswered.",
+    "verified": "Measured in Chromium against the live daemon, which holds 4 real stars in 2026-08. Real month: title 'Stars in 2026-08', count '4 stars', 4 .cal-star buttons, no failure block. Fetch aborted (page.route abort, to drive the failure branch): 0 stars, failure block present, copy 'Your stars could not be read. This is not an empty month, it is a question that went unanswered. If Interstice is not running, start it with interstice start, then press Try again.', retry button present. 200 with body {\"month\":\"2026-08\"} and no stars key: same failure block, same copy (BEFORE this change that response rendered the ordinary empty grid). Genuinely starless month 2025-01, unrouted, real request: no failure block, month grid drawn, copy 'No stars earned this month yet.' The two states are now different on screen.",
+    "files": [
+      "web/panel.html"
+    ]
+  },
+  "UFC-002": {
+    "state": "fixed",
+    "how": "Each of the three strings was rewritten so the sentence has the right subject. The arrival notification, which had no subject and no object, names the agent and says what to do. The to-do note stops making the product the subject of the reader's own action. The dashboard's silent-detection line stops making an internal component ('Detection') the subject.",
+    "verified": "Measured in Chromium. Arrival note BEFORE 'Response landed', AFTER 'Your agent answered. Go back to it.' (element shown: classList contains 'show' after a real __latency.complete). #todo-why BEFORE 'Read only. Ticking here is tracked by Interstice and never edits the note.', AFTER 'Tick anything you have already done. Interstice keeps the tick; your note is never changed.' Dashboard #live in the detection-silent branch BEFORE 'No events in 24 hours. Detection may be broken. Run interstice doctor.', AFTER 'Interstice has not seen a prompt in 24 hours, so it may be missing your gaps. Run interstice doctor.'",
+    "files": [
+      "web/panel.html",
+      "web/dashboard.html"
+    ]
+  },
+  "UFC-003": {
+    "state": "fixed",
+    "how": "Every control named in the row now states what it does in its visible label rather than in a hover title only. The footer control says which thing it changes; the reader mode toggle says which of the two views it takes you to and flips its wording when pressed; the calendar toggle says it is a switch; the dashboard's two jargon buttons are handled per the repo's binding vocabulary rule (see verified).",
+    "verified": "Measured in Chromium. #advance BEFORE text 'Something else' title 'Show me a different interstice', AFTER text 'Different rung' title 'Show a different rung: cards, book, queue or to-do'. #reader-mode BEFORE 'Page' with title 'Show the page as Amazon drew it', AFTER 'See the real page' in text mode and 'Back to the text' in image mode. #cal-view-toggle BEFORE 'Day view'/'Month view', AFTER 'Switch to day view'/'Switch to month view'. Dashboard #standdown BEFORE 'Stand down', AFTER 'Stop routing this gap'. #advance on the dashboard stays 'Next rung' because CLAUDE.md binds this repo to its existing vocabulary ('Match the existing vocabulary (rung, gap, ladder, actuator, companion); do not invent a parallel one'), which forbids the row's suggested 'Next activity'; the jargon complaint is answered instead by defining the word on screen, verified under UFC-008.",
+    "files": [
+      "web/panel.html",
+      "web/dashboard.html"
+    ]
+  },
+  "UFC-004": {
+    "state": "fixed",
+    "how": "Two of the three parts were already fixed earlier this session and are cited rather than re-done: the design's hint line was restored as .reader-hint (web/panel.html, 'body.immersive .reader-hint { display: block; position: absolute; ... }') and .reader-pager-overlay, .latency-chip, .arrival-note and .forfeit-note were excluded from the immersive hide rule, which now reads 'body.immersive #view-reading > :not(#reader):not(.reader-menu):not(.reader-menu-overlay):not(.reader-pager-overlay):not(.reader-hint)...'. The part still open was #reader-note, which the row names explicitly: it was not in that :not() chain, so the only string that ever explains why the picture replaced the text could not be seen at the moment it applied. #reader-note is now excluded too and given a floating immersive layout (absolute, bottom 76px, bounded max-height with overflow-y auto) so the page keeps its >=90% contract, scoped to the direct child so it still lays out normally when the reader menu takes it.",
+    "verified": "Measured in Chromium at 640x900 with body.immersive set. .reader-hint computed display 'block', text 'Press \u2192 for the next page, \u2190 to go back. Everything else is behind \u22ef'. .reader-pager-overlay computed display 'flex'. #reader-note computed display BEFORE 'none' even with hidden=false; AFTER 'none' while hidden and 'flex' once the view raises it, showing 'This page did not read cleanly, so this is the page itself.' #reader still measured 1.000 of viewport width and 1.000 of viewport height with the note visible, and test/immersive-layout.pw.mjs still prints '2C.1 PASS: the page occupies >=90% of both dimensions'.",
+    "files": [
+      "web/panel.html"
+    ]
+  },
+  "UFC-005": {
+    "state": "fixed",
+    "how": "The reading screen now states its ask in words, visible in immersive mode, and so does the to-do screen. The reader hint was a bare glyph pair; it is now an imperative that also names where everything else went.",
+    "verified": "Measured in Chromium with body.immersive set. .reader-hint BEFORE '\u2190 \u2192 turn the page', AFTER 'Press \u2192 for the next page, \u2190 to go back. Everything else is behind \u22ef', computed display 'block'. #todo-why BEFORE 'Read only. Ticking here is tracked by Interstice and never edits the note.' (a policy statement with no ask), AFTER 'Tick anything you have already done. Interstice keeps the tick; your note is never changed.'",
+    "files": [
+      "web/panel.html"
+    ]
+  },
+  "UFC-006": {
+    "state": "fixed",
+    "how": "bookLine() drops the ASIN (it is still on /api/health and in the panel's own ?asin= query, where an identifier belongs) and gives 'position' its unit. The shelf count gets its noun and its point. The dashboard names the threshold instead of pointing at one, and reads the number from GET /api/config rather than retyping 25 into the page, so the label cannot drift from the daemon's configuration.",
+    "verified": "Measured in Chromium. bookLine() with the live /api/reading payload BEFORE '39% \u00b7 position 226,766 of 575,835 \u00b7 ASIN B0046LU7H0', AFTER '39% read \u00b7 Kindle location 226,766 of 575,835'. #reader-page BEFORE 'Page 79  \u00b7  2 ready', AFTER 'Page 79  \u00b7  2 pages ready to turn instantly' (and '1 page ready to turn instantly' at ahead=1, plain 'Page 79' at ahead=0). Dashboard verdict row BEFORE 'Gaps below threshold', AFTER 'Gaps shorter than 25s', with 25 read live from /api/config {\"arm\": 25}.",
+    "files": [
+      "web/panel.html",
+      "web/dashboard.html"
+    ]
+  },
+  "UFC-007": {
+    "state": "fixed",
+    "how": "The vague hedge is replaced by the figure that was already in the same payload: weakLinesPhrase() turns d.weak (the fraction of lines below the weak-line bar, lib/ocr.js:293) and d.lines into a count, and falls back to stating the median confidence as a percentage when no individual line was weak but the typical one was still doubted. On naming, one noun is now used for a ladder step across both surfaces: 'rung', which is the noun CLAUDE.md binds this repo to. The nav's 'Activities' aria-label and the footer's 'a different interstice' wording are gone.",
+    "verified": "Measured in Chromium. weakLinesPhrase({weak: 3/14, lines: 14, confidence: 0.72}) returns ' \u00b7 3 of 14 lines read poorly' where the old code returned ' \u00b7 some of this page read poorly'; ({weak: 0, lines: 14, confidence: 0.80}) returns ' \u00b7 the typical line read at 80% confidence'; ({weak: 0, lines: 14, confidence: 0.97}) returns ''. Naming: #rungs aria-label BEFORE 'Activities' AFTER 'Rungs: cards, book, queue, to-do'; #advance BEFORE title 'Show me a different interstice' text 'Something else' AFTER title 'Show a different rung: cards, book, queue or to-do' text 'Different rung'; the dashboard keeps 'Next rung'. grep -in 'Activities|different interstice' over web/*.html now matches only a source comment recording the old wording.",
+    "files": [
+      "web/panel.html",
+      "web/dashboard.html"
+    ]
+  },
+  "UFC-008": {
+    "state": "fixed",
+    "how": "Each of the three definite-but-unresolvable nouns is given a referent. 'Response landed' names the agent and says what to do about it. '2 ready' names what is ready. 'Next rung' keeps its word, because CLAUDE.md binds this repo to that vocabulary, and the word is defined on the page that uses it, exactly as the row's own fix suggests. The panel defines it too, in the persistent header line added for UFC-011.",
+    "verified": "Measured in Chromium. Arrival note BEFORE 'Response landed', AFTER 'Your agent answered. Go back to it.' #reader-page BEFORE 'Page 79  \u00b7  2 ready', AFTER 'Page 79  \u00b7  2 pages ready to turn instantly'. Dashboard, under 'Where it sent you', new #rung-def BEFORE absent, AFTER 'A rung is one activity Interstice can send you to: cards, book, queue, to-do.' Panel #why-open, idle: 'Interstice opens this while your agent works. Each rung above is something to do until it answers.'",
+    "files": [
+      "web/panel.html",
+      "web/dashboard.html"
+    ]
+  },
+  "UFC-009": {
+    "state": "fixed",
+    "how": "The reader-failed block goes from four sentences (first 26 words, wrapped around a quotation of Amazon's own error string) to three short ones in the order the reader needs them: what happened, whose fault it is not, what the button does. The quotation and the phrase 'this reader's registration as a device' are gone. The deck line stops packing a ranking and a count into one middot-joined line and becomes two sentences on two lines. The Full Disk Access copy stops assuming the reader knows why macOS says 'node' and tells them which name to look for and why.",
+    "verified": "Measured in Chromium. #reader-failed-why BEFORE 'Amazon\u2019s reader answered with \u201cPlease try to open this book from the library again\u201d, which it says whether or not the book came from the library. You are signed in and the book is yours: what Amazon refused was this reader\u2019s registration as a device. Trying again throws away what Amazon has stored here, keeps your session, and opens the book fresh.' (4 sentences, first 26 words), AFTER 'Amazon would not open this book here. Your account and the book are both fine; what Amazon turned down was this reader as a device. Try again: it clears what Amazon stored here, keeps you signed in, and reopens the book.' (3 sentences, first 7 words, no embedded quote). #deck-why against the live Anki collection BEFORE '1 review per due card, the lowest of 43 decks with anything due \u00b7 7 due here of 1616 overall', AFTER two lines: '1 review per due card, the fewest of your 43 decks with work waiting.' / '7 of your 1616 due cards are here.' #book-why on reason book_data_forbidden AFTER 'macOS will not let Interstice read your Kindle library. macOS asks about this using the name of the program Interstice runs on, which is \u201cnode\u201d. Allow it when macOS asks, or add it yourself under Privacy & Security, then Full Disk Access.'",
+    "files": [
+      "web/panel.html"
+    ]
+  },
+  "UFC-010": {
+    "state": "fixed",
+    "how": "No raw reason code is the explanation on any of the three surfaces any more. The deck path was mapped earlier this session by ankiRemedy(), which turns 'AnkiConnect unreachable: fetch failed' into a remedy sentence and keeps the machine's own words below it under an explicit 'Anki said:' label, which is evidence rather than explanation and is what the project's transparency rule asks for. The two paths still falling through to String(d.reason) are fixed: the book path gets a single reader-facing fallback and stashes the code on the element's dataset plus console.debug, and the to-do path gets the same treatment. The Anki button's explanation stops describing the product's internals.",
+    "verified": "Measured in Chromium with the reason codes routed in. Book, reason 'kindle_db_locked' (unmapped): #book-why BEFORE would have read 'kindle_db_locked', AFTER 'Interstice could not find a book to open. Run interstice doctor to see why.' with dataset.reason == 'kindle_db_locked' and the code logged to console.debug. To-do, reason 'applescript_timeout' (unmapped): BEFORE would have read 'applescript_timeout', AFTER 'Interstice could not read your notes. Open Notes once, then press To-do again.' ankiRemedy('AnkiConnect unreachable: fetch failed') returns 'Anki is not running, or AnkiConnect is not installed in it. Press Reconnect to Anki below and Interstice will start it for you.' ankiFixHtml() BEFORE '...Starts Anki behind everything, turns off App Nap, and waits for AnkiConnect to answer. Nothing comes to the front.', AFTER 'Reconnect to Anki / Wakes Anki in the background and waits for it. Nothing comes to the front.' grep for String(d.reason) in web/panel.html now returns only the labelled 'Anki said:' evidence line and the dataset stash.",
+    "files": [
+      "web/panel.html"
+    ]
+  },
+  "UFC-011": {
+    "state": "fixed",
+    "how": "The question held at arrival is answered where the reader arrives, persistently, on every rung. A new #why-open line under the panel header states why the window is open and, while a prompt is in flight, counts the wait with the agent as its subject. It is fed by the same _renderLatency path the daemon already drives through POST /api/panel/ping (applyFocusBeat -> window.__latency), so it is real elapsed time, not a placeholder. The immersive latency chip, which said 'waited 2:14' with no waiter, names the agent. The arrival notification, which the row notes never rendered, renders (it is excluded from the immersive hide rule) and has a referent. The same line is where 'rung' is defined.",
+    "verified": "Measured in Chromium against the live daemon. #why-open idle: 'Interstice opens this while your agent works. Each rung above is something to do until it answers.', isVisible true. After window.__latency.submit at now-134000ms: 'Your agent has been working 2:14. Each rung above is something to do until it answers.' Latency chip at the same moment BEFORE 'waited 2:14', AFTER 'your agent: 2:14'. After __latency.complete: the line returns to the idle sentence and #arrival-note shows, text BEFORE 'Response landed', AFTER 'Your agent answered. Go back to it.' #why-open is hidden in immersive (body.immersive #why-open { display: none }) where the chip and the arrival note carry the same facts; test/latency-indicator.pw.mjs still prints '5.2 / 5.3 / 5.4 / 5.7 PASS'.",
+    "files": [
+      "web/panel.html"
+    ]
+  },
+  "VD-009": {
+    "state": "fixed",
+    "how": "There is now one token set. The block that was 9 tokens in panel.html and a different 15 in dashboard.html (and a third variant in debug.html) is a single block, byte for byte identical in all three pages, grouped and commented, naming panel.html as the source of truth. It gains --sunk, --faint, --crit, --accent-soft, --edge, --on-accent and the three type tokens the panel did not have. Every hardcoded literal named in the row is gone: the three color:#fff on var(--accent) go through --on-accent (defined #FFFFFF in light and #0E1116 in dark, so the 2.71:1 dark-theme case is a token a contrast audit can see), .cardframe iframe's #fff becomes var(--raised) and .proof img's #000 becomes var(--ink), so both follow the theme flip. Every font stack literal in panel.html is replaced by var(--display) / var(--body) / var(--mono): 3 body, 8 display and 4 mono occurrences. A separate shared .css file was rejected deliberately, not overlooked: the pages are served by lib/server.js:607 with the control token injected, a <link rel=stylesheet> cannot carry that header, so a shared file would need a new route plus an entry in isTokenExempt (lib/auth.js:121) and therefore a daemon restart, and the running daemon must not be restarted. The comment in each file says so and says to paste the block.",
+    "verified": "Programmatic diff of the :root..dark block in all three pages: BEFORE panel and dashboard differed on --ground (#F1F3F5 vs #EEF0F2), --warn (#9E5C0E vs #9A6A12 light, #D9A05B vs #D6A44A dark) and on the existence of --sunk/--faint/--crit/--accent-soft/--display/--body/--mono; debug.html was a third variant (--ground #EEF0F2, --warn #96580D, no --edge/--on-accent/--accent-soft). AFTER, the extractor prints 'ALL THREE IDENTICAL'. grep '#fff|#000' over web/*.html now matches only the two explanatory comments (no declarations). Rendered in Chromium, dashboard button.primary computes color from var(--on-accent) and the panel's fonts resolve through the tokens with no page errors; node --test stays at 305/305 and all five Playwright suites still pass.",
+    "files": [
+      "web/panel.html",
+      "web/dashboard.html",
+      "web/debug.html"
+    ]
+  }
+}
