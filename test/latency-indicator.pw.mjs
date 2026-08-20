@@ -7,7 +7,13 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 
 const PANEL = pathToFileURL(path.resolve('web/panel.html')).href;
-const browser = await chromium.launch({ channel: 'chrome' });
+// Browser choice: Playwright's bundled Chromium by default, because it is the engine the
+// repo installs with `@playwright/test` and is therefore always present. `channel: 'chrome'`
+// needs a separately-installed Chrome, and where that is missing the launch hangs until the
+// runner's timeout and reports a product failure for an environment reason. Set
+// INTERSTICE_PW_CHANNEL=chrome to test against real Chrome instead.
+const LAUNCH = process.env.INTERSTICE_PW_CHANNEL ? { channel: process.env.INTERSTICE_PW_CHANNEL } : {};
+const browser = await chromium.launch(LAUNCH);
 const fails = [];
 try {
   const page = await browser.newPage({ viewport: { width: 640, height: 900 } });
