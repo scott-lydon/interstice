@@ -376,7 +376,8 @@ data; simulated gaps are tagged `synthetic: true` and excluded from the statisti
 ## Things that will silently break, and what handles them
 
 Every one of these produces *nothing happening*, with no error, which is the failure
-this project can least afford. `doctor` proves each of them rather than assuming.
+this project can least afford. `doctor` proves the ones it can reach; the rest are handled in
+code, and are named here so the mitigation can be found rather than rediscovered.
 
 | Trap | Why it is invisible | Handled by |
 |---|---|---|
@@ -393,7 +394,7 @@ this project can least afford. `doctor` proves each of them rather than assuming
 | Notes' own store is TCC protected | a direct read of `NoteStore.sqlite` returns "Operation not permitted" | Notes is read over Apple events, which needs only the Automation grant that is already required |
 | Reading Notes one property at a time | it works, so nothing looks wrong; it just gets slower with every note you own. Timed once here, 40 notes took 104 seconds | properties are fetched in bulk, one Apple event per property for the whole library, which returned in 0.3 seconds on that same reading |
 | Chrome drops window flags passed to an already-running instance | the panel opens somewhere other than where it was placed | the panel runs in its own `--user-data-dir`, so the flags reach a process that will honour them |
-| The LaunchAgent names a Homebrew node by version | `brew upgrade node` deletes that Cellar directory, the job then fails at every login, and the only symptom is Interstice never appearing, which looks like a quiet day | `install` writes the stable symlink after proving it is node 22 or newer, and `doctor` fails if the plist points at a path that is gone or versioned |
+| The LaunchAgent names a Homebrew node by version | `brew upgrade node` deletes that Cellar directory, the job then fails at every login, and the only symptom is Interstice never appearing, which looks like a quiet day | `install` writes the stable symlink after proving it is node 22 or newer, and `doctor` warns if the plist points at a path that is gone or versioned |
 | Be Focused publishes no timer state | it is not scriptable, its group container holds no running interval, and its status item has no `AXTitle`, so any state you infer from the app is a guess | the menu bar countdown is photographed three times, a second apart; a running timer differs across every pair and a paused one across none |
 | Something crosses the menu bar mid-reading | one changed pair looks exactly like one tick, so a window going full screen reads as a running timer | three samples, an obstruction check before any capture, and `unknown` for a mixed result |
 | Music refuses the Automation grant | the error reads as "nothing is loaded", which is a state, so the panel would nag you about music you have on | `-1743` is separated from a genuine empty player and reported as `unknown`, which never warns |

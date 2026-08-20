@@ -139,8 +139,7 @@
   .view { display: none; flex-direction: column; gap: 12px; height: 100%; }
   .view.active { display: flex; }
 
-  /* Immersive reading: while reading, the page fills the panel and every other control
-     is behind one menu affordance. Scoped to body.immersive, which setView sets only for the
+  /* Immersive reading: while reading, the page fills the panel and every control except the page-turn pager is behind one menu affordance. Scoped to body.immersive, which setView sets only for the
      reading view, so the other rungs are untouched. */
   body.immersive header,
   body.immersive #why-open,
@@ -159,7 +158,7 @@
      banner all computed to `display: none` even with their own state class applied. */
   body.immersive #view-reading > :not(#reader):not(.reader-menu):not(.reader-menu-overlay):not(.reader-pager-overlay):not(.reader-hint):not(#reader-note):not(.star-cal-overlay):not(.latency-chip):not(.arrival-note):not(.forfeit-note) { display: none; }
   body.immersive #reader { border-radius: 0; border: 0; }
-  /* The single menu affordance: one always-visible button, top-right. */
+  /* The single menu affordance: one button, top-right, present whenever the menu it opens is not. */
   .reader-menu { display: none; }
   body.immersive .reader-menu {
     display: grid; place-items: center; position: absolute; top: 8px; right: 8px; z-index: 30;
@@ -1092,8 +1091,8 @@ function stopReader() {
 /**
  * What this view has to say about the page you are on, where you can see it.
  *
- * Shown under the pager rather than over the page, because a message drawn on top of
- * the book is a message you have to dismiss to keep reading.
+ * Floated over the foot of the page while immersive, bounded and out of the way, so it never
+ * eats into the page's share of the panel. Outside the reading view it sits in the flow.
  */
 function readerNote(text, { again = false } = {}) {
   const box = $('reader-note');
@@ -2213,8 +2212,7 @@ window.addEventListener('load', () => {
   // "waited 2:14" named no waiter. The subject is the thing the reader is actually
   // wondering about, and it is the only reason this window is open.
   function _fmtElapsed(ms) { return `your agent: ${_clock(ms)}`; }
-  // The same fact, in the sentence under the header, where it is on every rung rather
-  // than only on the book. This is the question a reader arrives holding.
+  // The same fact, in the sentence under the header, where it is on the three non-reading rungs; on the book the latency chip carries it. This is the question a reader arrives holding.
   const WHY_IDLE = 'Interstice opens this while your agent works. '
     + 'Each rung above is something to do until it answers.';
   function _renderWhyOpen(waitingMs) {

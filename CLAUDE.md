@@ -30,10 +30,10 @@ in a linter config, because eslint or prettier would add a second build-time dep
 whose npm surface is one test-only package, for a benefit a named guide already gives.
 
 - **JavaScript** (`lib/`, `bin/`, `test/`, `web/`): the
-  [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html), with the
-  formatting settings this repo already uses and `.editorconfig` records: 2-space indent, single
-  quotes, semicolons, LF, and a 110-column soft limit rather than Google's 80, which is what the
-  existing files are written to.
+  [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html), with the formatting this repo already uses. `.editorconfig` records what it can express: 2-space
+  indent, LF, UTF-8, a trailing newline and no trailing whitespace. Single quotes, semicolons
+  and a 110-column soft limit rather than Google's 80 are conventions the existing files are
+  written to, not settings any tool enforces.
 - **Shell** (`hooks/*.sh`): the
   [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html). Note the hooks
   are `#!/bin/sh` and must stay POSIX rather than bash: they run in front of every prompt
