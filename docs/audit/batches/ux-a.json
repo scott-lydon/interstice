@@ -1,0 +1,486 @@
+{
+ "batch": "ux-a",
+ "target": "web/dashboard.html, web/debug.html, web/panel.html",
+ "rules": [
+  {
+   "row_id": "UX-A11Y-001",
+   "sheet": "UX",
+   "title": "Icon-only buttons need aria-label",
+   "severity": "high",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Icon-only buttons need an aria-label.\n\nHOW TO DETECT: Find buttons whose children are only an icon component, an svg, or an img with no visible text. Flag any with no aria-label, aria-labelledby, or visually-hidden text child.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-A11Y-002",
+   "sheet": "UX",
+   "title": "Form controls need a label or aria-label",
+   "severity": "high",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Every form control needs an associated <label> or an aria-label.\n\nHOW TO DETECT: Find input, select, textarea, and role=textbox elements. Flag any with no htmlFor/id-paired label, no wrapping label, no aria-label, and no aria-labelledby.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-A11Y-003",
+   "sheet": "UX",
+   "title": "Interactive elements need keyboard handlers",
+   "severity": "high",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Interactive elements need keyboard handlers (onKeyDown or onKeyUp), not mouse handlers alone.\n\nHOW TO DETECT: Find elements with onClick that are not <button>, <a>, <input>, or <summary>. Flag each that has no matching key handler and no tabIndex.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-A11Y-004",
+   "sheet": "UX",
+   "title": "button for actions, a/Link for navigation",
+   "severity": "high",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use <button> for actions and <a> or <Link> for navigation. Never a <div onClick>.\n\nHOW TO DETECT: Flag <div>, <span>, and <li> carrying an onClick handler. Flag <button> handlers whose body only pushes a route (should be a link), and <a href='#'> whose handler performs an action (should be a button).\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-A11Y-005",
+   "sheet": "UX",
+   "title": "Images need alt text",
+   "severity": "high",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Images need an alt attribute, or alt=\"\" if decorative.\n\nHOW TO DETECT: Flag every <img> and next/image <Image> with no alt prop. An empty alt is correct for decorative images and is not an offense.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-A11Y-006",
+   "sheet": "UX",
+   "title": "Decorative icons need aria-hidden",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Decorative icons need aria-hidden=\"true\".\n\nHOW TO DETECT: Find inline svg and icon components rendered next to visible text conveying the same meaning. Flag those without aria-hidden=\"true\".\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-A11Y-007",
+   "sheet": "UX",
+   "title": "Async updates need aria-live",
+   "severity": "high",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Async updates such as toasts and validation messages need aria-live=\"polite\".\n\nHOW TO DETECT: Find toast containers, inline validation messages, and any region whose content is replaced after a fetch or a form submit. Flag those with no aria-live and no role=status/alert.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-A11Y-008",
+   "sheet": "UX",
+   "title": "Semantic HTML before ARIA",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use semantic HTML (<button>, <a>, <label>, <table>) before reaching for ARIA.\n\nHOW TO DETECT: Flag ARIA roles that duplicate a native element: role=\"button\" on a div, role=\"link\" on a span, role=\"table\"/\"row\"/\"cell\" on divs, role=\"checkbox\" on a div.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-A11Y-009",
+   "sheet": "UX",
+   "title": "Headings are hierarchical and a skip link exists",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Headings are hierarchical h1 through h6 with no skipped levels, and the page includes a skip link to main content.\n\nHOW TO DETECT: Walk the rendered heading order per page. Flag skipped levels, multiple h1s, and headings chosen for size rather than structure. Separately confirm a skip-to-main-content link exists as the first focusable element.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-A11Y-010",
+   "sheet": "UX",
+   "title": "Heading anchors need scroll-margin-top",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Heading anchors need scroll-margin-top so a fixed header does not cover the target after an in-page jump.\n\nHOW TO DETECT: Find headings that carry an id used as an in-page anchor target. Flag those with no scroll-margin-top (or scroll-mt-*) where the layout has a sticky or fixed header.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FOCUS-001",
+   "sheet": "UX",
+   "title": "Interactive elements need a visible focus ring",
+   "severity": "high",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Interactive elements need a visible focus state: focus-visible:ring-* or an equivalent.\n\nHOW TO DETECT: Find buttons, links, inputs, and custom interactive elements. Flag those with no focus-visible style anywhere in their class list or stylesheet.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FOCUS-002",
+   "sheet": "UX",
+   "title": "Never outline-none without a replacement",
+   "severity": "high",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Never use outline-none or outline: none without providing a focus replacement.\n\nHOW TO DETECT: Flag every outline-none class and `outline: none` declaration. For each, check the same selector or component also defines a focus-visible ring, border, or shadow.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FOCUS-003",
+   "sheet": "UX",
+   "title": "Prefer :focus-visible over :focus",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use :focus-visible over :focus so a focus ring does not appear on mouse click.\n\nHOW TO DETECT: Flag `:focus` selectors and `focus:` utility classes that style a ring or outline where `:focus-visible` / `focus-visible:` is the correct choice.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FOCUS-004",
+   "sheet": "UX",
+   "title": "Compound controls use :focus-within",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Group focus with :focus-within for compound controls.\n\nHOW TO DETECT: Find compound controls (an input plus an adornment inside a bordered wrapper, a combobox, a search field with a button). Flag those where focus styles land on the inner input rather than the wrapper via focus-within.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FORM-001",
+   "sheet": "UX",
+   "title": "Inputs need autocomplete and a meaningful name",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Inputs need an autocomplete attribute and a meaningful name.\n\nHOW TO DETECT: Flag inputs with no name or a name like `field1`, and inputs with no autocomplete where a standard token applies (email, username, current-password, new-password, tel, street-address, cc-number, one-time-code).\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FORM-002",
+   "sheet": "UX",
+   "title": "Correct input type and inputmode",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use the correct input type (email, tel, url, number) and inputmode.\n\nHOW TO DETECT: Flag type=\"text\" inputs whose label or name indicates email, phone, URL, numeric, or decimal content, and numeric inputs with no inputmode on mobile-facing forms.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FORM-003",
+   "sheet": "UX",
+   "title": "Never block paste",
+   "severity": "high",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Never block paste with onPaste plus preventDefault.\n\nHOW TO DETECT: Flag every onPaste handler that calls preventDefault or returns false.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FORM-004",
+   "sheet": "UX",
+   "title": "Labels are clickable",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Labels are clickable, via htmlFor or by wrapping the control.\n\nHOW TO DETECT: Flag <label> elements with no htmlFor and no control child, and htmlFor values that match no element id.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FORM-005",
+   "sheet": "UX",
+   "title": "Disable spellcheck on emails, codes, and usernames",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Disable spellcheck on emails, codes, and usernames with spellCheck={false}.\n\nHOW TO DETECT: Find inputs whose name, id, or label indicates email, username, coupon code, API key, one-time code, or slug. Flag those with no spellCheck={false}.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FORM-006",
+   "sheet": "UX",
+   "title": "Checkbox and radio share one hit target with their label",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Checkboxes and radios and their labels share a single hit target with no dead zones.\n\nHOW TO DETECT: Find checkbox and radio inputs. Flag layouts where the label is a sibling with no htmlFor, or where padding leaves an unclickable gap between the control and its text.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FORM-007",
+   "sheet": "UX",
+   "title": "Submit stays enabled until the request starts, then spins",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: The submit button stays enabled until the request starts, and shows a spinner during the request.\n\nHOW TO DETECT: Flag submit buttons disabled by validation state before any submit attempt, and submit handlers with no pending state driving a spinner. Cross-check against the animated-loading-indicator rule: the pending state must render an animated indicator, not static text.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FORM-008",
+   "sheet": "UX",
+   "title": "Errors render inline and focus moves to the first error",
+   "severity": "high",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Errors appear inline next to their fields, and focus moves to the first error on submit.\n\nHOW TO DETECT: Flag forms that surface validation only in a top-level banner or a toast, and submit handlers that set errors without moving focus to the first invalid control.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FORM-009",
+   "sheet": "UX",
+   "title": "Placeholders end with an ellipsis and show an example",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Placeholders end with the ellipsis character and show an example of the expected pattern.\n\nHOW TO DETECT: Flag placeholders that merely restate the label, and placeholders ending in three periods rather than the single ellipsis character.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FORM-010",
+   "sheet": "UX",
+   "title": "autocomplete=off on non-auth fields",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Set autocomplete=\"off\" on non-auth fields to avoid spurious password-manager triggers.\n\nHOW TO DETECT: Find non-credential inputs sitting near a password field, or fields named like credentials but holding something else. Flag those with no autocomplete=\"off\".\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-FORM-011",
+   "sheet": "UX",
+   "title": "Warn before navigating away from unsaved changes",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Warn before navigation when there are unsaved changes, via beforeunload or a router guard.\n\nHOW TO DETECT: Find forms and editors holding dirty local state. Flag those with no beforeunload listener and no router navigation guard.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-ANIM-001",
+   "sheet": "UX",
+   "title": "Honor prefers-reduced-motion",
+   "severity": "high",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Honor prefers-reduced-motion by providing a reduced variant or disabling the animation.\n\nHOW TO DETECT: Find every CSS animation, transition over roughly 200ms, and JS-driven motion. Flag the ones with no prefers-reduced-motion branch anywhere in the file or the global stylesheet.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-ANIM-002",
+   "sheet": "UX",
+   "title": "Animate transform and opacity only",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Animate transform and opacity only, because they are compositor-friendly.\n\nHOW TO DETECT: Flag keyframes and transitions animating width, height, top, left, right, bottom, margin, padding, or box-shadow where a transform equivalent exists.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-ANIM-003",
+   "sheet": "UX",
+   "title": "Never transition: all",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Never use transition: all. List the properties explicitly.\n\nHOW TO DETECT: Flag every `transition: all` declaration and every `transition-all` utility class.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-ANIM-004",
+   "sheet": "UX",
+   "title": "Set the correct transform-origin",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Set the correct transform-origin for scale and rotate animations.\n\nHOW TO DETECT: Find scale and rotate animations on elements that are not centered in their box (dropdowns, tooltips, popovers, accordion chevrons). Flag those relying on the default 50% 50% origin where the anchor edge is the correct origin.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-ANIM-005",
+   "sheet": "UX",
+   "title": "SVG transforms go on a g wrapper with fill-box origin",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: For SVG, put transforms on a <g> wrapper with transform-box: fill-box and transform-origin: center.\n\nHOW TO DETECT: Flag animations applied directly to <svg>, <path>, or <circle> elements rather than to a wrapping <g>, and SVG transforms with no transform-box: fill-box.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-ANIM-006",
+   "sheet": "UX",
+   "title": "Animations are interruptible",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Animations are interruptible and respond to user input mid-animation.\n\nHOW TO DETECT: Find animations gated behind a boolean that ignores input until the animation ends, and handlers disabled for the animation duration. Flag each with the interruptible rewrite.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-TYPO-001",
+   "sheet": "UX",
+   "title": "Use the ellipsis character, not three periods",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use the single ellipsis character rather than three period characters.\n\nHOW TO DETECT: Flag three consecutive periods in any user-visible string, including placeholders, button labels, loading text, and truncation suffixes. Do not flag ranges in code or spread syntax.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-TYPO-002",
+   "sheet": "UX",
+   "title": "Use curly quotes in prose",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use curly quotation marks in user-visible prose, not straight quotes.\n\nHOW TO DETECT: Flag straight apostrophes and straight double quotes inside user-visible string literals and JSX text. Do not flag quotes that delimit the string itself or appear in code, JSON, or attribute values.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-TYPO-003",
+   "sheet": "UX",
+   "title": "Non-breaking spaces in units, shortcuts, and brand names",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use non-breaking spaces in unit pairs, keyboard shortcuts, and brand names, for example 10&nbsp;MB and Cmd&nbsp;K.\n\nHOW TO DETECT: Flag user-visible strings containing a number followed by a space and a unit (MB, GB, ms, px, kg), keyboard shortcut pairs, and two-word brand names, where a normal space was used.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-TYPO-004",
+   "sheet": "UX",
+   "title": "Loading states end with an ellipsis",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Loading states end with an ellipsis: Loading\u2026 Saving\u2026\n\nHOW TO DETECT: Flag loading and pending strings with no trailing ellipsis character. Cross-check against the animated-indicator rule: the string alone is never sufficient.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-TYPO-005",
+   "sheet": "UX",
+   "title": "Tabular numerals in number columns",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use font-variant-numeric: tabular-nums for number columns and comparisons.\n\nHOW TO DETECT: Find tables, stat rows, price lists, and live counters displaying aligned numbers. Flag those with no tabular-nums.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-TYPO-006",
+   "sheet": "UX",
+   "title": "Balance or pretty wrapping on headings",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use text-wrap: balance or text-pretty on headings to prevent widows.\n\nHOW TO DETECT: Flag multi-word headings (h1 through h3, card titles, hero copy) with no text-balance or text-pretty.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-CONT-001",
+   "sheet": "UX",
+   "title": "Text containers handle long content",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Text containers handle long content with truncate, line-clamp-*, or break-words.\n\nHOW TO DETECT: Find containers rendering user-generated or API-supplied text with a bounded width. Flag those with no truncate, line-clamp, break-words, or overflow-wrap.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-CONT-002",
+   "sheet": "UX",
+   "title": "Flex children need min-w-0 to truncate",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Flex children need min-w-0 to allow text truncation.\n\nHOW TO DETECT: Find truncate or line-clamp inside a flex child. Flag those whose parent chain lacks min-w-0, because the truncation silently will not apply.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-CONT-003",
+   "sheet": "UX",
+   "title": "Empty states are handled",
+   "severity": "high",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Handle empty states. Do not render broken UI for empty strings or empty arrays.\n\nHOW TO DETECT: For each list, table, chart, and detail panel, find the zero-item and null branch. Flag surfaces that render an empty container, a bare zero, or a stray separator instead of a designed empty state.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-CONT-004",
+   "sheet": "UX",
+   "title": "Anticipate short, average, and very long user content",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: For user-generated content, anticipate short, average, and very long inputs.\n\nHOW TO DETECT: For each surface rendering user text, describe how it looks at one character, at typical length, and at ten times typical length. Flag surfaces that break, overflow, or lose their layout at either extreme.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-IMG-001",
+   "sheet": "UX",
+   "title": "img needs explicit width and height",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Every <img> needs explicit width and height to prevent cumulative layout shift.\n\nHOW TO DETECT: Flag <img> tags with no width and height attributes and no aspect-ratio style, and next/image usage with neither dimensions nor fill.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-IMG-002",
+   "sheet": "UX",
+   "title": "Below-fold images are lazy",
+   "severity": "low",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Below-fold images use loading=\"lazy\".\n\nHOW TO DETECT: Find images rendered below the initial viewport (list rows past the first few, footer logos, gallery items). Flag those with no loading=\"lazy\".\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-IMG-003",
+   "sheet": "UX",
+   "title": "Above-fold critical images are prioritized",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Above-fold critical images use priority or fetchpriority=\"high\".\n\nHOW TO DETECT: Find the hero or largest-contentful image on each entry route. Flag it if it carries neither priority nor fetchpriority=\"high\", and flag it if it is lazy-loaded.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-PERF-001",
+   "sheet": "UX",
+   "title": "Virtualize lists over 50 items",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Large lists over 50 items are virtualized, for example with virtua or content-visibility: auto.\n\nHOW TO DETECT: Find .map() renders over arrays that can exceed 50 items. Flag each with no virtualization and no content-visibility: auto.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-PERF-002",
+   "sheet": "UX",
+   "title": "No layout reads during render",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: No layout reads in render: getBoundingClientRect, offsetHeight, offsetWidth, scrollTop.\n\nHOW TO DETECT: Flag layout-reading properties called in a component body, in a useMemo, or in a render-phase helper rather than in an effect or an event handler.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-PERF-003",
+   "sheet": "UX",
+   "title": "Batch DOM reads and writes",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Batch DOM reads and writes; never interleave them.\n\nHOW TO DETECT: Find loops that read a layout property and then write a style in the same iteration. Flag each with the read-all-then-write-all rewrite.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UX-PERF-004",
+   "sheet": "UX",
+   "title": "Prefer uncontrolled inputs; controlled inputs stay cheap",
+   "severity": "medium",
+   "applies_to": "**/*.{tsx,jsx,ts,js,html,vue,svelte}",
+   "verdict": "include",
+   "reason": "web/panel.html plus the JS that drives it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Prefer uncontrolled inputs. A controlled input must be cheap per keystroke.\n\nHOW TO DETECT: Find controlled inputs whose onChange triggers a filter, a fetch, a large re-render, or a parent state update. Flag each with the uncontrolled, debounced, or deferred-value rewrite.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  }
+ ]
+}

@@ -1,0 +1,266 @@
+{
+ "batch": "copy-design",
+ "target": "user-facing copy and the design surfaces",
+ "rules": [
+  {
+   "row_id": "UFC-001",
+   "sheet": "User_Facing_Copy",
+   "title": "Passive voice in user-facing copy",
+   "severity": "medium",
+   "applies_to": "every user-facing surface in the target: rendered screens and flows, plus display strings in **/*.{strings,stringsdict,swift,tsx,jsx,ts,js,html,vue,svelte} and any email, push notification, or marketing asset",
+   "verdict": "include",
+   "reason": "the panel is a user-facing surface and its display strings live in matching files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: User-facing copy is written in active voice. Any sentence built from a form of the verb to be plus a past participle, and any construction that describes an action without naming who performs it, is rewritten so the actor is the grammatical subject.\n\nHOW TO DETECT: Read every user-facing string as rendered. Flag any sentence containing a form of to be (is, are, was, were, be, been, being, has been, have been, will be, gets, got) followed by a past participle, and any nominalization that hides the actor: \"a request was sent\", \"notifications are enabled\", \"verification is required\". Two exceptions to check before reporting: the actor is genuinely unknown to the product at that moment, or naming the actor would expose another person's identity. When an exception holds, the sentence must still name what the reader does next, so report it if it does not. Note that a word ending in -ed can be an adjective (\"you are ready\", \"the code is expired\"); confirm the participle is verbal before flagging. This row checks the rendered surface; UX-COPY-001 in UX/rows.csv checks the same grammar inside source files.\n\nSCOPE: every user-facing string on the surfaces under review, read as rendered, in the order a real user meets them.\n\nOUTPUT: For each offense emit one line as `<screen or file>:<location> - \"<the offending copy, quoted verbatim>\" -> <the replacement words, or the specific missing element>`. A fix line that only says \"make it clearer\" is not a fix; write the actual replacement copy. If the rule applied and the surface complied, emit exactly `PASS`. If the surface carries no copy this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UFC-002",
+   "sheet": "User_Facing_Copy",
+   "title": "Copy narrates the system instead of addressing the reader",
+   "severity": "high",
+   "applies_to": "every user-facing surface in the target: rendered screens and flows, plus display strings in **/*.{strings,stringsdict,swift,tsx,jsx,ts,js,html,vue,svelte} and any email, push notification, or marketing asset",
+   "verdict": "include",
+   "reason": "the panel is a user-facing surface and its display strings live in matching files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Copy addresses the reader in the second person and puts the reader, or the person the reader cares about, in the subject position wherever they are the one who acts or is affected. The product does not narrate its own activity in the third person when the sentence exists to tell the reader something about their own situation.\n\nHOW TO DETECT: The verbatim trigger, 2026-08-17: \"Map Mates has sent 2 people\". The product names itself as the actor, never says where the two people were sent or what that has to do with the reader, and leaves the reader nothing to do. Flag every string whose grammatical subject is the product, a feature name, a brand name, or an internal component name, where the sentence could be rewritten with \"you\" or the reader's real-world counterpart as the subject. Separately flag every such string whose verb has an incomplete object (\"sent 2 people\" with no destination, \"added your details\" with no place). One exception: a status line that is genuinely about the system itself, such as a sync or build indicator, and that claims no consequence for the reader.\n\nSCOPE: every user-facing string on the surfaces under review, read as rendered, in the order a real user meets them.\n\nOUTPUT: For each offense emit one line as `<screen or file>:<location> - \"<the offending copy, quoted verbatim>\" -> <the replacement words, or the specific missing element>`. A fix line that only says \"make it clearer\" is not a fix; write the actual replacement copy. If the rule applied and the surface complied, emit exactly `PASS`. If the surface carries no copy this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UFC-003",
+   "sheet": "User_Facing_Copy",
+   "title": "Every visible label, badge, and control states its own purpose",
+   "severity": "high",
+   "applies_to": "every user-facing surface in the target: rendered screens and flows, plus display strings in **/*.{strings,stringsdict,swift,tsx,jsx,ts,js,html,vue,svelte} and any email, push notification, or marketing asset",
+   "verdict": "include",
+   "reason": "the panel is a user-facing surface and its display strings live in matching files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Every label, badge, chip, toggle, button, and control on the surface makes its purpose evident to a reader who has never seen the screen before, without tapping it, without hovering it, and without reading a different screen.\n\nHOW TO DETECT: The verbatim trigger, 2026-08-17: \"(Not this time)\" appeared as a visible control with nothing on the surface saying what choosing it does, what it applies to, or what happens afterward. The reader's actual reaction was \"not sure what this is for\". Enumerate every visible label, badge, chip, toggle, button, and control on the surface. For each, write one sentence saying what it does and what it applies to, using only what is visible on that screen. Flag every one where you cannot write that sentence. One exception: a universally understood system affordance, such as a back chevron, a close X, or a standard labeled tab bar item.\n\nSCOPE: every user-facing string on the surfaces under review, read as rendered, in the order a real user meets them.\n\nOUTPUT: For each offense emit one line as `<screen or file>:<location> - \"<the offending copy, quoted verbatim>\" -> <the replacement words, or the specific missing element>`. A fix line that only says \"make it clearer\" is not a fix; write the actual replacement copy. If the rule applied and the surface complied, emit exactly `PASS`. If the surface carries no copy this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UFC-004",
+   "sheet": "User_Facing_Copy",
+   "title": "The sequence of the flow is legible from the copy alone",
+   "severity": "high",
+   "applies_to": "every user-facing surface in the target: rendered screens and flows, plus display strings in **/*.{strings,stringsdict,swift,tsx,jsx,ts,js,html,vue,svelte} and any email, push notification, or marketing asset",
+   "verdict": "include",
+   "reason": "the panel is a user-facing surface and its display strings live in matching files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: A first-time reader can state, from the copy visible on the screen in front of them, where they are in the flow, what they do here, what happens when they do it, and how they will know it worked. No screen leaves the reader guessing which step they are on or what moves them to the next one.\n\nHOW TO DETECT: The trigger, 2026-08-17: the reader's summary of the Akin venue-ask flow was \"the flow is confusing\". Walk the flow screen by screen in the order a real user meets them. At each screen answer all four questions in one sentence each: where am I, what do I do here, what happens when I do it, how do I know it worked. Flag every screen where any of the four cannot be answered from the visible copy. Separately flag every pair of screens that look alike but mean different states, and every transition whose trigger condition is never stated. Your fix line names the sentence to add and the screen it goes on.\n\nSCOPE: every user-facing string on the surfaces under review, read as rendered, in the order a real user meets them.\n\nOUTPUT: For each offense emit one line as `<screen or file>:<location> - \"<the offending copy, quoted verbatim>\" -> <the replacement words, or the specific missing element>`. A fix line that only says \"make it clearer\" is not a fix; write the actual replacement copy. If the rule applied and the surface complied, emit exactly `PASS`. If the surface carries no copy this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UFC-005",
+   "sheet": "User_Facing_Copy",
+   "title": "Every screen states its primary ask as a direct instruction",
+   "severity": "blocker",
+   "applies_to": "every user-facing surface in the target: rendered screens and flows, plus display strings in **/*.{strings,stringsdict,swift,tsx,jsx,ts,js,html,vue,svelte} and any email, push notification, or marketing asset",
+   "verdict": "include",
+   "reason": "the panel is a user-facing surface and its display strings live in matching files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: A screen that exists to get the reader to do something states that thing as a direct instruction, in the reader's own words, including when to do it and what to do if the answer is no. Describing the product, the benefit, or the situation is not an ask.\n\nHOW TO DETECT: The verbatim trigger, 2026-08-17: the Akin venue screen carried several paragraphs and never asked the reader to walk up to the counter. The missing sentence had the shape \"Please ask the cashier or an employee if they partner with Akin. If they say no, show them this QR code.\" The reader's words were: \"It just says a bunch of stuff without asking the user to walk up to the cashier and ask about it, either after they buy something or before.\" For each screen, first name the one action the product needs from the reader. Then flag the screen when any of these hold: no imperative sentence names that action; the action is named but the timing is unstated, for example before or after the purchase; the action is named but the no-branch is unstated, meaning what the reader does when the answer is no. One exception: a pure receipt or confirmation screen that needs nothing from the reader.\n\nSCOPE: every user-facing string on the surfaces under review, read as rendered, in the order a real user meets them.\n\nOUTPUT: For each offense emit one line as `<screen or file>:<location> - \"<the offending copy, quoted verbatim>\" -> <the replacement words, or the specific missing element>`. A fix line that only says \"make it clearer\" is not a fix; write the actual replacement copy. If the rule applied and the surface complied, emit exactly `PASS`. If the surface carries no copy this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UFC-006",
+   "sheet": "User_Facing_Copy",
+   "title": "No orphan data: every number, date, and range states what it is for",
+   "severity": "high",
+   "applies_to": "every user-facing surface in the target: rendered screens and flows, plus display strings in **/*.{strings,stringsdict,swift,tsx,jsx,ts,js,html,vue,svelte} and any email, push notification, or marketing asset",
+   "verdict": "include",
+   "reason": "the panel is a user-facing surface and its display strings live in matching files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Every number, date, date range, code, and abbreviation shown to the reader carries, on the same surface, a label saying what it measures and why the reader is seeing it.\n\nHOW TO DETECT: The verbatim trigger, 2026-08-17: \"1 August to 15 August, pt\" appeared with no label. Nothing said what the range counts, whose it is, or what the reader should do about it, and \"pt\" is an unexpanded abbreviation. The reader's words were \"no idea what this is for\". Enumerate every numeric token, date, date range, duration, currency amount, percentage, short code, and abbreviation on the surface. Flag each one where the surface does not state both what it measures and what the reader is meant to do with it. Flag every unexpanded abbreviation separately, per CM-003 in Process/Communication. One exception: a value rendered directly beneath or beside a label that names it.\n\nSCOPE: every user-facing string on the surfaces under review, read as rendered, in the order a real user meets them.\n\nOUTPUT: For each offense emit one line as `<screen or file>:<location> - \"<the offending copy, quoted verbatim>\" -> <the replacement words, or the specific missing element>`. A fix line that only says \"make it clearer\" is not a fix; write the actual replacement copy. If the rule applied and the surface complied, emit exactly `PASS`. If the surface carries no copy this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UFC-007",
+   "sheet": "User_Facing_Copy",
+   "title": "No vagueness: every claim names the specific thing",
+   "severity": "high",
+   "applies_to": "every user-facing surface in the target: rendered screens and flows, plus display strings in **/*.{strings,stringsdict,swift,tsx,jsx,ts,js,html,vue,svelte} and any email, push notification, or marketing asset",
+   "verdict": "include",
+   "reason": "the panel is a user-facing surface and its display strings live in matching files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: User-facing copy names the specific thing. Vague quantifiers, unnamed nouns, unquantified durations, and unnecessary hedges are replaced with the concrete noun, the actual number, the actual duration, or the actual name.\n\nHOW TO DETECT: Flag each of these where a specific value exists or could be obtained: some, several, various, a few, many, multiple, where a count is available; stuff, things, items, content, information, details, where a specific noun exists; soon, shortly, in a moment, later, where a duration is known; may, might, could, should, where the behavior is deterministic; and two different words used interchangeably for the same real thing, for example partner, venue, and business on one surface. For each, write the specific replacement. Where the specific value is not present on the surface, your fix line names the system or field that holds it, so the gap is actionable rather than noted. One exception: hedging that is legally required, which must be named as such.\n\nSCOPE: every user-facing string on the surfaces under review, read as rendered, in the order a real user meets them.\n\nOUTPUT: For each offense emit one line as `<screen or file>:<location> - \"<the offending copy, quoted verbatim>\" -> <the replacement words, or the specific missing element>`. A fix line that only says \"make it clearer\" is not a fix; write the actual replacement copy. If the rule applied and the surface complied, emit exactly `PASS`. If the surface carries no copy this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UFC-008",
+   "sheet": "User_Facing_Copy",
+   "title": "Every referent is named and located on first mention",
+   "severity": "high",
+   "applies_to": "every user-facing surface in the target: rendered screens and flows, plus display strings in **/*.{strings,stringsdict,swift,tsx,jsx,ts,js,html,vue,svelte} and any email, push notification, or marketing asset",
+   "verdict": "include",
+   "reason": "the panel is a user-facing surface and its display strings live in matching files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Copy never refers to a thing the reader has not been shown or told about. Every it, this, that, the number, the code, the link, and every other definite reference resolves to something named on the same surface. Where the needed context is genuinely absent, the agent proposes the sentence that supplies it.\n\nHOW TO DETECT: The verbatim trigger, 2026-08-17: \"It opens straight to sample tea company's own number\". The reader has no way to know which number, whose number, where it came from, or why it matters. The reader's words were: \"You are an agent tasked with bridging the gap between the context the user has and what is attempted to be conveyed. What number are you referring to here? How are they supposed to know?\" For every pronoun and every definite noun phrase on the surface, trace the referent to something named earlier on that same surface. Flag every one that does not resolve. Your fix line must either name the referent inline in the rewritten sentence, or propose the missing sentence of context, verbatim. Reporting that a referent is unclear without supplying the resolving words is not a fix and does not count. This is the copy-surface counterpart of CM-006 in Process/Communication and of the name-and-locate rule (guidance OOO).\n\nSCOPE: every user-facing string on the surfaces under review, read as rendered, in the order a real user meets them.\n\nOUTPUT: For each offense emit one line as `<screen or file>:<location> - \"<the offending copy, quoted verbatim>\" -> <the replacement words, or the specific missing element>`. A fix line that only says \"make it clearer\" is not a fix; write the actual replacement copy. If the rule applied and the surface complied, emit exactly `PASS`. If the surface carries no copy this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UFC-009",
+   "sheet": "User_Facing_Copy",
+   "title": "One-pass comprehension for a first-time reader",
+   "severity": "high",
+   "applies_to": "every user-facing surface in the target: rendered screens and flows, plus display strings in **/*.{strings,stringsdict,swift,tsx,jsx,ts,js,html,vue,svelte} and any email, push notification, or marketing asset",
+   "verdict": "include",
+   "reason": "the panel is a user-facing surface and its display strings live in matching files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Every sentence on the surface is understandable on a single read by a person seeing the product for the first time, with no domain knowledge, no memory of a previous screen, and no re-reading.\n\nHOW TO DETECT: Read the surface once, in order, in the posture of a first-time user, then report without re-reading to rescue a sentence. Flag: any sentence you had to read twice; any sentence with more than one plausible reading; any sentence longer than about twenty-five words; any sentence carrying two ideas that should be two sentences; any term that assumes prior knowledge of the product, the industry, or a previous screen. For each, write the replacement sentence. This is the whole-surface clarity pass and it is deliberately distinct from UFC-007, which checks the specificity of individual words, and UFC-008, which checks unresolved referents; the same sentence may legitimately be flagged by more than one of the three for different reasons.\n\nSCOPE: every user-facing string on the surfaces under review, read as rendered, in the order a real user meets them.\n\nOUTPUT: For each offense emit one line as `<screen or file>:<location> - \"<the offending copy, quoted verbatim>\" -> <the replacement words, or the specific missing element>`. A fix line that only says \"make it clearer\" is not a fix; write the actual replacement copy. If the rule applied and the surface complied, emit exactly `PASS`. If the surface carries no copy this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UFC-010",
+   "sheet": "User_Facing_Copy",
+   "title": "No oversharing of internals in reader-facing copy",
+   "severity": "high",
+   "applies_to": "every user-facing surface in the target: rendered screens and flows, plus display strings in **/*.{strings,stringsdict,swift,tsx,jsx,ts,js,html,vue,svelte} and any email, push notification, or marketing asset",
+   "verdict": "include",
+   "reason": "the panel is a user-facing surface and its display strings live in matching files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Copy shown to an end user carries only what that reader needs in order to decide or act. Internal scheduling, staffing, queueing, retry cadence, quota, and process detail belongs in an operator or project report, never on the user's screen.\n\nHOW TO DETECT: The verbatim trigger, 2026-08-17: \"Either way, nobody else here is asked on this shift, and if nothing is reported, not for another two weeks.\" That is a fact about the product's own polling cadence and staffing model. The reader's words were: \"You might mention this in a report to a project manager, but not to the user.\" For every sentence on the surface, ask whether the reader needs it to decide or act right now. Flag every sentence that is true only about the product's internals: how often something runs, who else was contacted, how the queue is ordered, how many retries remain, what the backend calls a thing. One exception: a wait or cooldown the reader is personally subject to and can plan around, and only when it is stated as its effect on them rather than as the mechanism that produces it.\n\nSCOPE: every user-facing string on the surfaces under review, read as rendered, in the order a real user meets them.\n\nOUTPUT: For each offense emit one line as `<screen or file>:<location> - \"<the offending copy, quoted verbatim>\" -> <the replacement words, or the specific missing element>`. A fix line that only says \"make it clearer\" is not a fix; write the actual replacement copy. If the rule applied and the surface complied, emit exactly `PASS`. If the surface carries no copy this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UFC-011",
+   "sheet": "User_Facing_Copy",
+   "title": "Every screen answers the question the user is holding at that moment",
+   "severity": "high",
+   "applies_to": "every user-facing surface in the target: rendered screens and flows, plus display strings in **/*.{strings,stringsdict,swift,tsx,jsx,ts,js,html,vue,svelte} and any email, push notification, or marketing asset",
+   "verdict": "include",
+   "reason": "the panel is a user-facing surface and its display strings live in matching files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Before any screen's copy is judged, the user's thought sequence through the flow is written out, one line per moment, in the user's own inner voice. Each screen is then judged against the question the user is actually holding when they arrive at it. A screen that answers a question the user is not asking has failed, even when every sentence on it is well written.\n\nHOW TO DETECT: Build the map first, before any offense list. One line per moment, in this shape: `<where the user is and what just happened> -> \"<their inner-voice thought, first person>\"`. The reader's own example, 2026-08-17: a user arrived at the venue and thought \"I guess I'll wait for my match, they're only a few minutes away.\" Continue through the whole flow, including the moments between screens. Then set each screen's copy beside the map line for that moment and flag three failures: the screen answers a different question than the one being held; the held question goes unanswered anywhere in the flow; the copy arrives before the user has the question, so it reads as noise on first pass and is not there on second pass when it is wanted.\n\nSCOPE: every user-facing string on the surfaces under review, read as rendered, in the order a real user meets them.\n\nOUTPUT: Emit the thought-flow map first, under the heading `THOUGHT FLOW`, one line per moment in the shape given above, covering the whole flow in order. Then, under the heading `FINDINGS`, emit one line per offense as `<screen>: user is holding \"<their question>\" - screen says \"<the copy>\" -> <the replacement copy, or the screen this block should move to>`. The map is required output even when there are zero findings; emit the map, then `FINDINGS: PASS`. If the target is a single screen with no flow around it, emit `N/A: <why>` in place of the map. `N/A` is not `PASS`. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UFC-012",
+   "sheet": "User_Facing_Copy",
+   "title": "Every block earns its space on a dense surface",
+   "severity": "medium",
+   "applies_to": "every user-facing surface in the target: rendered screens and flows, plus display strings in **/*.{strings,stringsdict,swift,tsx,jsx,ts,js,html,vue,svelte} and any email, push notification, or marketing asset",
+   "verdict": "include",
+   "reason": "the panel is a user-facing surface and its display strings live in matching files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: On a surface already carrying a lot of text, every block, banner, aside, and courtesy line earns its space by carrying information the reader needs in order to act. A nice touch that adds nothing to the decision is cut until the surface is light enough to afford it.\n\nHOW TO DETECT: The verbatim trigger, 2026-08-17: a \"Before you go\" block sat on an already text-heavy screen. The reader's words were: \"If there was less text it might be a nice touch but currently it overloads an already view and might not be necessary to convey what the UI needs.\" Take the minimalist position deliberately: the burden is on each block to justify itself. Count the blocks on the surface. For each, name the single reader decision it supports. Flag every block that supports none, and every block that repeats something already stated elsewhere on the same surface. Rank the findings by how much space each block consumes, most first, so the largest win is at the top. Two exceptions: a legally required disclosure, and a block whose removal would delete the only statement of the screen's primary ask, where UFC-005 wins and the block stays.\n\nSCOPE: every user-facing string on the surfaces under review, read as rendered, in the order a real user meets them.\n\nOUTPUT: For each offense emit one line as `<screen or file>:<location> - \"<the offending copy, quoted verbatim>\" -> <the replacement words, or the specific missing element>`. A fix line that only says \"make it clearer\" is not a fix; write the actual replacement copy. If the rule applied and the surface complied, emit exactly `PASS`. If the surface carries no copy this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "VD-006",
+   "sheet": "Design/Visual_Design",
+   "title": "Chart.js responsive charts need a fixed-height parent",
+   "severity": "high",
+   "applies_to": "**/*.{html,tsx,jsx}",
+   "verdict": "include",
+   "reason": "three HTML surfaces under web/",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Chart.js with responsive: true and maintainAspectRatio: false MUST have a parent element with a fixed height, otherwise the canvas grows without bound or collapses to zero.\n\nHOW TO DETECT: Find every Chart.js instance with maintainAspectRatio false. Report each whose canvas parent has no explicit height.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "VD-007",
+   "sheet": "Design/Visual_Design",
+   "title": "A palette or token rename ships with a repo-wide grep audit",
+   "severity": "high",
+   "applies_to": "design tokens",
+   "verdict": "conditional",
+   "reason": "applies only if phase 2 introduces a token layer; record which way it resolved",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: A palette or design-token rename ships with a repo-wide grep audit, not a where-I-remembered-to-update sweep. Every occurrence of the old token name, including in comments, docs, tests, and generated files, is accounted for.\n\nHOW TO DETECT: After any token rename, grep for every old name across every file type and report every remaining occurrence.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "VD-008",
+   "sheet": "Design/Visual_Design",
+   "title": "The visual direction is deliberate, not a framework default",
+   "severity": "medium",
+   "applies_to": "user interfaces",
+   "verdict": "include",
+   "reason": "web/panel.html is the product's whole interface",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: New or reshaped user interfaces get an intentional visual direction: typography, color, spacing, and motion chosen on purpose rather than left at the framework's defaults, so the result does not read as templated.\n\nHOW TO DETECT: Describe the interface's typographic scale, palette, spacing rhythm, and motion vocabulary, and state where each came from. Report every surface still on the framework default where a deliberate choice was intended.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "VD-009",
+   "sheet": "Design/Visual_Design",
+   "title": "Design tokens have one architecture and no hardcoded values bypass it",
+   "severity": "high",
+   "applies_to": "user interfaces",
+   "verdict": "include",
+   "reason": "web/panel.html is the product's whole interface",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: The project has one design-token architecture, and every color, spacing, radius, shadow, and type value in the interface reads from it. A hardcoded value in a component is a token that will not follow a theme flip.\n\nHOW TO DETECT: Find hardcoded hex colors, pixel values, and font sizes in component code. Report each with the token it should reference. Cross-check against the WCAG contrast row: a hardcoded value is invisible to the per-theme contrast audit.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "VD-010",
+   "sheet": "Design/Visual_Design",
+   "title": "Third-party content is re-rendered, not embedded in a nested webview",
+   "severity": "high",
+   "applies_to": "user interfaces",
+   "verdict": "include",
+   "reason": "web/panel.html is the product's whole interface",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: When the product's job is to present content from another service, it renders that content itself. It does not embed the other service's own interface in a webview, iframe, or nested browser view and call that the feature. Embedding ships the other product's navigation, toolbars, banners, and chrome inside a frame sized for your content, so the reader gets a fraction of the window for the thing they came for and a duplicate set of controls around it.\n\nHOW TO DETECT: Find every `<iframe>`, `<webview>`, `WKWebView`, `SFSafariViewController`, embedded `BrowserView`, or screenshot-of-a-live-page that renders a THIRD-PARTY page as a primary content surface. For each, ask what the user came for. If it is the content (an article, a book page, a document, a message, a record) and not the other service's own tooling, it is an offense: the content should be fetched or extracted and re-rendered in the product's own type and layout. EXCEPTIONS, check before reporting: an interactive sign-in or consent flow that legally or technically must run on the provider's origin; a payment form on the processor's origin; an embed the provider's terms require to be shown unmodified (a video player, a map widget); and a debug or admin surface whose stated purpose is to show the raw upstream page.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DV-001",
+   "sheet": "Design/Data_Visualization",
+   "title": "Chart type follows the question, not the data shape",
+   "severity": "medium",
+   "applies_to": "charts and dashboards",
+   "verdict": "include",
+   "reason": "the star calendar and the existing dashboard at :7420",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: The chart type is chosen from the question the reader is asking (comparison, composition, distribution, relationship, change over time), not from what the data happens to look like. A pie chart for anything but a small part-to-whole, a dual axis, and a 3D chart are all signals the form was chosen before the question.\n\nHOW TO DETECT: For each chart, state the question it answers and whether the mark type is the right form for that question. Report every mismatch with the correct form.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DV-002",
+   "sheet": "Design/Data_Visualization",
+   "title": "Categorical colors come from a validated palette and survive both themes",
+   "severity": "high",
+   "applies_to": "charts and dashboards",
+   "verdict": "include",
+   "reason": "the star calendar and the existing dashboard at :7420",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Chart colors come from one validated categorical palette that keeps its distinctions in light and dark theme and remains distinguishable under the common color-vision deficiencies. Series are never colored ad hoc per chart.\n\nHOW TO DETECT: List every color used across every chart. Report ad hoc colors not from the palette, series whose colors collide under deuteranopia simulation, and colors whose contrast against the plot background falls below 3:1 in either theme.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DV-003",
+   "sheet": "Design/Data_Visualization",
+   "title": "Sequential and diverging scales are used for their own data shapes",
+   "severity": "medium",
+   "applies_to": "charts and dashboards",
+   "verdict": "include",
+   "reason": "the star calendar and the existing dashboard at :7420",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: A sequential scale encodes an ordered magnitude with one hue ramp; a diverging scale encodes deviation from a meaningful midpoint with two. Never use a categorical palette for ordered data, and never use a diverging scale where there is no midpoint.\n\nHOW TO DETECT: For each color-encoded chart, classify the underlying data as categorical, sequential, or diverging, and report every scale that does not match.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DV-004",
+   "sheet": "Design/Data_Visualization",
+   "title": "Axes, legends, and tooltips are complete and honest",
+   "severity": "high",
+   "applies_to": "charts and dashboards",
+   "verdict": "include",
+   "reason": "the star calendar and the existing dashboard at :7420",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Every axis carries a label and a unit, a truncated axis is marked as truncated, a legend exists whenever more than one series is drawn, and the tooltip shows the exact value rather than only the visual encoding.\n\nHOW TO DETECT: Report unlabeled axes, missing units, truncated axes with no break marker, multi-series charts with no legend, and charts with no tooltip.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DV-005",
+   "sheet": "Design/Data_Visualization",
+   "title": "Stat tiles, meters, and sparklines follow one system",
+   "severity": "medium",
+   "applies_to": "dashboards",
+   "verdict": "include",
+   "reason": "web/dashboard.html",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Stat tiles, key-metric rows, meters, and sparklines share one visual system: the same numeral treatment, the same delta convention, the same color meaning, and the same empty and loading states across every tile.\n\nHOW TO DETECT: Compare every stat tile and meter in the project. Report inconsistencies in numeral style, delta direction color, unit placement, and empty-state treatment.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DV-006",
+   "sheet": "Design/Data_Visualization",
+   "title": "Numbers in a chart are the real measurement",
+   "severity": "blocker",
+   "applies_to": "charts and dashboards",
+   "verdict": "include",
+   "reason": "the star calendar and the existing dashboard at :7420",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Every number plotted is a real measurement. A zero plotted because nothing was measured misreads as a measured zero. See Data_Integrity DI-004 and DI-005 for the underlying rule; this row is its chart-surface enforcement.\n\nHOW TO DETECT: Trace every plotted series back to its source. Report every series where an unmeasured value is plotted as zero rather than omitted, and every chart that does not visually distinguish a gap from a zero.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DF-005",
+   "sheet": "Design/Design_Fidelity",
+   "title": "Never add rationalizing copy the design did not have",
+   "severity": "blocker",
+   "applies_to": "projects with a Claude Design handoff bundle",
+   "verdict": "conditional",
+   "reason": "applies if docs/design-immersive-reading.html is treated as the canonical design artifact; record whether the panel drifted from it",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: NEVER add rationalizing copy that the Claude Design did not have. Forbidden examples: \"hence green\", \"the phase completed but...\", \"Run data is in an older format\", \"fallback view shown\". Coping-mechanism text in the user interface is a sign that the underlying data shape disagrees with the design's assumptions. Fix the data shape, not the message.\n\nHOW TO DETECT: Diff every user-visible string in the live tree against the design bundle. Report every string not present in the design, especially explanatory, apologetic, and fallback text. For each, report the data-shape mismatch it is covering for.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DF-006",
+   "sheet": "Design/Design_Fidelity",
+   "title": "The design export is the source of truth; drift re-syncs to it",
+   "severity": "blocker",
+   "applies_to": "projects with a Claude Design handoff bundle",
+   "verdict": "conditional",
+   "reason": "same precondition as DF-005: does a canonical design artifact exist here",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: The Claude Design export is the source of truth. Live source that has drifted gets re-synced back to the design files. Design files never get retro-fitted to match live drift. When the user asks for features that are not in the design file, first add them to the design file and the architecture if needed, reconcile any contradictions with the user, and then update the code.\n\nHOW TO DETECT: List every difference between the live tree and the design bundle and state, for each, which direction it was resolved. Report every case resolved by editing the design to match the code, and every live feature with no design-file counterpart.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DF-008",
+   "sheet": "Design/Design_Fidelity",
+   "title": "Design work uses Claude Design, not a general model imitating it",
+   "severity": "high",
+   "applies_to": "design deliverables",
+   "verdict": "include",
+   "reason": "phase 2A.4 produces docs/design-immersive-reading.html",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Design slices go to Claude Design. Do not have a general-purpose model produce the design artifact and label it a design handoff.\n\nHOW TO DETECT: For each design artifact, report which tool produced it. Flag artifacts produced by a general model and presented as a Claude Design export.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  }
+ ]
+}

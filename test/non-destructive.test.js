@@ -43,7 +43,7 @@ test('no actuator brings a third-party app to the front', () => {
   // Anki, Kindle and Notes are data sources. The build this replaced activated each
   // one in turn, and four apps taking the screen in sequence is four interruptions,
   // which is the problem this project exists to remove rather than a way to solve
-  // it. Everything is rendered in the panel; only the panel is ever raised.
+  // it. Everything is rendered in the panel; no actuator raises another app.
   const files = sourceFiles(path.join(ROOT, 'lib', 'actuators'));
   const banned = /\bactivate\s*\(|open\s+-a\b|openUrl\s*\(/;
   for (const f of files) {

@@ -1,0 +1,45 @@
+{
+  "video": "interstice-demo.mp4",
+  "marks": [
+    {
+      "at": "5.5s",
+      "what": "item 2: reading view, #reader measures 640x900 of 640x900"
+    },
+    {
+      "at": "10.7s",
+      "what": "item 2: the one menu, open, holding every displaced control"
+    },
+    {
+      "at": "13.2s",
+      "what": "item 2: menu closed, page restored"
+    },
+    {
+      "at": "17.5s",
+      "what": "item 4: month view, \"Stars in 2026-08\", \"12 stars\" (earned by the running daemon on 2026-08-20)"
+    },
+    {
+      "at": "22.6s",
+      "what": "item 4: a star activated, revealing \"A block earned on 2026-08-20: began 06:41 \u00b7 ended 07:06.\""
+    },
+    {
+      "at": "28.1s",
+      "what": "item 4: day view, \"Stars on 2026-08-20\", \"12 stars\""
+    },
+    {
+      "at": "37.6s",
+      "what": "item 6: prompt submitted, chip reads \"your agent: 0:04\""
+    },
+    {
+      "at": "41.7s",
+      "what": "item 6: still ticking, \"your agent: 0:08\""
+    },
+    {
+      "at": "43.7s",
+      "what": "item 6: response arrived. chip cleared=true, arrival notice shown=true"
+    },
+    {
+      "at": "51.2s",
+      "what": "item 5: forfeit banner, \"\u00d7Block forfeited at 07:51: non-whitelisted video played. 20 minutes lost. A fresh block starts on the next cle\""
+    }
+  ]
+}

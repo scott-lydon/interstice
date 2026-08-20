@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { open } from '../lib/focus/store.js';
 
-// 3.9: a fresh install renders zero stars, never a seeded or sample value. An empty history is an
+// A fresh install renders zero stars, never a seeded or sample value. An empty history is an
 // empty list, honestly, not a demo month.
 test('a fresh star store has no stars at all', () => {
   const p = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'fresh-')), 's.jsonl');

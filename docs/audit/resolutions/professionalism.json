@@ -1,0 +1,224 @@
+{
+  "1": {
+    "state": "fixed",
+    "what": "Hero eyebrow read \"Design brief, version 5, nothing built yet\" beside a working codebase.",
+    "where": "docs/design-brief.html:310",
+    "how": "Eyebrow now reads \"Design brief, version 5. Historical record, superseded by the shipped build.\", and the hero meta chip that said \"Status: 5 of 6 decisions settled\" now says \"Status when written\"."
+  },
+  "2": {
+    "state": "fixed",
+    "what": "Closing paragraph claimed no daemon had been installed and no file outside the checklist created, false since the first commit.",
+    "where": "docs/design-brief.html:817",
+    "how": "Replaced with a note saying that paragraph described the day the brief was written, that the project has since been built, and that README.md is authoritative where the two disagree."
+  },
+  "3": {
+    "state": "fixed",
+    "what": "Hero trace caption ended \"Nothing is built yet.\"",
+    "where": "docs/design-brief.html:346",
+    "how": "Caption now says the trace is a simulation drawn for the document and is not a recording of the running daemon. The stale sentence is gone."
+  },
+  "4": {
+    "state": "fixed",
+    "what": "\"Five are settled ... One is still open. Answer them ... before writing a line of code.\", an open request in a document about shipped software.",
+    "where": "docs/design-brief.html:762",
+    "how": "Rewritten in the past tense: six decisions shaped the build, five were settled when the brief was written, and the sixth was settled shortly afterwards and is recorded as it resolved."
+  },
+  "5": {
+    "state": "fixed",
+    "what": "Decision 6 was tagged Open and proposed a personal absolute path (~/Developer/interstice).",
+    "where": "docs/design-brief.html:799",
+    "how": "Tag changed from Open to Settled and the copy now states the resolved outcome (the project is called Interstice and lives in a directory of that name under the developer tree) with no home-directory path."
+  },
+  "6": {
+    "state": "fixed",
+    "what": "Brief pointed at ~/Developer/interstice/GOAL_LOOP.md; the file is docs/GOAL_LOOP.md.",
+    "where": "docs/design-brief.html:813",
+    "how": "Path corrected to docs/GOAL_LOOP.md, described as a record of the checklist that drove the first build, and the surrounding sentence moved to the past tense."
+  },
+  "7": {
+    "state": "fixed",
+    "what": "\"CLI is 2.1.220; your ~/.claude/settings.json already runs a working PreToolUse hook\": a third-party version pinned as present-tense fact, plus a personal path.",
+    "where": "docs/design-brief.html:403",
+    "how": "Row now reads \"Checked against the Claude Code CLI current when this brief was written: a PreToolUse hook declared in settings.json fired on every turn.\" No version number, no home path."
+  },
+  "8": {
+    "state": "fixed",
+    "what": "\"Chrome 137 onwards ignores --load-extension\", a version claim that goes stale.",
+    "where": "README.md:166",
+    "how": "Version dropped: \"Chrome ignores --load-extension on current releases, so the page cannot be given furniture of ours.\""
+  },
+  "9": {
+    "state": "fixed",
+    "what": "\"it measures 0.5 seconds a page at 1.00 confidence on this book\": a one-sample benchmark stated as a spec, with \"this book\" having no antecedent.",
+    "where": "README.md:196-198",
+    "how": "Rewritten as \"Timed on one book on one machine it took about half a second a page and returned every line at full confidence, which is a single reading rather than a benchmark.\" The measurement is kept, the benchmark framing is gone."
+  },
+  "10": {
+    "state": "fixed",
+    "what": "Trap table quoted \"104s for 40 notes on this collection\" and \"all 3,349 notes\", the author's private library size.",
+    "where": "README.md:377",
+    "how": "The private note count is removed. The row now says the cost grows with every note owned, quotes the one real measurement (40 notes took 104 seconds), and the handled-by column says properties are fetched in bulk for the whole library, which returned in 0.3 seconds on that same reading."
+  },
+  "11": {
+    "state": "fixed",
+    "what": "A table of six exact counts and percentages from the author's private transcript history, headed \"Measured on real usage\", read as a product benchmark.",
+    "where": "README.md:35-46",
+    "how": "Table kept intact. Heading changed to \"Measured before it was built\" and the caption now states plainly that the figures come from one person's own transcripts on one machine, timestamps only, before any code existed, that they are a sample of one operator's habits rather than a benchmark, and that a reader's numbers will differ."
+  },
+  "12": {
+    "state": "already-fixed",
+    "what": "README panel-size sample contradicting the shipped config.",
+    "where": "README.md:338-357",
+    "how": "Verified: the configuration block quotes panel 640x900, matching config/interstice.config.default.json, and test/readme-quotes.test.js pins every quoted value. No change needed."
+  },
+  "14": {
+    "state": "already-fixed",
+    "what": "CI step `test ! -f package-lock.json` under a heading claiming no dependencies.",
+    "where": ".github/workflows/ci.yml:22-31",
+    "how": "Verified fixed: the step is now `npm ci` plus a node check that package.json has zero runtime dependencies. Additionally trimmed the five-line war-story comment above it that narrated the old failure; the rationale comment on the runtime-dependency guard is kept."
+  },
+  "15": {
+    "state": "fixed",
+    "what": "docs/GOAL_LOOP.md specifies a Python implementation (lib/router.py, python3 -m pytest, test/*.py) for a JavaScript project.",
+    "where": "docs/GOAL_LOOP.md:1-16, and the note above Phase 0",
+    "how": "Superseded banner at the top names the language drift explicitly, and a note directly above Phase 0 states that every verify command below was written for a Python implementation that was never built, that the named files do not exist, that the shipped suite is JavaScript run with npm test, and that the verifies should be read as statements of what each item had to prove."
+  },
+  "16": {
+    "state": "fixed",
+    "what": "config/ladder.json named throughout; the shipped config is config/interstice.config.json.",
+    "where": "docs/GOAL_LOOP.md:1-16 and the settled-decisions table",
+    "how": "Named in the superseded banner as one of the four things overtaken by the build, and the settled-decisions row that referenced config/ladder.json now names config/interstice.config.json."
+  },
+  "17": {
+    "state": "fixed",
+    "what": "The to-do surface is given as Obsidian with a personal vault path; the product reads Apple Notes.",
+    "where": "docs/GOAL_LOOP.md ground-truth table; docs/design-brief.html:393",
+    "how": "The ground-truth row now carries a bold Superseded note saying the shipped to-do rung reads Apple Notes over Apple events, and the personal vault path is gone. The matching row in the design brief was corrected the same way."
+  },
+  "18": {
+    "state": "fixed",
+    "what": "Phase 3 specifies app-activation actuators (bring Anki, Kindle, Obsidian to the front), which the README documents as a corrected design error.",
+    "where": "docs/GOAL_LOOP.md, note directly under \"## Phase 3: Deliver\"",
+    "how": "A note under the Phase 3 heading says items 3.1 to 3.4 were tried and were the wrong design, that four apps taking the screen in sequence is four interruptions, that the shipped build renders every rung inside one panel and brings no other app forward, and points at the README section \"One window\"."
+  },
+  "19": {
+    "state": "fixed",
+    "what": "The project name is recorded as \"still open\", all 88 checkboxes are unticked, and four verify commands reference UX_FEEDBACK.md.",
+    "where": "docs/GOAL_LOOP.md:1-16, the still-open paragraph, and the note under Phase 5",
+    "how": "The still-open paragraph is now past tense and records that both were settled shortly afterwards. The banner states that the unticked boxes are unticked because the checklist was retired, not because work is outstanding. A note under Phase 5 explains that UX_FEEDBACK.md is the convergence loop's own scratch surface, rewritten each round; the file exists at the repo root. The personal repo-root path was also replaced with \"the checkout this file lives in\". The file was NOT rewritten into a fiction: every original item, verify command and unticked box is preserved."
+  },
+  "20": {
+    "state": "fixed",
+    "what": "README \"## Commands\" omitted uninstall, hotkeys and stats [--tune], all of which the CLI ships.",
+    "where": "README.md:311-330",
+    "how": "All three added, checked line by line against the USAGE string in bin/interstice.js:18-32, in the order the CLI prints them."
+  },
+  "21": {
+    "state": "fixed",
+    "what": "The three most recently shipped features (prompt latency indicator, star calendar, immersive reading) were undocumented in the README.",
+    "where": "README.md:421-445",
+    "how": "New section \"## The panel while it is open\" with three subsections: the waited-time clock per session and the arrival note; the reading view taking at least 90% of both panel dimensions with everything else behind one menu button and arrow-key or fade-in pager page turns; and the star calendar behind that same menu button, month and day views, each star opening to the block that earned it, empty on a fresh install. Each claim checked against lib/latency.js, web/panel.html and test/immersive-layout.pw.mjs."
+  },
+  "22": {
+    "state": "fixed",
+    "what": "\"## Focus blocks and stars\" sat after \"## License\", reading as an unmerged patch.",
+    "where": "README.md:447-466 (License now at 484)",
+    "how": "The focus section was moved above \"## Privacy\"; License is now the last section in the file."
+  },
+  "23": {
+    "state": "fixed",
+    "what": "\"**Scope (S3): browsers only.**\" leaked an internal decision id into the README.",
+    "where": "README.md:465",
+    "how": "Now \"**Scope: browsers only.**\". The row in docs/consistency-finding-2026-08-19.md that quoted the old string was updated to match."
+  },
+  "25": {
+    "state": "fixed",
+    "what": "web/panel.html hardcoded \"25-minute block\" in two pieces of user copy while focus.blockMinutes is configurable.",
+    "where": "web/panel.html:627 (calendar legend) and web/panel.html:2404 (empty-state copy)",
+    "how": "focus.blockMinutes already rides the /api/panel/ping heartbeat (lib/focus/tracker.js status()). The panel now stores it and renders both strings from it; before the first beat lands the copy names no length at all, so it can never state a number nobody uses. Verified live against the running daemon: the heartbeat returns blockMinutes = 25."
+  },
+  "26": {
+    "state": "fixed",
+    "what": "Exact test counts pinned to a commit, presented without a date or a scope.",
+    "where": "docs/STARS_NOTES_2026-08-19.md:1-11",
+    "how": "A header block now states that the file is a working record for a dated goal loop, not a description of the product, and that every figure in it (test counts, coverage percentages, timings, commit ranges) is the value measured on the date and at the commit stated beside it, is not a claim about the current tree, and is not re-checked when the tree moves. The measurements themselves are untouched."
+  },
+  "27": {
+    "state": "fixed",
+    "what": "First-person diary paragraph about \"someone else's 631-line diff\" that \"should not be rushed as a side effect\".",
+    "where": "docs/STARS_NOTES_2026-08-19.md, section \"Status of the remaining items\"",
+    "how": "Rewritten factually: the diff runs to 631 lines, none of it was written by that loop, so each hunk is classified on its own evidence rather than assumed. The record of what had to be reconciled is kept."
+  },
+  "28": {
+    "state": "fixed",
+    "what": "Section headers in a self-congratulatory register: \"Status of the rest, stated honestly\" and \"What is NOT done, stated plainly\", plus \"Note carried forward honestly\" and \"stated plainly rather than papered over\".",
+    "where": "docs/STARS_NOTES_2026-08-19.md:13, :421 and two inline phrases",
+    "how": "Headers are now \"Status of the remaining items\" and \"Items not completed\"; the two inline phrases were rewritten without the self-praise. No content was removed."
+  },
+  "29": {
+    "state": "fixed",
+    "what": "lib/daemon.js and lib/server.js were listed at \"None%\" coverage and again, in the same list, at \"0%\".",
+    "where": "docs/STARS_NOTES_2026-08-19.md, section 8.2",
+    "how": "Both \"None%\" entries now read 0% (the value the later lines already gave) and point at the note at the end of the list that says which slice this loop changed and where that slice's logic is covered. The measured record for every other file is untouched."
+  },
+  "30": {
+    "state": "fixed",
+    "what": "File titled by an internal item number, and closing with \"No document contradicts another or the code on any claim checked\", which reads as a clean bill of health.",
+    "where": "docs/consistency-finding-2026-08-19.md:1-8 and the closing line",
+    "how": "Retitled \"Cross-document consistency check, 2026-08-19\". The opening now says it checked the eight claims in its table and nothing else, on the tree as it stood that day, and that a later professionalism pass found defects this check was never looking for. The closing line is scoped to those eight claims."
+  },
+  "31": {
+    "state": "fixed",
+    "what": "docs/RECURRING_GOALS_SELECTION.md carried two hardcoded personal absolute paths in its header.",
+    "where": "docs/RECURRING_GOALS_SELECTION.md:3-4",
+    "how": "The generator now prints basenames plus the environment variable that set them (\"Source tree : `Recurring_goals` (from RECURRING_GOALS_ROOT)\"), with a comment saying why a committed manifest must not carry one machine's home directory. The manifest was regenerated from the real spreadsheets; the diff against the old one is those two lines plus the finding-33 heading."
+  },
+  "32": {
+    "state": "already-fixed",
+    "what": "docs/recurring_goals_selection.py hardcoded personal absolute paths.",
+    "where": "docs/recurring_goals_selection.py:33-53",
+    "how": "Verified already target-agnostic: RECURRING_GOALS_ROOT and TARGET_REPO are required environment variables with no default, and _required_path exits with a named remedy when either is unset. Only its OUTPUT still leaked the paths, which is finding 31."
+  },
+  "33": {
+    "state": "fixed",
+    "what": "Headline said \"Selected 328\" while the row-id list below enumerated 346 ids, being selected plus conditional.",
+    "where": "docs/RECURRING_GOALS_SELECTION.md:104",
+    "how": "The section heading is generated from the actual count and now reads \"Row ids routed to workers (346: every included row plus every conditional one)\". The headline tally is unchanged and now agrees with it. Manifest regenerated."
+  },
+  "34": {
+    "state": "fixed",
+    "what": "File titled by internal item numbers (2A.1, 2A.2) and describing a layout shortfall that has since been fixed, with no indication it was historical.",
+    "where": "docs/immersive-reading-measurements.md:1-8 and both section headings",
+    "how": "Retitled without item numbers, framed as a design record from 2026-08-19 kept for its reasoning, and a lead paragraph states the shortfall has since been closed and that test/immersive-layout.pw.mjs measures the shipped panel against the at-least-90% contract. The measured table is kept and its analysis moved to the past tense; the remaining internal item reference (2A.4) was removed."
+  },
+  "35": {
+    "state": "fixed",
+    "what": "Test files opened with a goal-loop item number comment such as \"// 2C.2/2C.3: ...\".",
+    "where": "23 files under test/",
+    "how": "Leading item numbers and audit ids (numeric 1.6, 2A.3, 2C.1, 3.1, 3.3, 3.8, 3.9, 3.10, 4.6, 4.7, 5.2, 8.4, and DEP-019, DI-006, DI-010, SEC-004, TC-008, TC-010, UC-CMT-001, UC-CUPID-001, UC-ERR-001, UC-ERR-002, UC-MOD-001, UC-PRIN-001, UC-PRIN-004) stripped; every sentence that followed is kept, recapitalised where the id was the start of it. Also stripped the same ids from five Playwright console.log lines that printed them into test output, and from 25 comment lines in lib/ and web/panel.html that carried the same leak. Verified: npm test still 336 passing, 0 failing."
+  },
+  "37": {
+    "state": "fixed",
+    "what": "launchd/ was an empty directory referenced by nothing.",
+    "where": "launchd/",
+    "how": "Moved to the trash with ~/bin/safe-trash (git never tracked it: git does not track empty directories). It is still listed in the SOURCE_DIRS scan list of docs/recurring_goals_selection.py, which was left alone deliberately because a missing directory contributes nothing to the language probes and because docs/GOAL_LOOP_STARS_READER_2026-08-17.md, which I may not edit, records that scan list verbatim."
+  },
+  "38": {
+    "state": "fixed",
+    "what": ".gitignore ignored chrome/port.js for a directory that does not exist.",
+    "where": ".gitignore:10 (removed)",
+    "how": "Line deleted. Confirmed first that no chrome/ directory exists and that the only other mentions of the path are audit findings quoting the .gitignore line as vestigial."
+  },
+  "39": {
+    "state": "fixed",
+    "what": "<title> sat inside <body>, after </head>.",
+    "where": "docs/design-brief.html:1",
+    "how": "Moved into <head> as <title>Interstice design brief</title>, ahead of the reset stylesheet. <body> now opens with no stray title element."
+  },
+  "40": {
+    "state": "fixed",
+    "what": "Both hooks carried a war story: \"It never failed, so the || fallback never fired and 6111 events logged as unparseable.\"",
+    "where": "hooks/on-submit.sh:12-15 and hooks/on-stop.sh:8-11",
+    "how": "Trimmed to the rationale a future reader needs: BSD date does not implement %3N, the literal \"3N\" makes the record invalid JSON without failing, so a || fallback never fires and bad lines pile up silently; ask python for the milliseconds instead. The incident count is gone."
+  }
+}

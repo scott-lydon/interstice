@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import process from 'node:process';
-import { load } from '../lib/config.js';
+import { readToken } from '../lib/auth.js';
+import { loadCached } from '../lib/config.js';
 import { Daemon } from '../lib/daemon.js';
 import { createLogger, readJsonl } from '../lib/logger.js';
 import { runDoctor } from '../lib/doctor.js';
 import { install, uninstall } from '../lib/install.js';
-import { PID_FILE, GAPS_LOG } from '../lib/paths.js';
+import { PID_FILE, GAPS_LOG, LOG_DIR } from '../lib/paths.js';
 import { summarize, suggestThresholds } from '../lib/stats.js';
 import { openUrl } from '../lib/state/system.js';
 import { buildHotkeyApps, instructions } from '../lib/hotkeys.js';
@@ -16,7 +17,7 @@ const has = (flag) => args.includes(flag);
 
 const USAGE = `interstice - fills the dead moment after you dispatch an AI agent
 
-  doctor              Prove every dependency. Exits non-zero on any failure.
+  doctor              Prove every dependency. Exits non-zero when a required check fails.
   install             Write config, install hooks and the LaunchAgent.
   uninstall           Remove hooks and the LaunchAgent. Leaves your logs.
   start [--foreground]
@@ -31,10 +32,16 @@ const USAGE = `interstice - fills the dead moment after you dispatch an AI agent
 `;
 
 async function api(pathname, { method = 'GET', body } = {}) {
-  const config = load();
+  const config = loadCached();
+  // The control surface authenticates every request. A local client proves it is local by reading
+  // the mode 0600 token the daemon minted, which a web page on another origin cannot do.
+  const token = readToken(LOG_DIR);
+  const headers = {};
+  if (body) headers['content-type'] = 'application/json';
+  if (token) headers['x-interstice-token'] = token;
   const res = await fetch(`http://127.0.0.1:${config.port}${pathname}`, {
     method,
-    headers: body ? { 'content-type': 'application/json' } : undefined,
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   return res.json();
@@ -67,7 +74,14 @@ async function main() {
     }
 
     case 'install': {
-      await install({ force: has('--force') });
+      // install() returns false when the LaunchAgent did not end up loaded and running. Pointing
+      // at doctor after a failed install sends you to a second command to be told the same thing,
+      // so the failure is the exit code here instead.
+      const ok = await install({ force: has('--force') });
+      if (!ok) {
+        console.error('\ninstall did not finish: the LaunchAgent is not running. Fix the line above, then re-run.');
+        process.exit(1);
+      }
       console.log('\nNow run:  interstice doctor');
       break;
     }
@@ -82,7 +96,7 @@ async function main() {
         console.error(`already running (pid ${existing}). Use "interstice stop" first.`);
         process.exit(1);
       }
-      const config = load();
+      const config = loadCached();
       const logger = createLogger({ toFile: !has('--foreground') });
       const daemon = new Daemon({ config, logger });
       await daemon.start();
@@ -113,11 +127,11 @@ async function main() {
         console.log('interstice is not running');
         process.exit(1);
       }
-      const h = await api('/api/health');
-      console.log(`running          pid ${h.pid}, up ${fmtSec(h.uptimeSec)}`);
-      console.log(`gap              ${h.open ? `${h.gap.surface}, ${fmtSec(h.gap.elapsed)}, rung=${h.gap.current ?? 'none yet'}` : 'none open'}`);
-      console.log(`counters         ${Object.entries(h.counters).map(([k, v]) => `${k}=${v}`).join('  ')}`);
-      if (h.detectionSilent) console.log('WARNING          no events seen in 24h. Detection may be broken.');
+      const health = await api('/api/health');
+      console.log(`running          pid ${health.pid}, up ${fmtSec(health.uptimeSec)}`);
+      console.log(`gap              ${health.open ? `${health.gap.surface}, ${fmtSec(health.gap.elapsed)}, rung=${health.gap.current ?? 'none yet'}` : 'none open'}`);
+      console.log(`counters         ${Object.entries(health.counters).map(([k, v]) => `${k}=${v}`).join('  ')}`);
+      if (health.detectionSilent) console.log('WARNING          no events seen in 24h. Detection may be broken.');
       break;
     }
 
@@ -130,21 +144,21 @@ async function main() {
       break;
 
     case 'hotkeys': {
-      const config = load();
+      const config = loadCached();
       const built = await buildHotkeyApps({ port: config.port });
       console.log(instructions(built));
       break;
     }
 
     case 'dashboard': {
-      const config = load();
+      const config = loadCached();
       await openUrl(`http://127.0.0.1:${config.port}/`);
       break;
     }
 
     case 'stats': {
       const gaps = readJsonl(GAPS_LOG);
-      const s = summarize(gaps, load());
+      const s = summarize(gaps, loadCached());
       console.log(`gaps             ${s.totals.gaps} real (${s.totals.synthetic} synthetic, excluded)`);
       console.log(`delivered        ${s.totals.delivered} (${(s.totals.deliveryRate * 100).toFixed(1)}%)`);
       console.log(`reclaimed        ${s.totals.minutesReclaimed} min inside activities`);

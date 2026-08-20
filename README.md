@@ -32,9 +32,12 @@ will keep checking, and checking is the decision you were trying to delete.
 **It can prove itself wrong.** Every gap is logged. If the vice arrives anyway right
 after the flashcards, the dashboard will say so.
 
-## Measured on real usage
+## Measured before it was built
 
-Parsed from existing transcripts before a line was written (timestamps only):
+The thresholds below came from a count rather than a hunch. These figures were parsed from
+one person's own agent transcripts, on one machine, reading timestamps only and no message
+content, before any code existed. They are a sample of one operator's habits rather than a
+benchmark, and your own numbers will be different.
 
 | Surface | Prompts | Median turn | >=25s | >=3m | >=12m |
 |---|---|---|---|---|---|
@@ -47,7 +50,9 @@ This is not a system that fires twice a day.
 
 ## Install
 
-Requires macOS and Node 20 or newer. There are no runtime dependencies (a
+Requires macOS and Node 22 or newer. Node 20 runs everything except the in-panel
+reader, which needs the global `WebSocket` that arrived in 22; `doctor` says so by
+name rather than letting the rung fail at first use. There are no runtime dependencies (a
 devDependency, `@playwright/test`, is used only to drive automated UI tests
 and is never required to run Interstice itself).
 
@@ -71,15 +76,16 @@ Five stages. Each hands a fact to the next.
 |---|---|
 | **Detect** | Cowork via a recursive FSEvents watch on the session transcripts. Claude Code via a `UserPromptSubmit` hook. Both push into one queue. No polling. |
 | **Decide** | At 25 seconds the gap is real. The router picks one rung, filtered by live state, and escalates at 3m and 12m if the current rung runs dry. |
-| **Deliver** | One small window, bottom right. The cards, the book, the lists and the capture box all render in it. Anki, Kindle and Notes are read over their own interfaces and never appear. Nothing is ever quit, hidden or closed. |
-| **Reclaim** | Agent finishes or asks for you: your window comes forward, the activity drops behind, the notification says which session and why. |
+| **Deliver** | One small window, bottom right. The cards, the book, the lists and the capture box all render in it. Anki, Kindle and Notes are read over their own interfaces. No application of yours is ever quit or closed, and the only thing ever hidden is an Anki that Interstice started itself. It does close the headless browser it opened for the book. |
+| **Reclaim** | Agent finishes or asks for you: your window comes forward, the activity drops behind, the notification says which surface and why. |
 | **Learn** | Every gap is logged and rendered at `http://localhost:7420`. |
 
 ### One window
 
 Everything arrives in the same small panel in the bottom right corner. That is the
-whole interface: there is no second window, and no third-party app is ever brought
-to the front.
+whole interface: no rung ever opens a second window, and no third-party app is ever
+brought to the front to deliver one. Two things you press are exceptions, and the router does
+neither of them to you: signing in to Amazon, and "Open the Kindle app instead".
 
 This is a correction, not a preference. The first build activated Anki, then Kindle,
 then Obsidian, each in turn as the ladder escalated. Four apps taking the screen in
@@ -90,7 +96,7 @@ So the apps became data sources:
 
 | Rung | Where the content comes from | What you see |
 |---|---|---|
-| Flashcards | AnkiConnect, with Anki started in the background by `open -g` | The card, rendered with its own deck stylesheet, answered through `answerCards`. Anki never opens. |
+| Flashcards | AnkiConnect, with Anki started in the background by `open -g` | The card, rendered with its own deck stylesheet, answered through `answerCards`. Anki is started behind everything and put back there; its deck list can flash, because its launcher ignores the flags asking it to start hidden. |
 | Reading | Which book, from the Kindle app's Core Data store. The pages themselves from Amazon's own reader, running in a browser you never see | The book, at the page your Kindle synced to, inside the panel. Arrow keys turn it. |
 | To-do | Notes, over Apple events | Your most recent lists, ticked here. Notes never opens and is never edited. |
 | Queue | Interstice's own log | A capture box for the next prompt. |
@@ -160,8 +166,8 @@ decision fatigue the router exists to delete, one screen further in.
 For a while it opened in a window of its own, because the three obvious routes are
 all closed. Amazon sends `x-frame-options: SAMEORIGIN`, so the reader cannot be
 framed inside the panel. The text is encrypted, so it cannot be re-rendered from the
-file. Chrome 137 onwards ignores `--load-extension`, so the page cannot be given
-furniture of ours. A second window was what was left, and a second window is the
+file. Chrome ignores `--load-extension` on current releases, so the page cannot be
+given furniture of ours. A second window was what was left, and a second window is the
 interruption this project exists to remove.
 
 The fourth route is to run Amazon's reader where nobody is looking. A headless
@@ -170,15 +176,16 @@ content area; what arrives is the picture, and what goes back is your clicks and
 keys. It is the reader, not a screenshot of one: arrow keys turn the page, links
 work, and the position you reach syncs the way it would anywhere else.
 
-Two things it does to the page it is showing. It renders at 480 points wide,
-whatever the panel's width, because Chrome will not lay out narrower and the parts
-the reader positions from the right edge otherwise land on top of the text; the
-panel scales the picture down. And it hides Amazon's floating copy of the book
+Two things it does to the page it is showing. It renders at least 480 points wide, because Chrome
+will not lay out narrower and the parts the reader positions from the right edge would otherwise
+land on top of the text. A panel already wider than that is rendered at its own width; a narrower
+one is rendered at 480 and the picture is scaled down to fit. And it hides Amazon's floating copy of the book
 title, with a stylesheet rather than by deleting the node, because the reader
 rebuilds its own DOM on every page turn.
 
-The browser shuts down after fifteen minutes with no reading in it, and no page is
-written to disk.
+The browser shuts down after fifteen minutes with no reading in it. The only page ever written
+to disk is the JPEG Vision has to be handed in order to read one, in a temporary directory that
+is removed as soon as it answers.
 
 ### The words, not a photograph of the words
 
@@ -191,24 +198,28 @@ A picture of a book is not a book. Scaled into a panel it is small, it is set in
 someone else's type at someone else's size, it does not reflow, and none of it can
 be selected. So the words are read back off the picture, on this machine, by the
 same engine macOS reads text out of photographs with: Vision, over the ObjC bridge.
-No dependency, nothing leaves the machine, and it measures 0.5 seconds a page at
-1.00 confidence on this book.
+No dependency and nothing leaves the machine. Timed on one book on one machine it took
+about half a second a page and returned every line at full confidence, which is a single
+reading rather than a benchmark.
 
 What comes back is set in the panel's own type. Getting from lines to prose is the
-part that is easy to get wrong, and three signals do it, none of which works alone:
+part that is easy to get wrong, and four signals do it, none of which works alone:
 
 - **A short line ends a paragraph**, but only on a justified page. Justified text
   reaches the right margin on every line but the last. On a ragged one, a list or
   verse or a title, most lines stop short and the rule would make every line its own
-  paragraph, so it is switched off when fewer than 60% of the lines reach the edge.
+  paragraph, so it is switched off unless more than 60% of the lines reach the edge.
 - **Tall lines are a heading**, measured against the page's own type size taken low
-  in the distribution. Against the median, a chapter opening with three large lines
-  over four of prose has no heading at all, and the title joins the first paragraph.
+  in the distribution. Against the median, a chapter opening whose large type outnumbers the prose has no heading at
+  all, and the title joins the first paragraph.
 - **A trailing hyphen is a word the renderer broke**, so it is rejoined. `--`, which
   this book uses for an em dash, is not that and is left alone.
+- **A gap wider than the usual line spacing ends a block**, measured per kind, because
+  a heading's lines sit further apart than a paragraph's and one threshold for the
+  whole page would either split every heading or join every paragraph.
 
-The picture is always one press away, and it comes forward by itself when the
-reading was not confident: a diagram, an equation, or one of Amazon's own dialogs
+The picture stays one press away inside the reading menu, and it comes forward by itself
+when the reading was not confident: a diagram, an equation, or one of Amazon's own dialogs
 over a blurred page is exactly the thing you need to look at rather than read a
 confident transcription of.
 
@@ -239,9 +250,13 @@ your ordinary profile into the reader's, while nothing holds either.
 - **Turn it off** with `"reading": { "carrySession": false }`, and undo it by
   deleting `logs/reader-profile`.
 
-If your ordinary browser is not signed in either, the sign-in page appears in the
-panel, live, and you can type into it: the reader forwards what you type. `doctor`
-says which of the two profiles has a session.
+If your ordinary browser is not signed in either, the panel's primary offer is
+**Sign in to Amazon in Chrome**: a visible Chrome window opens on Amazon's own
+sign-in page, on the reader's own profile, and closes itself the moment the session
+lands. Carrying the session from your ordinary browser is the quieter second
+option, offered underneath, and it only works while that browser is still signed in.
+The sign-in page can also be typed into inside the panel, live, with the reader
+forwarding your keystrokes. `doctor` says which of the two profiles has a session.
 
 **A passkey is the exception, and it cannot be otherwise.** The QR code in that flow
 is drawn by Chrome itself, not by the page, and a browser with no screen has nowhere
@@ -249,8 +264,11 @@ to draw it: asked for a passkey, headless Chrome does not refuse, it simply neve
 answers. There is no image in the page to capture and none in the session to read.
 Amazon's own sign-in form has no QR of its own either; it asks for an email address
 and then for a code or a password, and all of that types straight into the panel.
-So the passkey route is the one thing here that needs your ordinary browser, and
-carrying the session from it is what this section is about.
+So a passkey needs a browser with a screen, which is exactly why the panel opens a
+real Chrome window rather than trying to draw the QR itself, and why that is the
+primary offer rather than the fallback. Carrying a session out of a browser that is
+already signed in is the other way to the same place, and is what this section is
+about.
 
 ### The setup check
 
@@ -261,8 +279,9 @@ says which of them is missing, above whatever the rung is showing.
 It is a note, never a gate. No rung is blocked and the banner is dismissible for the
 rest of the gap. Nothing starts on its own either, but each line now carries the one
 button that would fix it: **Play** puts on the first track in your library that
-matches the pattern, and **Start 25:00** begins a whole work interval rather than
-resuming whatever was left of the last one.
+matches the pattern, and **Start a full interval** begins a whole work interval rather
+than resuming whatever was left of the last one. The label names no length, because the
+length is Be Focused's own setting, which this product neither reads nor writes.
 
 Neither button reports its own success. Both do the thing and then take the reading
 again, and the banner shows the strip of menu bar it read, so what happened is
@@ -283,7 +302,8 @@ one of four states, and three of them the cards rung can fix without you leaving
 panel, so it offers a **Reconnect** button: it starts Anki behind everything with
 `open -g`, turns off App Nap for both of the bundle ids Anki ships under, and then
 waits for the socket rather than declaring it dead at the 800ms the router allows
-itself. Anki never comes to the front.
+itself. Anki's own launcher ignores the flags that ask it to start hidden, so its deck list can
+flash; Interstice puts it straight back behind everything, and the panel says so when it will not go.
 
 The fourth state is yours: the addon is missing, or a dialog inside Anki is holding
 the collection. When that is what it is, the button says so and names the steps.
@@ -307,23 +327,29 @@ verdict can be checked rather than trusted.
 ## Commands
 
 ```
-interstice doctor          Prove every dependency. Exits non-zero on any failure.
+interstice doctor          Prove every dependency. Exits non-zero when a required check fails.
 interstice install         Write config, install hooks and the LaunchAgent, which
                            starts Interstice at login and restarts it if it dies.
+interstice uninstall       Remove the hooks and the LaunchAgent. Leaves your logs.
 interstice start [--foreground]
 interstice stop
-interstice status          Current gap, armed rung, cooldown, counts.
+interstice status          Current gap, counters, health.
 interstice advance         Move to the next rung (also bound to a hotkey).
 interstice standdown [--day]
 interstice dashboard       Open the log UI in your browser.
+interstice hotkeys         Build the advance and stand-down apps, and print how to
+                           bind a key to each.
+interstice stats [--tune]  Summarise your gaps. --tune suggests thresholds from
+                           your own data rather than the shipped defaults.
 interstice simulate <sec>  Drive a synthetic gap of N seconds. Debug route.
 ```
 
 ## Debug route
 
 Real gaps depend on an agent actually running, which makes some states slow to reach.
-`interstice simulate` and the `/debug` page drive the daemon into any state directly:
-arm a gap, force any rung, trigger reclaim, fire a veto. Nothing there fabricates log
+`interstice simulate` and the `/debug` page drive the daemon into states that are slow
+to reach for real: arm a gap, walk the ladder, trigger reclaim, force any companion
+verdict. Nothing there fabricates log
 data; simulated gaps are tagged `synthetic: true` and excluded from the statistics.
 
 ## Configuration
@@ -336,12 +362,12 @@ data; simulated gaps are tagged `synthetic: true` and excluded from the statisti
   "ladder": ["flashcards", "reading", "queue_prompt", "todo"],
   "focusMode": "take",
   "idleVetoMs": 4000,
-  "panel": { "width": 440, "height": 620, "margin": 24, "raiseOnDeliver": true },
+  "panel": { "width": 640, "height": 900, "margin": 24, "side": "bottom-right", "raiseOnDeliver": true },
   "reading": { "app": "Amazon Kindle", "carrySession": true, "readerPort": 7421, "idleCloseMs": 900000 },
   "todo": { "source": "notes", "maxLists": 3 },
   "companions": {
     "enabled": true,
-    "binaural": { "app": "Music", "match": "binaural|isochronic|[0-9]{2,3} ?hz|gamma|focus" },
+    "binaural": { "app": "Music", "match": "binaural|isochronic|solfeggio|[0-9]{2,3} ?hz|gamma|alpha|theta|delta|focus|concentration" },
     "pomodoro": { "app": "Be Focused", "minTimerWidth": 44, "sampleGapMs": 1200 }
   }
 }
@@ -350,7 +376,8 @@ data; simulated gaps are tagged `synthetic: true` and excluded from the statisti
 ## Things that will silently break, and what handles them
 
 Every one of these produces *nothing happening*, with no error, which is the failure
-this project can least afford. `doctor` proves each of them rather than assuming.
+this project can least afford. `doctor` proves the ones it can reach; the rest are handled in
+code, and are named here so the mitigation can be found rather than rediscovered.
 
 | Trap | Why it is invisible | Handled by |
 |---|---|---|
@@ -365,9 +392,9 @@ this project can least afford. `doctor` proves each of them rather than assuming
 | A read that blocks cannot be cancelled | node hands it to a four-thread pool and an `AbortSignal` will not take it back, so a stuck read every few seconds ends with no asynchronous I/O anywhere in the daemon | reads are abandoned rather than awaited, counted per file, and never more than two outstanding |
 | TCC access does not follow into a child process | so "run the read in a killable subprocess" trades a hang for a refusal: the child is denied where the parent is allowed | proved with a launchd job, and the read stays in-process |
 | Notes' own store is TCC protected | a direct read of `NoteStore.sqlite` returns "Operation not permitted" | Notes is read over Apple events, which needs only the Automation grant that is already required |
-| Reading Notes one property at a time | it works, so nothing looks wrong; it just takes 104s for 40 notes on this collection | properties are fetched in bulk, one event per property for all 3,349 notes, which measures 0.3s |
+| Reading Notes one property at a time | it works, so nothing looks wrong; it just gets slower with every note you own. Timed once here, 40 notes took 104 seconds | properties are fetched in bulk, one Apple event per property for the whole library, which returned in 0.3 seconds on that same reading |
 | Chrome drops window flags passed to an already-running instance | the panel opens somewhere other than where it was placed | the panel runs in its own `--user-data-dir`, so the flags reach a process that will honour them |
-| The LaunchAgent names a Homebrew node by version | `brew upgrade node` deletes that Cellar directory, the job then fails at every login, and the only symptom is Interstice never appearing, which looks like a quiet day | `install` writes the stable symlink after proving it is node 20 or newer, and `doctor` fails if the plist points at a path that is gone or versioned |
+| The LaunchAgent names a Homebrew node by version | `brew upgrade node` deletes that Cellar directory, the job then fails at every login, and the only symptom is Interstice never appearing, which looks like a quiet day | `install` writes the stable symlink after proving it is node 22 or newer, and `doctor` warns if the plist points at a path that is gone or versioned |
 | Be Focused publishes no timer state | it is not scriptable, its group container holds no running interval, and its status item has no `AXTitle`, so any state you infer from the app is a guess | the menu bar countdown is photographed three times, a second apart; a running timer differs across every pair and a paused one across none |
 | Something crosses the menu bar mid-reading | one changed pair looks exactly like one tick, so a window going full screen reads as a running timer | three samples, an obstruction check before any capture, and `unknown` for a mixed result |
 | Music refuses the Automation grant | the error reads as "nothing is loaded", which is a state, so the panel would nag you about music you have on | `-1743` is separated from a genuine empty player and reported as `unknown`, which never warns |
@@ -379,6 +406,87 @@ this project can least afford. `doctor` proves each of them rather than assuming
 | Be Focused asks before skipping an interval | its confirmation never takes keyboard focus, so Return, Escape and a click at the button's coordinates all leave it open, and it then swallows every keystroke meant for the timer | the confirmation is answered through accessibility, by the button's title |
 | Be Focused's start shortcut is a toggle, and it starts the new interval itself after a skip | pressing start on top of that pauses the timer you just asked for: the menu bar read 24:56 and stayed there | the menu bar is read before start is pressed, and the answer the panel shows is that reading rather than the press |
 
+## The control surface is authenticated
+
+The daemon's HTTP surface binds to loopback, and loopback binding is not access control. Any page
+you visit in an ordinary browser can reach `127.0.0.1`, and a `text/plain` POST is not preflighted,
+so without a check a web page could reschedule your Anki cards, write your to-do state, or type
+into the signed-in Amazon session the reader holds. DNS rebinding would let it read the responses
+too.
+
+Three checks run before any handler sees a request:
+
+| check | what it stops |
+|---|---|
+| `Host` must be loopback on this port | DNS rebinding, which arrives carrying the attacker's hostname |
+| `Origin`, when present, must be this daemon's own | a cross-origin POST from a page you are visiting |
+| `x-interstice-token` must match | anything else that can reach the port |
+
+The token is generated on first run into `logs/control-token` with mode `0600`, never shipped as
+a default, and compared in constant time. The served pages are the only unauthenticated route,
+because serving a page is how the browser is given the token: a small bootstrap in the document
+head wraps `fetch` so every request the page makes carries it.
+
+Local clients read the same file. `interstice status`, `doctor`, and the hotkey apps all do this
+for you; nothing asks you to copy a value anywhere. If you drive the API by hand:
+
+```bash
+curl -H "x-interstice-token: $(cat logs/control-token)" http://127.0.0.1:7420/api/health
+```
+
+A request that is refused says which check refused it and how to satisfy it.
+
+## The panel while it is open
+
+Three things it does that are not a rung of the ladder.
+
+### It shows how long you have been waiting
+
+The moment a prompt goes out, the panel starts a clock for that session and shows the time
+waited so far. When the answer lands it says so and the clock stops. Two prompts in flight
+are two independent clocks, cleared independently, and the surface makes no difference: a
+Cowork submit and a Claude Code submit are the same event by the time the indicator sees
+them.
+
+### Reading gets the whole panel
+
+While the reading rung is up, the page itself takes at least 90% of the panel in both
+directions. Everything else, the rung buttons, the book title, the progress bar, the status
+line, moves behind one menu button in the corner. Arrow keys still turn the page, and a
+pager that fades in on hover or keyboard focus turns it with the mouse without opening the
+menu at all.
+
+### The stars are on a calendar
+
+The calendar lives behind that same menu button rather than adding a second one. It shows a
+month at a time or a single day, and each star opens to the block that earned it, with the
+clock times it ran between. A fresh install renders an empty calendar, never a sample one.
+
+## Focus blocks and stars
+
+A completed 25-minute unbroken focus block earns one star. Configure it under `focus` in
+`config/interstice.config.json`:
+
+- `focus.blockMinutes`: minutes of unbroken focus that earn one star (default `25`).
+- `focus.blacklistApps`: apps whose coming frontmost forfeits the block (default: Slack, Discord,
+  Messages, Mail, X, Twitter, Instagram, TikTok). The Interstice panel itself never forfeits a block.
+- `focus.videoWhitelist`: video source domains that do not forfeit a block; matched on the whole
+  host, exactly or as a dot-suffix, so `www.udemy.com` and `sub.udemy.com` pass, `bbc.co.uk`
+  matches itself and its subdomains and nothing else under `.co.uk`, and a lookalike like
+  `udemy.com.evil.example` does not (default: Udemy).
+- `focus.videoBreakAfterMs`: how long non-whitelisted video must play continuously before it
+  forfeits the block, so a one-frame autoplay costs nothing (default `4000`).
+- `focus.videoBrowsers`: the browsers to read play state from, as
+  `{ "name": "Chrome", "wsUrl": "ws://127.0.0.1:9222/devtools/browser/..." }` entries. Ships empty,
+  because a browser that was not started with `--remote-debugging-port` has no endpoint to read and
+  there is no way to discover one after the fact. With no entries the video breaker reads nothing
+  and forfeits nothing; the app and display breakers are unaffected.
+
+**Scope: Chromium-family browsers only.** Video detection reads tab URL plus real play state over
+the DevTools protocol, so it sees any browser you started with `--remote-debugging-port` and listed
+under `focus.videoBrowsers`. Safari exposes no such endpoint and is out of scope, as are native
+video apps (a desktop Netflix app, QuickTime).
+
 ## Privacy
 
 Interstice reads message *timestamps and structure* from agent transcripts. It never
@@ -386,8 +494,29 @@ reads, stores, transmits or logs the content of your prompts or the agent's repl
 
 To render the rungs it does read content: your due cards, the title and position of
 your current book, and the text of the to-do lists it finds. None of it leaves the
-machine, none of it is written back, and the only thing kept on disk is which items
-you ticked (`logs/todo_state.jsonl`).
+machine. Nothing is written back to Notes or Kindle. Two things are written outside `logs/`:
+the card review you answer, which lands in Anki's collection exactly as answering it in Anki
+would, and the App Nap preference on Anki's two bundle ids, described under the traps below. It does stay on this
+Mac, under `logs/`. This is everything Interstice itself writes there:
+
+| file | what it holds |
+|---|---|
+| `todo_state.jsonl` | which to-do items you ticked in the panel |
+| `queued_prompts.jsonl` | the prompts you typed into the capture box for later |
+| `todo_cache.json` | the last readable to-do lists, so a closed Notes shows the last good answer with its age rather than a blank rung |
+| `reading_cache.json` | the title and position of your current book, for the same reason |
+| `stars.jsonl` | one line per focus block you completed, with its start and end |
+| `gaps.jsonl`, `events.jsonl`, `hook-events.jsonl` | gap timings and rung decisions, never prompt or reply text |
+| `control-token` | the local API token, mode 0600 |
+| `reader-profile/` | a Chrome profile of its own, holding the carried amazon.com cookies. The most sensitive thing here, and the reason `carrySession: false` and deleting this directory are both documented above |
+| `panel-profile/` | a second Chrome profile, for the panel window itself. No account, no cookies worth anything |
+| `launchd.out.log`, `launchd.err.log`, and `daemon.log` when started without `--foreground` | operational lines: what started, what a rung decided, what failed. No prompt or reply text |
+| `interstice.pid`, `panel.pid` | process ids, so a second start does not race the first |
+
+`logs/` is gitignored, so none of it is committed, and `interstice uninstall` leaves it
+in place rather than deciding for you. It is an ordinary directory rather than a
+private one, so a tool you point at it can leave files of its own alongside these;
+nothing above is written by anything but Interstice.
 
 Two exceptions to "nothing leaves the machine": AnkiConnect on localhost, and
 Amazon's own reader, which the reading rung loads in a browser of its own to draw
@@ -398,19 +527,3 @@ the line that says which page you are on.
 ## License
 
 MIT. See [LICENSE](LICENSE).
-
-## Focus blocks and stars
-
-A completed 25-minute unbroken focus block earns one star. Configure it under `focus` in
-`config/interstice.config.json`:
-
-- `focus.blockMinutes` — minutes of unbroken focus that earn one star (default `25`).
-- `focus.blacklistApps` — apps whose coming frontmost forfeits the block (default: Slack, Discord,
-  Messages, Mail, X, Twitter, Instagram, TikTok). The Interstice panel itself never forfeits a block.
-- `focus.videoWhitelist` — video source domains that do not forfeit a block; matched on registrable
-  domain, so `www.udemy.com` and `sub.udemy.com` pass and a lookalike does not (default: Udemy).
-- `focus.videoBreakAfterMs` — how long non-whitelisted video must play continuously before it
-  forfeits the block, so a one-frame autoplay costs nothing (default `4000`).
-
-**Scope (S3): browsers only.** Video detection covers Chromium-family and Safari browser tabs via
-tab URL plus real play state. Native video apps (a desktop Netflix app, QuickTime) are out of scope.
