@@ -331,6 +331,25 @@
   ul.todo li.done label { color: var(--muted); text-decoration: line-through; }
   .listhead { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
 
+  /* Picking another book off the shelf does something, so it is a button. It was a
+     <label>, which reads like a caption and cannot be reached by keyboard at all;
+     these two rules are only about making a button sit in a list looking like one. */
+  ul.todo button.pick {
+    font: inherit; font-size: 13.5px; line-height: 1.4; text-align: left;
+    background: none; border: 0; padding: 0; color: var(--ink); cursor: pointer;
+  }
+  ul.todo button.pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Reads as a link, behaves as a button, because it posts rather than navigates. */
+  button.linkish {
+    font: inherit; background: none; border: 0; padding: 0;
+    color: var(--accent); cursor: pointer; text-decoration: underline;
+  }
+  button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Said next to the control that was refused, not down in the footer line. */
+  .err { color: var(--warn); font-size: 12px; line-height: 1.4; }
+
   textarea {
     flex: 1 1 auto; min-height: 120px; resize: none; width: 100%; padding: 12px;
     background: var(--raised); color: var(--ink);
@@ -358,8 +377,13 @@
     border: 2px solid var(--rule); border-top-color: var(--accent); animation: spin .7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  /* Every motion the panel makes, not only the two that spin. The progress bar was
+     the one that got missed: it is a transition rather than a keyframe animation, so
+     stopping animations left a 300ms slide still running under someone who had asked
+     the system for none. Any new transition over about 200ms belongs in this list. */
   @media (prefers-reduced-motion: reduce) {
     .shimmer, .spinner { animation-duration: 0s; }
+    .bar > i { transition: none; }
   }
   .empty { color: var(--muted); font-size: 13px; }
   a { color: var(--accent); }
@@ -424,7 +448,8 @@
       </div>
       <div class="bar" id="book-bar-wrap"><i id="book-bar" style="width:0%"></i></div>
       <div class="reader" id="reader">
-        <img id="reader-frame" alt="Your book, at the page you were on" hidden>
+        <img id="reader-frame" role="button" tabindex="0"
+             alt="Your book, at the page you were on. Press Enter to tap the middle of the page." hidden>
         <div class="text" id="reader-text" hidden></div>
         <div class="over" id="reader-over">
           <div class="skeleton">
@@ -433,7 +458,7 @@
             <i class="shimmer" style="width:62%"></i>
             <i class="shimmer" style="width:88%"></i>
           </div>
-          <div class="mono" id="reader-status">opening your book</div>
+          <div class="mono" id="reader-status" role="status" aria-live="polite">opening your book</div>
         </div>
         <!--
           Amazon's own failure, said rather than photographed.
@@ -506,10 +531,12 @@
     <!-- --------------------------------------------------------------- queue -->
     <section class="view" id="view-queue_prompt">
       <div>
-        <div class="label">Queue your next prompt</div>
-        <div class="why">Held here until you want it. &#8984;&#9166; saves.</div>
+        <label class="label" for="box">Queue your next prompt</label>
+        <div class="why" id="box-why">Held here until you want it. &#8984;&#9166; saves.</div>
       </div>
-      <textarea id="box" placeholder="What do you want to hand off next?"></textarea>
+      <textarea id="box" placeholder="What do you want to hand off next?"
+                aria-describedby="box-why box-err"></textarea>
+      <div class="err" id="box-err" role="alert" hidden></div>
       <button class="act primary" id="save" type="button">Save</button>
       <ul class="todo" id="queued"></ul>
     </section>
@@ -525,7 +552,7 @@
   </main>
 
   <footer id="footer-bar">
-    <span id="status"></span>
+    <span id="status" role="status" aria-live="polite"></span>
     <span class="grow"></span>
     <!--
       Not "Next". This steps to the next thing on the ladder; the book's own "Next"
@@ -1145,7 +1172,7 @@ function renderSignIn(d) {
     + '<button class="act primary" id="signin-chrome" type="button" style="width:100%;margin-top:6px">'
     + 'Sign in to Amazon in Chrome<small>password, emailed code, or scan the QR with your phone</small>'
     + '</button>'
-    + '<div class="signin-status mono" style="margin-top:6px;min-height:1.2em"></div>'
+    + '<div class="signin-status mono" role="status" aria-live="polite" style="margin-top:6px;min-height:1.2em"></div>'
     + '<div class="why" style="margin-top:4px">A Chrome window opens on Amazon\'s sign-in page and '
     + 'closes itself as soon as you are in, then your book opens here. Nothing types a password for '
     + 'you and nothing stores one.</div>'
@@ -1334,14 +1361,15 @@ async function loadBook() {
       (d.shelf && d.shelf.length
         ? '<div class="listhead"><span class="label">Or another one you have going</span></div>'
           + '<ul class="todo" id="shelf">' + d.shelf.map((s, i) =>
-              '<li><label data-shelf="' + i + '">' + esc(s.title)
-              + ' <span class="mono">' + (s.percent === null ? '' : s.percent + '%') + '</span></label></li>'
+              '<li><button type="button" class="pick" data-shelf="' + i + '">' + esc(s.title)
+              + ' <span class="mono">' + (s.percent === null ? '' : s.percent + '%') + '</span></button></li>'
             ).join('') + '</ul>'
         : '')
       + '<div class="why">Amazon’s own reader is drawing this, in a browser you never see, at '
-      + 'the page your Kindle synced to. <a href="#" id="read-app">Open the Kindle app instead.</a></div>';
+      + 'the page your Kindle synced to. '
+      + '<button type="button" class="linkish" id="read-app">Open the Kindle app instead.</button></div>';
 
-    for (const el of document.querySelectorAll('#shelf label[data-shelf]')) {
+    for (const el of document.querySelectorAll('#shelf button[data-shelf]')) {
       const s = d.shelf[Number(el.dataset.shelf)];
       el.onclick = () => {
         $('book-title').textContent = s.title;
@@ -1349,8 +1377,7 @@ async function loadBook() {
         startReader(s.asin);
       };
     }
-    $('read-app').onclick = async (e) => {
-      e.preventDefault();
+    $('read-app').onclick = async () => {
       say('opening Kindle', true);
       await fetch('/api/reading/open', { method: 'POST' });
       say('opened in Kindle');
@@ -1487,18 +1514,49 @@ async function loadTodos() {
 async function loadQueued() {
   try {
     const d = await (await fetch('/api/queued')).json();
-    $('queued').innerHTML = (d.queued || []).slice(-6).reverse()
-      .map((q) => '<li><label>' + esc(q.text.slice(0, 140)) + '</label></li>').join('');
+    const queued = d.queued || [];
+    // A blank strip under the Save button read as a list that had failed to load.
+    // Every other rung says what nothing looks like; this one says it too.
+    $('queued').innerHTML = queued.length
+      ? queued.slice(-6).reverse()
+          .map((q) => '<li><label>' + esc(q.text.slice(0, 140)) + '</label></li>').join('')
+      : '<li><span class="empty">Nothing queued yet. What you write above waits here '
+        + 'until you want it.</span></li>';
   } catch { /* daemon gone */ }
+}
+
+/**
+ * The reason a save was refused, under the box that was refused, and the cursor put
+ * back in it. An empty save used to be a silent `return`: the button moved, nothing
+ * changed, and nothing anywhere said why. The footer line is the wrong place for it,
+ * being a banner's distance from the control the person is looking at.
+ */
+function boxError(text) {
+  const el = $('box-err');
+  el.textContent = text || '';
+  el.hidden = !text;
+  $('box').setAttribute('aria-invalid', text ? 'true' : 'false');
+  if (text) $('box').focus();
 }
 
 async function savePrompt() {
   const text = $('box').value.trim();
-  if (!text) return;
-  await fetch('/api/queued', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ text }),
-  });
+  if (!text) {
+    boxError('Write something first. An empty note has nothing to hand off.');
+    return;
+  }
+  boxError('');
+  try {
+    const r = await fetch('/api/queued', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    if (!r.ok) throw new Error('refused');
+  } catch {
+    boxError('That did not save. The daemon did not take it, so nothing was lost: your '
+      + 'words are still in the box.');
+    return;
+  }
   $('box').value = '';
   say('saved');
   loadQueued();
@@ -1618,6 +1676,8 @@ $('save').addEventListener('click', savePrompt);
 $('box').addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); savePrompt(); }
 });
+// The complaint was about an empty box. Typing answers it, so it goes away then.
+$('box').addEventListener('input', () => { if ($('box').value.trim()) boxError(''); });
 $('companions-recheck').addEventListener('click', async () => {
   say('checking your setup', true);
   companionsHiddenFor = -1;
@@ -1671,14 +1731,30 @@ $('read-again').addEventListener('click', () => {
  * this image happens to be drawn at, so a footnote is still a footnote after the
  * window has been resized.
  */
+function readerPress(fx, fy) {
+  const r = $('reader-frame').getBoundingClientRect();
+  if (!readerViewport.width || !r.width) return;
+  readerInput({ kind: 'click', x: fx * readerViewport.width, y: fy * readerViewport.height });
+}
+
 $('reader-frame').addEventListener('click', (e) => {
   const r = e.currentTarget.getBoundingClientRect();
-  if (!readerViewport.width || !r.width) return;
-  readerInput({
-    kind: 'click',
-    x: ((e.clientX - r.left) / r.width) * readerViewport.width,
-    y: ((e.clientY - r.top) / r.height) * readerViewport.height,
-  });
+  readerPress((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+});
+
+/**
+ * The same press, without a pointer.
+ *
+ * A mouse can aim anywhere on the page; a keyboard cannot, so Enter and Space press
+ * the middle, which is what a Kindle's own centre tap does: it dismisses whatever
+ * Amazon has put on top of the page. Turning pages is not this key's job. Arrows
+ * already do that from anywhere in the reading rung, so they are left to bubble.
+ */
+$('reader-frame').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  e.stopPropagation();
+  readerPress(0.5, 0.5);
 });
 
 // The panel resizes with the window, and the page was laid out for the old box.

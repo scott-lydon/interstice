@@ -1,0 +1,20 @@
+#!/bin/sh
+# TC-008. Block bare counts and dates on the assertion side before they land.
+#
+# Wire this clone up with:
+#
+#   git config core.hooksPath .githooks
+#
+# core.hooksPath is per-clone and cannot be shipped in the repository itself, so the same check
+# runs as a CI step too. The hook is the fast feedback; CI is the one that cannot be skipped.
+#
+# Only staged test files are checked, so a commit is judged on what it is actually adding rather
+# than on whatever else happens to be in the working tree. `--diff-filter=d` drops deletions,
+# which have no content left to scan.
+set -e
+
+staged=$(git diff --cached --name-only --diff-filter=d | grep -E '^test/.*\.(m?js|cjs)$' || true)
+[ -z "$staged" ] && exit 0
+
+# shellcheck disable=SC2086
+node scripts/literal-detector.mjs $staged

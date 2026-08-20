@@ -74,7 +74,14 @@ async function main() {
     }
 
     case 'install': {
-      await install({ force: has('--force') });
+      // install() returns false when the LaunchAgent did not end up loaded and running. Pointing
+      // at doctor after a failed install sends you to a second command to be told the same thing,
+      // so the failure is the exit code here instead.
+      const ok = await install({ force: has('--force') });
+      if (!ok) {
+        console.error('\ninstall did not finish: the LaunchAgent is not running. Fix the line above, then re-run.');
+        process.exit(1);
+      }
       console.log('\nNow run:  interstice doctor');
       break;
     }

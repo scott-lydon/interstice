@@ -5,9 +5,14 @@ import { starsHandler } from '../lib/focus/stars-routes.js';
 
 // 3.10: an HTTP test hits each new star route and asserts shape and status codes, including the
 // error shape for a malformed date range. A tiny server wraps the same handler the real routes use.
+// The day the stub knows about, named once. Re-typing it on the assertion side made the same
+// value exist twice, and two copies of a fixture value drift the first time one of them moves.
+const DAY = '2026-08-19';
+const MONTH = '2026-08';
+const STAR = { id: 'a', startedAt: `${DAY}T09:00:00-07:00`, endedAt: `${DAY}T09:25:00-07:00`, day: DAY };
 const store = {
-  starsForDay: (d) => (d === '2026-08-19' ? [{ id: 'a', startedAt: '2026-08-19T09:00:00-07:00', endedAt: '2026-08-19T09:25:00-07:00', day: d }] : []),
-  starsForMonth: (m) => (m === '2026-08' ? [{ id: 'a', startedAt: '2026-08-19T09:00:00-07:00', endedAt: '2026-08-19T09:25:00-07:00', day: '2026-08-19' }] : []),
+  starsForDay: (d) => (d === DAY ? [STAR] : []),
+  starsForMonth: (m) => (m === MONTH ? [STAR] : []),
 };
 
 function serve() {
@@ -32,15 +37,14 @@ test('the star routes answer with the right shape, status, and error', async () 
   const server = serve();
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   try {
-    const day = await get(server, '/api/stars/day?day=2026-08-19');
+    const day = await get(server, `/api/stars/day?day=${DAY}`);
     assert.equal(day.status, 200);
-    assert.equal(day.body.day, '2026-08-19');
-    assert.equal(day.body.stars.length, 1);
-    assert.equal(day.body.stars[0].startedAt, '2026-08-19T09:00:00-07:00');
+    assert.equal(day.body.day, DAY);
+    assert.deepEqual(day.body.stars, [STAR]);
 
-    const month = await get(server, '/api/stars/month?month=2026-08');
+    const month = await get(server, `/api/stars/month?month=${MONTH}`);
     assert.equal(month.status, 200);
-    assert.equal(month.body.stars.length, 1);
+    assert.deepEqual(month.body.stars, [STAR]);
 
     const emptyDay = await get(server, '/api/stars/day?day=2020-01-01');
     assert.equal(emptyDay.status, 200);

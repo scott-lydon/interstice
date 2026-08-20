@@ -145,9 +145,9 @@ test('the book is opened on the synced position and read on from where you are',
 /* ----------------------------------------------------------------- the shelf --- */
 
 /** A reader that believes it has a browser, and records everything asked of one. */
-function shelved({ readAhead = 0 } = {}) {
+function shelved({ readAhead = 0, keepBehind = 4 } = {}) {
   const calls = [];
-  const reader = new Reader({ config: { reading: { readAhead, keepBehind: 4 } } });
+  const reader = new Reader({ config: { reading: { readAhead, keepBehind } } });
   reader.browser = { child: null };
   reader.cdp = {
     closed: false,
@@ -244,15 +244,19 @@ test('no picture is taken of a browser that has run on ahead of you', async () =
 test('the shelf is a window around you, not a growing pile', async () => {
   // A page is roughly a hundred kilobytes of JPEG plus its transcription, and a
   // reading session is hundreds of pages.
-  const { reader } = shelved({ readAhead: 2 });
+  const READ_AHEAD = 2;
+  const KEEP_BEHIND = 4;
+  const { reader } = shelved({ readAhead: READ_AHEAD, keepBehind: KEEP_BEHIND });
   for (let i = 0; i < 40; i += 1) reader.pages.set(i, page(i));
   reader.pos = 30;
   reader.frontier = 30;
   await reader.turn('next'); // held: lands on 31 and trims on the way past
 
   // Four behind, four in front and the one you are on: bounded, and bounded by the
-  // configured numbers rather than by a magic one.
-  assert.equal(reader.pages.size, 9, `holds a window, not everything (held ${reader.pages.size})`);
+  // configured numbers rather than by a magic one. The window ahead is the wider of the two,
+  // because paging backwards leaves the browser parked well in front of you.
+  const window = KEEP_BEHIND + Math.max(READ_AHEAD, KEEP_BEHIND) + 1;
+  assert.equal(reader.pages.size, window, `holds a window, not everything (held ${reader.pages.size})`);
   assert.ok(reader.pages.has(31), 'including where you are');
   assert.ok(reader.pages.has(27) && reader.pages.has(35), 'and its edges');
   assert.ok(!reader.pages.has(26) && !reader.pages.has(36), 'and nothing outside it');

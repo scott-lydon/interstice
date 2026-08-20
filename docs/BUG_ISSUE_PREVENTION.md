@@ -36,3 +36,60 @@ entirely, comments included; describe the avoided thing without naming it.
 The repo already had a real user config there. **Prevention.** A test that writes a real config file
 must back up its prior contents and restore them in a `finally`, so the test leaves the repo exactly
 as it found it, and reload the config back to the original state afterward.
+
+## A feature can be fully built, fully unit tested, and never wired in (2026-08-20)
+**Cause.** The whole focus, star and latency feature passed its unit tests while `createMachine`,
+the three breakers and `createLatency` had no caller anywhere outside `test/`, and `lib/daemon.js`
+opened the star store but never called `award`. No star could ever be earned in production while
+the README documented earning them. **Prevention.** A unit test constructs the module itself, so a
+green suite proves the module works and says nothing about whether the product reaches it. For
+every new module, grep the non-test tree for its exported names and require at least one caller
+outside `test/`, or treat the feature as unshipped no matter how green the suite is.
+
+## A UTC timestamp read by a local-offset reader files the record on the wrong day (2026-08-20)
+**Cause.** The focus tracker minted `new Date().toISOString()`, which is always UTC, while
+`localDay` in `lib/focus/blocks.js:22` takes the calendar day by slicing the first ten characters
+of the timestamp. That slice is only correct when the timestamp carries the offset it is meant to
+be read in. The first star the live tracker awarded, at 23:33 local, was filed on the following
+day. **Prevention.** When a timestamp is written by one module and its date part is read by
+another, the offset is part of the contract, not a formatting detail. Stamp the local offset at the
+mint site, and state in the reader's comment which offset it assumes.
+
+## A missing Playwright browser channel hangs rather than errors (2026-08-20)
+**Cause.** All five browser specs called `chromium.launch({ channel: 'chrome' })`, which needs a
+separately installed Chrome. Where that is missing the launch does not fail fast: it blocks until
+the runner's 180 second timeout, and the runner then reports five product failures. `npm test` hung
+for fifteen minutes and returned red for an environment reason. **Prevention.** Default to the
+browser the test dependency itself ships, which is always present, and keep the externally
+installed channel behind an opt-in env var (`INTERSTICE_PW_CHANNEL`). More generally, a dependency
+whose absence produces a timeout instead of an error will be misread as a product failure, so it
+must not be the default.
+
+## Loopback binding is not access control (2026-08-20)
+**Cause.** Roughly 35 control-surface handlers had no authentication of any kind, verified live: a
+cross-origin POST carrying `Content-Type: text/plain` was accepted and routed, and a request naming
+another Host returned 200. Any page the user visits can reach 127.0.0.1, `readBody` parses JSON
+regardless of content-type so the request is never preflighted, and the surface it lands on
+reschedules cards, writes to-do state, drives the daemon, and types keystrokes into a signed-in
+browser session. **Prevention.** Authenticate a local control surface the same as a remote one:
+check Host is loopback on this port, check Origin when present is this daemon's own, and require a
+token generated on first run rather than configured, compared in constant time. Run all three once
+at the dispatcher so a handler added later cannot forget them.
+
+## A shell script that calls `claude -p` must redirect stdin (2026-08-20)
+**Cause.** The blocker resolver ran `claude -p` with stdin inherited from the supervisor. The CLI
+waits on stdin, gives up after three seconds, and returns "Warning: no stdin data received in 3s"
+on stdout, which the script then parsed as the model's answer and stored as the verdict. The first
+two ledger entries in `logs/blocker-ledger.md` are that warning where a VERDICT line belongs.
+**Prevention.** Every non-interactive `claude -p` call site gets `< /dev/null`. And when a script
+parses a command's stdout for a specific shape, it must record what it could not parse rather than
+storing the unparsed text as though it were the answer.
+
+## An exclusion reason must be a falsifiable claim, checked against the repo (2026-08-20)
+**Cause.** The rules manifest excluded the Python sheet with the reason "no Python source in this
+repo", written while `docs/recurring_goals_selection.py`, the manifest generator that emitted that
+very sentence, was itself 375 lines of Python. The claim was false on its face and nothing re-checked it.
+**Prevention.** State every exclusion as a claim about the target that a reader can test in one
+command, then run that command. Where the honest reason is a scope decision rather than an absence,
+say so ("the only Python is audit tooling, scoped out deliberately, not absent"), because "X does
+not exist" and "X exists and is out of scope" fail in different ways.

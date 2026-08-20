@@ -133,9 +133,10 @@ test('cooldown suppresses the next gap, then expires', async () => {
   await h.engine.onEnd({ reason: 'complete' });
 
   await h.tick(120); // let cooldown lapse
+  const beforeLapse = h.delivered.length;
   h.engine.onSubmit({ surface: 'cowork' });
   await h.tick(30);
-  assert.equal(h.delivered.length, 2, 'cooldown expired');
+  assert.equal(h.delivered.length, beforeLapse + 1, 'cooldown expired');
 });
 
 test('cooldown is not set when nothing was delivered', async () => {

@@ -365,7 +365,13 @@
   "severity": "blocker",
   "evidence": "Four verified product-versus-spec contradictions. (1) README.md:402-413 documents that 'A completed 25-minute unbroken focus block earns one star' and four `focus.*` knobs, but no product code can award one: `createMachine` (lib/focus/blocks.js:74), `createFrontmostBreaker` (frontmost.js:41), `createDisplayBreaker` (display.js:38), `createVideoBreaker` (video.js:33) and `createLatency` (lib/latency.js:17) are called only from test/, lib/daemon.js:22,34 opens the star store but never calls `award`, and `window.__latency` / `window.__stars.forfeit` in web/panel.html:1766,1795 have no caller outside the Playwright tests. (2) README.md:339 states the panel default is 440x620 while config/interstice.config.default.json:29-30 is 640x900. (3) .github/workflows/ci.yml:21-22 runs `test ! -f package-lock.json` as a required step while package-lock.json is tracked in git, so CI exits 1 on every push and never installs the @playwright/test devDependency the five .pw.mjs tests import. (4) docs/FOCUS_MODULE_CONTRACTS.md:14,46 specifies `Machine.onTick(nowISO)` and `createTicker({onTick,onClear})`, while the implementations export `createMachine().send(event)` (blocks.js:74-95) and `createLatency().onSubmit/onComplete` (latency.js:17-40), and the contract's `breakers/lock.js` ships as breakers/display.js.",
   "fix": "Wire the machine, the three breakers and the latency mapper into lib/daemon.js's tick so a star can actually be awarded and the panel is fed real events; correct README.md:339 to 640x900; replace the ci.yml zero-dependency step with `npm ci` (or drop the tracked lockfile); and re-sync docs/FOCUS_MODULE_CONTRACTS.md to the shipped signatures.",
-  "_file": "universal.jsonl"
+  "_file": "universal.jsonl",
+  "resolution": {
+   "state": "fixed",
+   "commit": "14520ee",
+   "how": "lib/focus/tracker.js composes the machine, the three breakers and the durable star store; lib/daemon.js builds, starts and stops it and feeds lib/latency.js from the engine's own submit and end events; lib/server.js exposes GET /api/focus and adds focus and latency to the heartbeat; web/panel.html applyFocusBeat renders them.",
+   "verified": "The live daemon reports a running block with all three breakers armed and awarded a real star (2026-08-19T23:44:51-07:00 to 2026-08-20T00:09:51-07:00). test/focus-tracker.test.js pins the join including a source assertion that the daemon still wires it."
+  }
  },
  "DI-008": {
   "row_id": "DI-008",

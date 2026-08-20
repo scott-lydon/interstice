@@ -32,7 +32,7 @@ test('a playing video is reported with playing:true; a paused one false; a media
   const ud = records.find((r) => r.host === 'udemy.com');
   assert.equal(yt.playing, true);
   assert.equal(ud.playing, false);
-  assert.equal(records.length, 3, 'the medialess tab is reported as not playing, still a record');
+  assert.equal(records.length, targets.length, 'the medialess tab is reported as not playing, still a record');
 });
 
 test('the probe is read-only: no navigation, activation, or tab creation (4.2)', async () => {

@@ -18,9 +18,42 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - name: No dependencies to install
-        run: test ! -f package-lock.json && echo "zero-dependency by design"
+      # This used to be `test ! -f package-lock.json`, a boast that the project had no
+      # dependencies at all. @playwright/test arrived as a devDependency and the lockfile
+      # became tracked, so the boast started exiting 1 and taking the whole job with it,
+      # before the test step below ever ran. Every push since has reported a red build for
+      # a claim about the repo rather than anything about the code.
+      - name: Install dev dependencies
+        run: npm ci
+      # The invariant that is actually still true and still worth guarding: nothing the
+      # daemon loads at runtime comes from npm. A devDependency is fine; a dependency is a
+      # thing every user would have to install before Interstice could start.
+      - name: No runtime dependencies
+        run: |
+          node -e "const d=Object.keys(require('./package.json').dependencies||{}); if (d.length) { console.error('runtime dependencies appeared '+d.join(', ')); process.exit(1); } console.log('zero runtime dependencies');"
+      # `node --test` picks the five test/*.pw.mjs specs up along with everything else, because
+      # its default pattern includes all of test/, and each of them launches Playwright's
+      # bundled Chromium against the real panel HTML. They are tests of the panel's rendering
+      # rather than a separate suite that could reasonably be run elsewhere, so CI installs the
+      # browser instead of excluding them: excluded, they would report green here and be run by
+      # nobody. Chromium is the bundled engine @playwright/test installs, so no separate
+      # browser channel is needed.
+      - name: Install the browser the panel specs drive
+        run: npx playwright install chromium
+      - name: Assertions carry no bare literals
+        run: node scripts/literal-detector.mjs
+      # A test runner that selects nothing reports success: `node --test 'test/nosuch*.test.js'`
+      # prints 0/0/0 and exits 0, and so does a run pointed at a file that does not exist. So
+      # the exit code alone cannot tell "everything passed" from "nothing ran", and a rename
+      # or a glob change would land as a green build with no tests behind it. The floor turns
+      # that into a red one. It is a floor, not a count: raise it deliberately, never to make
+      # a build pass.
       - name: Test
-        run: node --test
+        run: |
+          set -o pipefail
+          node --test --test-reporter=tap | tee /tmp/tap.txt
+          executed=$(awk '/^# pass /{print $3}' /tmp/tap.txt)
+          echo "executed ${executed:-0} tests"
+          test "${executed:-0}" -ge 290
       - name: Config defaults must be valid
         run: node -e "import('./lib/config.js').then(m=>{const e=m.validate(m.defaults());if(e.length){console.error(e);process.exit(1)}console.log('defaults valid')})"

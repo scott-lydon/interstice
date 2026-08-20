@@ -94,6 +94,7 @@ test('only the page loads are exempt, because serving them is how the token is h
 test('the token is 0600, generated not defaulted, and stable across reads', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'interstice-auth-'));
   const t1 = readOrCreateToken(dir);
+  // literal-ok: 64 is the specification (32 random bytes rendered as hex), not a fixture size.
   assert.equal(t1.length, 64, 'a 32-byte token in hex');
   assert.equal(readOrCreateToken(dir), t1, 'a second call must not mint a new one');
   assert.equal(readToken(dir), t1);
