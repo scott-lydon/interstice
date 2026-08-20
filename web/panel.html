@@ -54,8 +54,8 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* The header never scrolls away: whatever the view is doing, the way to the next
-     rung stays one click from wherever you are. */
+  /* The header is sticky on every rung but reading, where it is displaced behind the menu with the
+  rest of the chrome, so the next rung is one press further. */
   header {
     position: sticky; top: 0; z-index: 5; flex: 0 0 auto;
     display: flex; align-items: center; gap: 8px;
@@ -187,7 +187,7 @@
   /* Where you are, in the pager itself. The page label lives in #reader-page, which the menu
      takes with it when it opens, so while reading there was nothing on screen saying the page. */
   .reader-pager-overlay .now { align-self: center; padding: 0 4px; color: var(--ink); white-space: nowrap; }
-  /* The arrows are the page-turn that always works, and nothing said so. Quiet, persistent, and
+  /* The arrows are the page-turn that works from anywhere in the reading rung except under the star calendar, and nothing said so. Quiet, persistent, and
      out of the page's box, exactly as the design artifact carries it. */
   .reader-hint { display: none; }
   body.immersive .reader-hint {
@@ -225,7 +225,7 @@
     background: color-mix(in srgb, var(--ground) 92%, transparent);
     backdrop-filter: blur(8px);
   }
-  /* This overlay holds all eight displaced controls inside a 620px panel, so it scrolls,
+  /* This overlay holds all eight displaced controls inside a 640px panel, so it scrolls,
      and Close was a plain first child that scrolled away with them. Its own header, pinned
      and opaque, so the dismiss path never leaves the screen. */
   .reader-menu-overlay .om-head {
@@ -246,7 +246,7 @@
   }
   .latency-chip.show { display: inline-block; }
   /* The arrival notification is visually and structurally distinct: filled, accented, brief.
-     It sits below the chip rather than on it: with two prompts in flight, one arriving must not
+     It sits beside the chip rather than on it: with two prompts in flight, one arriving must not
      hide the timer still counting for the other, and the arrival has to stay its own
      distinct notification, which it cannot be while it is covering the thing it is
      distinct from. It sits beside the chip rather than under it, because the forfeit banner owns
@@ -978,7 +978,7 @@ let readerShelf = null;
  * here were read back off that image on this machine. That reading is what belongs
  * in a panel: it sets in our own type, at a size that suits the window, and it
  * reflows. What it cannot do is a diagram, a table or an equation, which is why the
- * page Amazon actually drew is always one press away.
+ * page Amazon actually drew stays one press away inside the reading menu.
  */
 /**
  * Versioned, and deliberately so.
@@ -1311,7 +1311,7 @@ function renderReader(d) {
       // picture, whatever the mode says.
       if (readerMode() === 'image' || readerSignedOut) img.hidden = false;
     };
-    img.src = '/api/reading/frame?s=' + d.seq;
+    setReaderFrame(img, d.seq);
     if (readerMode() === 'text' && !readerSignedOut) loadReaderText();
   } else if (!d.ready && !d.signedOut) {
     readerSay('opening your book', true);
@@ -1465,7 +1465,7 @@ async function readerInput(payload) {
     if (d.shelf) readerShelf = d.shelf;
     if (d.seq && d.seq !== readerSeq) {
       readerSeq = d.seq;
-      $('reader-frame').src = '/api/reading/frame?s=' + d.seq;
+      setReaderFrame($('reader-frame'), d.seq);
     }
     return d;
   } catch {
@@ -2049,6 +2049,29 @@ document.addEventListener('keydown', (e) => {
  * that should be showing. One poll does both, which is why a second window never
  * gets opened on top of this one.
  */
+// The reader frame is the one thing the page loads that `fetch` does not reach: an <img src> is
+// issued by the browser itself, so the auth wrapper in the injected bootstrap never sees it and
+// the request arrives with no token. That is a 401 and a blank book. Fetching the bytes and
+// handing the element an object URL keeps the token on the request without exempting the route,
+// which would have made the page image the one unauthenticated thing the daemon serves.
+let _frameUrl = null;
+async function setReaderFrame(img, seq) {
+  if (!img) return;
+  try {
+    const r = await fetch('/api/reading/frame?s=' + seq);
+    if (!r.ok) return;
+    const url = URL.createObjectURL(await r.blob());
+    // Revoke the previous one only after the new src is set, or a fast page turn revokes a blob
+    // the element is still painting.
+    const previous = _frameUrl;
+    _frameUrl = url;
+    img.src = url;
+    if (previous) setTimeout(() => URL.revokeObjectURL(previous), 1000);
+  } catch {
+    /* the reader will be reopened by the next tick */
+  }
+}
+
 async function beat() {
   try {
     const d = await (await fetch('/api/panel/ping', { method: 'POST' })).json();

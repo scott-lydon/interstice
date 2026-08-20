@@ -1,4 +1,5 @@
 import test from 'node:test';
+import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { Engine } from '../lib/engine.js';
 
@@ -314,4 +315,23 @@ test('the retry counter resets between gaps', async () => {
   h.engine.onSubmit({ surface: 'cowork' });
   await h.tick(30);
   assert.deepEqual(h.delivered, ['flashcards'], 'a fresh gap is not penalised by the last one');
+});
+
+test('a day-long stand down lasts until local midnight, not until UTC midnight', async () => {
+  // The regression: #dayKey used toISOString(), which is UTC, so west of Greenwich a stand down
+  // asked for "the rest of today" expired in the early evening and the router came back. The
+  // focus tracker already had the same lesson written down for which day a star belongs to.
+  const engineSrc = fs.readFileSync(new URL('../lib/engine.js', import.meta.url), 'utf8');
+  assert.match(engineSrc, /localISO/, 'the day key must carry the local offset');
+  assert.doesNotMatch(
+    engineSrc.slice(engineSrc.indexOf('#dayKey'), engineSrc.indexOf('#dayKey') + 400),
+    /toISOString/,
+    'a UTC day key is exactly the bug this pins'
+  );
+
+  // And the key it produces is the local date, at an hour where UTC has already rolled over.
+  const { localISO } = await import('../lib/focus/tracker.js');
+  const lateEvening = new Date(2026, 7, 19, 23, 30, 0);
+  assert.equal(localISO(lateEvening).slice(0, 10), '2026-08-19');
+  assert.notEqual(localISO(lateEvening).slice(0, 10), lateEvening.toISOString().slice(0, 10));
 });

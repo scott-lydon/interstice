@@ -76,7 +76,7 @@ Five stages. Each hands a fact to the next.
 |---|---|
 | **Detect** | Cowork via a recursive FSEvents watch on the session transcripts. Claude Code via a `UserPromptSubmit` hook. Both push into one queue. No polling. |
 | **Decide** | At 25 seconds the gap is real. The router picks one rung, filtered by live state, and escalates at 3m and 12m if the current rung runs dry. |
-| **Deliver** | One small window, bottom right. The cards, the book, the lists and the capture box all render in it. Anki, Kindle and Notes are read over their own interfaces. Nothing is ever quit or closed, and the only thing ever hidden is an Anki that Interstice started itself. |
+| **Deliver** | One small window, bottom right. The cards, the book, the lists and the capture box all render in it. Anki, Kindle and Notes are read over their own interfaces. No application of yours is ever quit or closed, and the only thing ever hidden is an Anki that Interstice started itself. It does close the headless browser it opened for the book. |
 | **Reclaim** | Agent finishes or asks for you: your window comes forward, the activity drops behind, the notification says which surface and why. |
 | **Learn** | Every gap is logged and rendered at `http://localhost:7420`. |
 
@@ -203,7 +203,7 @@ about half a second a page and returned every line at full confidence, which is 
 reading rather than a benchmark.
 
 What comes back is set in the panel's own type. Getting from lines to prose is the
-part that is easy to get wrong, and three signals do it, none of which works alone:
+part that is easy to get wrong, and four signals do it, none of which works alone:
 
 - **A short line ends a paragraph**, but only on a justified page. Justified text
   reaches the right margin on every line but the last. On a ragged one, a list or
@@ -215,7 +215,8 @@ part that is easy to get wrong, and three signals do it, none of which works alo
 - **A trailing hyphen is a word the renderer broke**, so it is rejoined. `--`, which
   this book uses for an em dash, is not that and is left alone.
 
-The picture is always one press away, and it comes forward by itself when the
+The picture stays one press away inside the reading menu, and it comes forward by itself when
+the
 reading was not confident: a diagram, an equation, or one of Amazon's own dialogs
 over a blurred page is exactly the thing you need to look at rather than read a
 confident transcription of.

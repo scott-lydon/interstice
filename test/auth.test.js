@@ -197,3 +197,23 @@ test('a real server refuses the live attack and serves the legitimate client', a
   assert.match(html, /window\.__INTERSTICE_TOKEN/);
   assert.ok(html.includes(token), 'the served page must carry the running daemon\'s token');
 });
+
+test('the reader frame is fetched with the token, not loaded as a bare img src', () => {
+  // The regression: adding auth turned the page image into a 401. An <img src> is issued by the
+  // browser itself, so the fetch wrapper the bootstrap installs never sees it and the request
+  // arrives with no token. The book went blank and nothing said why. The fix must not be to
+  // exempt the route, which would make the page image the one unauthenticated thing served.
+  const panel = fs.readFileSync(new URL('../web/panel.html', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(panel, /\.src\s*=\s*['"]\/api\/reading\/frame/,
+    'assigning the frame straight to .src bypasses the token and returns 401');
+  assert.match(panel, /async function setReaderFrame/,
+    'the frame goes through a fetch so the wrapper can add the token');
+  assert.match(panel, /URL\.createObjectURL/,
+    'and reaches the element as an object URL');
+
+  // And the route itself must stay behind the token.
+  assert.equal(isTokenExempt('/api/reading/frame'), false);
+  const g = { method: 'GET', headers: { host: `127.0.0.1:${PORT}` } };
+  assert.equal(checkRequest(g, { port: PORT, token: TOKEN, pathname: '/api/reading/frame' }).status, 401);
+});
