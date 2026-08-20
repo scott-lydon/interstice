@@ -127,11 +127,11 @@ async function main() {
         console.log('interstice is not running');
         process.exit(1);
       }
-      const h = await api('/api/health');
-      console.log(`running          pid ${h.pid}, up ${fmtSec(h.uptimeSec)}`);
-      console.log(`gap              ${h.open ? `${h.gap.surface}, ${fmtSec(h.gap.elapsed)}, rung=${h.gap.current ?? 'none yet'}` : 'none open'}`);
-      console.log(`counters         ${Object.entries(h.counters).map(([k, v]) => `${k}=${v}`).join('  ')}`);
-      if (h.detectionSilent) console.log('WARNING          no events seen in 24h. Detection may be broken.');
+      const health = await api('/api/health');
+      console.log(`running          pid ${health.pid}, up ${fmtSec(health.uptimeSec)}`);
+      console.log(`gap              ${health.open ? `${health.gap.surface}, ${fmtSec(health.gap.elapsed)}, rung=${health.gap.current ?? 'none yet'}` : 'none open'}`);
+      console.log(`counters         ${Object.entries(health.counters).map(([k, v]) => `${k}=${v}`).join('  ')}`);
+      if (health.detectionSilent) console.log('WARNING          no events seen in 24h. Detection may be broken.');
       break;
     }
 
