@@ -50,7 +50,9 @@ This is not a system that fires twice a day.
 
 ## Install
 
-Requires macOS and Node 20 or newer. There are no runtime dependencies (a
+Requires macOS and Node 22 or newer. Node 20 runs everything except the in-panel
+reader, which needs the global `WebSocket` that arrived in 22; `doctor` says so by
+name rather than letting the rung fail at first use. There are no runtime dependencies (a
 devDependency, `@playwright/test`, is used only to drive automated UI tests
 and is never required to run Interstice itself).
 
@@ -318,7 +320,7 @@ interstice install         Write config, install hooks and the LaunchAgent, whic
 interstice uninstall       Remove the hooks and the LaunchAgent. Leaves your logs.
 interstice start [--foreground]
 interstice stop
-interstice status          Current gap, armed rung, cooldown, counts.
+interstice status          Current gap, counters, health.
 interstice advance         Move to the next rung (also bound to a hotkey).
 interstice standdown [--day]
 interstice dashboard       Open the log UI in your browser.
@@ -473,8 +475,21 @@ reads, stores, transmits or logs the content of your prompts or the agent's repl
 
 To render the rungs it does read content: your due cards, the title and position of
 your current book, and the text of the to-do lists it finds. None of it leaves the
-machine, none of it is written back, and the only thing kept on disk is which items
-you ticked (`logs/todo_state.jsonl`).
+machine and none of it is written back to Anki, Notes or Kindle. It does stay on this
+Mac, under `logs/`, and here is everything that lands there:
+
+| file | what it holds |
+|---|---|
+| `todo_state.jsonl` | which to-do items you ticked in the panel |
+| `queued_prompts.jsonl` | the prompts you typed into the capture box for later |
+| `todo_cache.json` | the last readable to-do lists, so a closed Notes shows the last good answer with its age rather than a blank rung |
+| `reading_cache.json` | the title and position of your current book, for the same reason |
+| `stars.jsonl` | one line per focus block you completed, with its start and end |
+| `gaps.jsonl`, `events.jsonl`, `hook-events.jsonl` | gap timings and rung decisions, never prompt or reply text |
+| `control-token` | the local API token, mode 0600 |
+
+`logs/` is gitignored, so none of it is committed, and `interstice uninstall` leaves it
+in place rather than deciding for you.
 
 Two exceptions to "nothing leaves the machine": AnkiConnect on localhost, and
 Amazon's own reader, which the reading rung loads in a browser of its own to draw

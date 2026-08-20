@@ -26,8 +26,8 @@ Environment: `node` is at `/opt/homebrew/bin/node`; a non-login shell will not s
 
 The repo named no style guide for either language it ships, so "match the surrounding style" was
 the only rule and there was nothing to appeal to when two files disagreed. Named here rather than
-in a linter config, because adding eslint or prettier would add the first dependency to a
-dependency-free tool for a benefit a named guide already gives.
+in a linter config, because eslint or prettier would add a second build-time dependency to a tool
+whose npm surface is one test-only package, for a benefit a named guide already gives.
 
 - **JavaScript** (`lib/`, `bin/`, `test/`, `web/`): the
   [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html), with the
