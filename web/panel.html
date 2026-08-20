@@ -843,8 +843,8 @@ async function loadCards() {
  *
  * Anki is started behind everything, App Nap is turned off for both of the bundle
  * ids it ships under, and then it is waited for rather than declared dead at the
- * 800ms the router allows itself. Nothing about the window changes: Anki has never
- * been visible in this design and does not become visible now.
+ * 800ms the router allows itself. Nothing about the panel window changes. Anki's deck list can
+ * flash while it loads; Interstice puts it back behind everything and says so when it will not go.
  */
 function ankiFixHtml() {
   return '<button class="act primary" id="anki-reconnect" type="button" style="width:100%;margin-top:8px">'

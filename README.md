@@ -96,7 +96,7 @@ So the apps became data sources:
 
 | Rung | Where the content comes from | What you see |
 |---|---|---|
-| Flashcards | AnkiConnect, with Anki started in the background by `open -g` | The card, rendered with its own deck stylesheet, answered through `answerCards`. Anki never opens. |
+| Flashcards | AnkiConnect, with Anki started in the background by `open -g` | The card, rendered with its own deck stylesheet, answered through `answerCards`. Anki is started behind everything and put back there; its deck list can flash, because its launcher ignores the flags asking it to start hidden. |
 | Reading | Which book, from the Kindle app's Core Data store. The pages themselves from Amazon's own reader, running in a browser you never see | The book, at the page your Kindle synced to, inside the panel. Arrow keys turn it. |
 | To-do | Notes, over Apple events | Your most recent lists, ticked here. Notes never opens and is never edited. |
 | Queue | Interstice's own log | A capture box for the next prompt. |
@@ -488,7 +488,8 @@ reads, stores, transmits or logs the content of your prompts or the agent's repl
 
 To render the rungs it does read content: your due cards, the title and position of
 your current book, and the text of the to-do lists it finds. None of it leaves the
-machine and none of it is written back to Anki, Notes or Kindle. It does stay on this
+machine. Nothing is written back to Notes or Kindle, and the one write anywhere is the card
+review you answer, which lands in Anki's collection exactly as answering it in Anki would. It does stay on this
 Mac, under `logs/`. This is everything Interstice itself writes there:
 
 | file | what it holds |
