@@ -1,25 +1,35 @@
+# Conditional rules, and how each one resolved
+
+Verdicts as the workers measured them on 2026-08-19 and into 2026-08-20, against the tree at
+commit 7aa8ea1 and recorded in commit a72e5f6. They are a snapshot of that tree and are not
+re-checked as it moves, so read every present-tense sentence below as "was true then". At least
+one has already been overtaken: DEP-003 was fixed after the audit, and `lib/install.js` now
+returns the real load result from `reloadLaunchAgent` while `bin/interstice.js` exits non-zero
+when the LaunchAgent did not end up running, so the unconditional "loaded" line the row describes
+no longer exists. Regenerate this file with `python3 docs/audit/merge_resolutions.py --conditionals`.
+
 Conditional rows: 18. Each names its precondition and whether it held.
 
 | row_id | sheet | precondition (from the manifest) | held? | applies? | verdict |
 |---|---|---|---|---|---|
-| `CM-009` | Process/Communication | the closing block produces a manual verification checklist, which is a | no | no | NA |
-| `CM-010` | Process/Communication | the closing block produces a manual verification checklist, which is a | no | no | NA |
-| `DEP-001` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | yes | yes | PASS |
-| `DEP-002` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | yes | yes | PASS |
-| `DEP-003` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | yes | yes | FAIL |
-| `DEP-006` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | no | no | NA |
-| `DEP-007` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | yes | yes | PASS |
-| `DEP-008` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | no | no | NA |
-| `DEP-011` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | no | no | NA |
-| `DEP-013` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | no | no | NA |
-| `DEP-014` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | no | no | NA |
-| `DEP-015` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | no | no | NA |
-| `DEP-016` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | yes | yes | PASS |
-| `DEP-017` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | no | no | NA |
-| `DEP-018` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a serv | no | no | NA |
-| `DF-005` | Design/Design_Fidelity | applies if docs/design-immersive-reading.html is treated as the canoni | no | no | NA |
-| `DF-006` | Design/Design_Fidelity | same precondition as DF-005: does a canonical design artifact exist he | no | no | NA |
-| `VD-007` | Design/Visual_Design | applies only if phase 2 introduces a token layer; record which way it  | no | no | NA |
+| `CM-009` | Process/Communication | the closing block produces a manual verification checklist, which is a guide; applies to that artifact only | no | no | NA |
+| `CM-010` | Process/Communication | the closing block produces a manual verification checklist, which is a guide; applies to that artifact only | no | no | NA |
+| `DEP-001` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | yes | yes | PASS |
+| `DEP-002` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | yes | yes | PASS |
+| `DEP-003` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | yes | yes | FAIL |
+| `DEP-006` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | no | no | NA |
+| `DEP-007` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | yes | yes | PASS |
+| `DEP-008` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | no | no | NA |
+| `DEP-011` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | no | no | NA |
+| `DEP-013` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | no | no | NA |
+| `DEP-014` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | no | no | NA |
+| `DEP-015` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | no | no | NA |
+| `DEP-016` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | yes | yes | PASS |
+| `DEP-017` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | no | no | NA |
+| `DEP-018` | Deployment | Interstice 'deploys' as a macOS LaunchAgent on one machine, not a server; each row must record whether its notion of deployment maps onto a LaunchAgent | no | no | NA |
+| `DF-005` | Design/Design_Fidelity | applies if docs/design-immersive-reading.html is treated as the canonical design artifact; record whether the panel drifted from it | no | no | NA |
+| `DF-006` | Design/Design_Fidelity | same precondition as DF-005: does a canonical design artifact exist here | no | no | NA |
+| `VD-007` | Design/Visual_Design | applies only if phase 2 introduces a token layer; record which way it resolved | no | no | NA |
 
 ### Evidence per conditional row
 

@@ -91,5 +91,26 @@ repo", written while `docs/recurring_goals_selection.py`, the manifest generator
 very sentence, was itself 375 lines of Python. The claim was false on its face and nothing re-checked it.
 **Prevention.** State every exclusion as a claim about the target that a reader can test in one
 command, then run that command. Where the honest reason is a scope decision rather than an absence,
-say so ("the only Python is audit tooling, scoped out deliberately, not absent"), because "X does
-not exist" and "X exists and is out of scope" fail in different ways.
+say so, because "X does not exist" and "X exists and is out of scope" fail in different ways.
+**Recurrence, 2026-08-20.** The rewritten reason was false too: it read "the only Python in the repo
+is docs/recurring_goals_selection.py", while `git ls-files '*.py'` returned five tracked files. A
+prevention rule that names the command and is then not run is the same defect wearing the fix's
+clothes. The reason now quotes both commands it rests on, `git ls-files '*.py'` and
+`find lib bin web test scripts .githooks -name '*.py'`, so re-checking it is reading it.
+
+## Pre-existing dead code, reported rather than deleted (2026-08-20)
+
+Three exported symbols have no reference anywhere in `lib`, `bin`, `web`, `test`, `scripts`,
+`.githooks`, or `docs`. They predate the audits that found them, no change here orphaned them, and
+deleting code nobody asked to have deleted is its own risk, so they are recorded here instead. Check
+the list with `grep -rn '<name>' lib bin web test scripts .githooks`, which should return only the
+definition line.
+
+| Symbol | Where |
+|---|---|
+| `OFFSETS_FILE` | `lib/paths.js:33` |
+| `panelCookies` | `lib/amazon-session.js:36` |
+| `toParagraphs` | `lib/ocr.js:279` |
+
+If one of them is deliberately kept for a caller that does not exist yet, say so beside it here. An
+export with no reference and no note is indistinguishable from one that was forgotten.

@@ -139,7 +139,7 @@
   .view { display: none; flex-direction: column; gap: 12px; height: 100%; }
   .view.active { display: flex; }
 
-  /* Immersive reading (Phase 2): while reading, the page fills the panel and every other control
+  /* Immersive reading: while reading, the page fills the panel and every other control
      is behind one menu affordance. Scoped to body.immersive, which setView sets only for the
      reading view, so the other rungs are untouched. */
   body.immersive header,
@@ -236,7 +236,7 @@
      screen while immersive, overlapping the pager and costing the page 33px of the >=90%
      contract. Inline styles are unreachable by the displacement rule, so it lives here. */
   #book-actions { display: flex; flex-direction: column; gap: 6px; }
-  /* Prompt-latency indicator (Phase 5): a quiet chip, never in the page's way (position:absolute
+  /* Prompt-latency indicator: a quiet chip, never in the page's way (position:absolute
      so it does not change the #reader box, satisfying the >=90% contract while visible). */
   .latency-chip {
     position: absolute; top: 8px; left: 8px; z-index: 25; display: none;
@@ -247,8 +247,8 @@
   .latency-chip.show { display: inline-block; }
   /* The arrival notification is visually and structurally distinct: filled, accented, brief.
      It sits below the chip rather than on it: with two prompts in flight, one arriving must not
-     hide the timer still counting for the other, and success condition 6 asks for the arrival to
-     be its own distinct notification, which it cannot be while it is covering the thing it is
+     hide the timer still counting for the other, and the arrival has to stay its own
+     distinct notification, which it cannot be while it is covering the thing it is
      distinct from. It sits beside the chip rather than under it, because the forfeit banner owns
      the full width of the row below and never auto-hides, so anything parked there is covered for
      the rest of the session once a block forfeits. */
@@ -258,7 +258,7 @@
     color: var(--ground); background: var(--accent); border-radius: 999px; padding: 6px 10px;
   }
   .arrival-note.show { display: inline-block; }
-  /* 4.6 Legible forfeit: a bounded, dismissible banner naming the cause and the wall-clock
+  /* Legible forfeit: a bounded, dismissible banner naming the cause and the wall-clock
      time. Silent forfeiture would make the star system untrustworthy, so a lost block says so. */
   .forfeit-note {
     position: absolute; top: 44px; left: 8px; right: 8px; z-index: 27; display: none;
@@ -273,7 +273,7 @@
     float: right; margin-left: 8px; border: none; background: none; color: var(--muted);
     font-size: 14px; cursor: pointer; line-height: 1;
   }
-  /* 3.8 Star calendar: same calm system as the panel. One accent for earned days, the ground for
+  /* Star calendar: same calm system as the panel. One accent for earned days, the ground for
      empty ones, a legend, and a bounded scroll so a long month never traps the close control. */
   .star-cal-overlay { display: none; }
   body.immersive .star-cal-overlay.open, .star-cal-overlay.open {
@@ -595,7 +595,7 @@
         <button class="act" id="read-again" type="button" style="padding:2px 8px">Read it again</button>
       </div>
       <div id="book-actions"></div>
-      <!-- Immersive affordances (Phase 2C): shown only while body.immersive. -->
+      <!-- Immersive affordances: shown only while body.immersive. -->
       <div class="latency-chip" id="latency-chip" aria-live="polite"></div>
       <div class="arrival-note" id="arrival-note" role="status">Your agent answered. Go back to it.</div>
       <div class="forfeit-note" id="forfeit-note" role="alert" aria-live="assertive"></div>
@@ -822,9 +822,10 @@ async function loadCards() {
     $('deck-fix').innerHTML = '';
     $('deck-name').textContent = d.deck;
     // Show the arithmetic behind the choice, not just the conclusion. Two ideas, two
-    // sentences on two lines: "4 reviews per due card, the lowest of 7 decks with anything
-    // due · 12 due here of 96 overall" was one line carrying a ranking and a count, and the
-    // middot in the middle of it read as a third clause rather than a break.
+    // sentences on two lines. An earlier version ran them together as one line of the form
+    // "<n> reviews per due card, the lowest of <m> decks with anything due · <k> due here of
+    // <t> overall", which carried a ranking and a count in the same breath, and the middot in
+    // the middle of it read as a third clause rather than a break.
     $('deck-why').innerHTML =
       esc(d.metric.meanReps + (d.metric.meanReps === 1 ? ' review' : ' reviews')
         + ' per due card, the fewest of your ' + d.metric.decksWithDue
@@ -1040,12 +1041,14 @@ function readerBox() {
  *
  * In image mode it is exactly this window, because the picture has to fit it. In
  * text mode the words are reflowed into our own type, so the page they were read
- * from can be any shape at all, and a taller one is simply a better deal: measured
- * on this book, the same panel got 39 words a page at its own height, 109 at 1000,
- * and 178 at 1400, while the reading got *more* confident rather than less (a fifth
- * of the lines doubted became a thirtieth, because a taller page sets fewer lines
- * broken across a page edge). Fewer turns for the same reading is the point: the
- * complaint that started this was not being able to settle into the text.
+ * from can be any shape at all, and a taller one is simply a better deal. Measured once,
+ * on one book on one machine, the same panel got 39 words a page at its own height, 109 at
+ * 1000, and 178 at 1400, while the reading got *more* confident rather than less (a fifth
+ * of the lines doubted became a thirtieth, because a taller page sets fewer lines broken
+ * across a page edge). That is a single reading and not a benchmark, but it is the reason
+ * the two constants below are the sizes they are, and the direction it points in is the
+ * point: fewer turns for the same reading. The complaint that started this was not being
+ * able to settle into the text.
  */
 const TEXT_RENDER_SCALE = 2.2;
 const TEXT_RENDER_MAX = 1400;
@@ -1819,7 +1822,7 @@ const SAYS = {
 /** What the button does, and what it says while it is doing it. */
 const FIXES = {
   binaural: { label: 'Play', route: '/api/companions/binaural/play', doing: 'starting your track' },
-  pomodoro: { label: 'Start 25:00', route: '/api/companions/pomodoro/start', doing: 'starting a 25 minute timer' },
+  pomodoro: { label: 'Start a full interval', route: '/api/companions/pomodoro/start', doing: 'starting a fresh interval' },
 };
 
 function renderCompanions(d) {
@@ -2009,7 +2012,7 @@ document.addEventListener('keydown', (e) => {
   if (currentView === 'reading') {
     // The star calendar covers the page and shows no position anywhere, so a turn under it
     // moved the reader with nothing on screen saying so. The calendar keeps its own keys.
-    // The reading menu is deliberately not guarded: item 2C.3 requires arrows to keep
+    // The reading menu is deliberately not guarded: arrows have to keep
     // working with it open, and it can, because the menu is where #reader-page is displaced
     // to, so the position change stays visible while it turns.
     const calOpen = Boolean(document.querySelector('#view-reading .star-cal-overlay.open'));
@@ -2106,7 +2109,7 @@ window.addEventListener('load', () => {
   // duplicated and every displaced control is reachable from exactly one place.
   // Everything the immersive page displaces, moved into the one menu when it opens and restored to
   // its exact original position when it closes, so nothing is duplicated and nothing is lost when
-  // the reading view is left. IDs cover every element enumerated in the 2A.1 inventory.
+  // the reading view is left. The ids below cover every element the reading view displaces.
   const READER_MENU_DISPLACED = ['rungs', 'book-title-wrap', 'book-bar-wrap', 'reader-pager', 'reader-note', 'book-actions', 'companions', 'footer-bar'];
   let readerMenuLastFocus = null;
   const readerMenuHomes = new Map(); // el -> { parent, next }
@@ -2250,7 +2253,7 @@ window.addEventListener('load', () => {
   };
 
   // ------------------------------------------------------------- star calendar ---
-  // Day and month views behind the Phase 2 menu. Every star reveals the wall-clock start and end
+  // Day and month views behind the reading menu. Every star reveals the wall-clock start and end
   // of the block that earned it. Data is real: production loads it from /api/stars; a test injects
   // it via render(). Nothing is stubbed: an empty history renders an honest empty calendar.
   const _cal = { view: 'month', key: null, stars: [] };

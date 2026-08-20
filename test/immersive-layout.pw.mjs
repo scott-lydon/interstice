@@ -36,7 +36,7 @@ try {
     await browser.close();
     process.exit(0);
   }
-  console.log('2C.1 FAIL');
+  console.log('FAIL: the page does not occupy >=90% of both dimensions');
   await browser.close();
   process.exit(1);
 } catch (e) {

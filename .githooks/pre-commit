@@ -1,5 +1,5 @@
 #!/bin/sh
-# TC-008. Block bare counts and dates on the assertion side before they land.
+# Block bare counts and dates on the assertion side before they land.
 #
 # Wire this clone up with:
 #

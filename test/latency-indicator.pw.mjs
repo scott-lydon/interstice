@@ -22,31 +22,31 @@ try {
   await page.evaluate(() => { if (typeof setView === 'function') setView('reading'); document.body.classList.add('immersive'); });
 
   const T0 = 1_000_000_000_000;
-  // 5.2: submit, then tick forward; the chip text increments and matches the elapsed.
+  // Submit, then tick forward; the chip text increments and matches the elapsed.
   await page.evaluate((t) => window.__latency.submit('s1', t), T0);
   const at3 = await page.evaluate((t) => { window.__latency.tick(t); return document.getElementById('latency-chip').textContent; }, T0 + 3000);
   const at12 = await page.evaluate((t) => { window.__latency.tick(t); return document.getElementById('latency-chip').textContent; }, T0 + 72000);
-  if (!/0:03/.test(at3)) fails.push(`5.2: chip at 3s was "${at3}"`);
-  if (!/1:12/.test(at12)) fails.push(`5.2: chip at 72s was "${at12}" (expected 1:12)`);
+  if (!/0:03/.test(at3)) fails.push(`chip at 3s was "${at3}"`);
+  if (!/1:12/.test(at12)) fails.push(`chip at 72s was "${at12}" (expected 1:12)`);
   const shown = await page.evaluate(() => document.getElementById('latency-chip').classList.contains('show'));
-  if (!shown) fails.push('5.2: chip is not visible while waiting');
+  if (!shown) fails.push('chip is not visible while waiting');
 
-  // 5.7: with the timer visible, #reader still >=90% of both dimensions.
+  // With the timer visible, #reader still >=90% of both dimensions.
   const m = await page.evaluate(() => { const r = document.getElementById('reader').getBoundingClientRect(); return { rw: r.width, rh: r.height, vw: innerWidth, vh: innerHeight }; });
-  if (!(m.rw / m.vw >= 0.9 && m.rh / m.vh >= 0.9)) fails.push(`5.7: reader ${Math.round(m.rw)}x${Math.round(m.rh)} broke the >=90% layout`);
+  if (!(m.rw / m.vw >= 0.9 && m.rh / m.vh >= 0.9)) fails.push(`reader ${Math.round(m.rw)}x${Math.round(m.rh)} broke the >=90% layout`);
 
-  // 5.3: completion clears the chip (not frozen).
+  // Completion clears the chip (not frozen).
   await page.evaluate((t) => window.__latency.complete('s1', t), T0 + 80000);
   const clearedShown = await page.evaluate(() => document.getElementById('latency-chip').classList.contains('show'));
-  if (clearedShown) fails.push('5.3: chip did not clear after completion');
+  if (clearedShown) fails.push('chip did not clear after completion');
 
-  // 5.4: the arrival notification appeared, is distinct from the chip, and fires once per completion.
+  // The arrival notification appeared, is distinct from the chip, and fires once per completion.
   const arrival = await page.evaluate(() => {
     const n = document.getElementById('arrival-note');
     return { shown: n.classList.contains('show'), sameNode: n === document.getElementById('latency-chip'), cls: n.className };
   });
-  if (!arrival.shown) fails.push('5.4: arrival notification did not appear');
-  if (arrival.sameNode) fails.push('5.4: arrival notification is not distinct from the elapsed chip');
+  if (!arrival.shown) fails.push('arrival notification did not appear');
+  if (arrival.sameNode) fails.push('arrival notification is not distinct from the elapsed chip');
 
   // completing a session with no submit fires nothing (once-per-completion, no phantom).
   await page.evaluate((t) => window.__latency.complete('ghost', t), T0 + 90000);

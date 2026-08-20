@@ -8,21 +8,21 @@ Total rules : 643 across 19 sheets (counted with a CSV reader; `wc -l` overcount
 
 ## Probed facts about the target
 
-| fact | value |
-|---|---|
-| `claude_design_bundle` | False |
-| `gauntlet_assignment` | False |
-| `graphified` | False |
-| `html` | True |
-| `icloud_synced` | False |
-| `js` | True |
-| `migrations` | False |
-| `python` | False |
-| `react` | False |
-| `server_dir` | False |
-| `src_dir` | False |
-| `swift` | False |
-| `website_index` | False |
+| fact | value | how |
+|---|---|---|
+| `claude_design_bundle` | False | probed from the filesystem |
+| `gauntlet_assignment` | False | stated: Interstice is a personal tool, not a graded submission |
+| `graphified` | False | probed from the filesystem |
+| `html` | True | probed from the filesystem |
+| `icloud_synced` | False | probed from the filesystem |
+| `js` | True | probed from the filesystem |
+| `migrations` | False | probed from the filesystem |
+| `python` | False | probed from the filesystem |
+| `react` | False | probed from the filesystem |
+| `server_dir` | False | probed from the filesystem |
+| `src_dir` | False | probed from the filesystem |
+| `swift` | False | probed from the filesystem |
+| `website_index` | False | probed from the filesystem |
 
 ## Per sheet
 
@@ -54,7 +54,7 @@ Total rules : 643 across 19 sheets (counted with a CSV reader; `wc -l` overcount
 | sheet | applies_to | rules dropped | reason |
 |---|---|---:|---|
 | Code/Swift_Development | `**/*.swift` | 129 | no Swift source in this repo |
-| Code/Python_Development | `**/*.py` | 61 | the only Python in the repo is docs/recurring_goals_selection.py, the manifest generator itself; it is audit tooling, not product source, and the product ships no Python. Scoped out deliberately, not absent |
+| Code/Python_Development | `**/*.py` | 61 | `git ls-files '*.py'` returns five files, every one of them under docs/: this manifest generator and four audit-record scripts. `find lib bin web test scripts .githooks -name '*.py'` returns nothing, so the product itself ships no Python and these rules have no product source to run against. Scoped out deliberately, not absent |
 | Code/React_NextJS_Development | `**/*.{ts,tsx,js,jsx}` | 50 | the glob matches this repo's .js files, and most rules on the React/Next sheet presume a React component tree, Server Actions, RSC nesting, or a bundler, none of which this repo has. The plain-JavaScript and plain-web subset of the sheet is restored row by row in ROW_OVERRIDES |
 | Process/Agent_Behavior | `every response` | 7 | governs how the agent writes its replies, not anything in the codebase; remains in force continuously and is not a code-audit row |
 | Assignments | `assignment repositories` | 5 | Interstice is a personal tool, not a Gauntlet assignment submission |

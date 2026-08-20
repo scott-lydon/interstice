@@ -265,8 +265,9 @@ says which of them is missing, above whatever the rung is showing.
 It is a note, never a gate. No rung is blocked and the banner is dismissible for the
 rest of the gap. Nothing starts on its own either, but each line now carries the one
 button that would fix it: **Play** puts on the first track in your library that
-matches the pattern, and **Start 25:00** begins a whole work interval rather than
-resuming whatever was left of the last one.
+matches the pattern, and **Start a full interval** begins a whole work interval rather
+than resuming whatever was left of the last one. The label names no length, because the
+length is Be Focused's own setting, which this product neither reads nor writes.
 
 Neither button reports its own success. Both do the thing and then take the reading
 again, and the banner shows the strip of menu bar it read, so what happened is

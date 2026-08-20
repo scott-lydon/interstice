@@ -1,5 +1,22 @@
 # UX_FEEDBACK
 
+> **Working record from a review loop, not a list of outstanding defects.**
+>
+> Nine rounds of synthetic user-interface review, run by the convergence sub-loop described in
+> `docs/GOAL_LOOP_STARS_READER_2026-08-17.md:398-408` and committed on 2026-08-20. Each round, a
+> reviewer agent wrote one checkable item per issue it saw in the form
+> `- [ ] (severity) [persona] issue`, and a separate judge agent with fresh context ruled every
+> item `{worthwhile}` (real user value, in scope) or `{skip}` (nitpick, taste only, or out of
+> scope). Only worthwhile items were worked; the loop converged when no worthwhile item was left
+> unticked, which is what `grep -qE '^- \[ \].*\{worthwhile\}'` still checks.
+>
+> **An unticked box below is not outstanding work.** Nine of the ten carry `{skip}`, meaning the
+> judge ruled them out of scope. The tenth is the last item of pass 8, which pass 9 then verified
+> as fixed against the live daemon (`window.__closeStarCal`, `web/panel.html:2460`); its box was
+> simply never ticked back, and the item lines are left exactly as the loop wrote them.
+>
+> This is a log of how the interface was arrived at. Read `README.md` for what Interstice does.
+
 ## Pass 1 - design only (2B.2)
 
 - [x] (high) [operator] The `#companions` setup banner is a sibling of `<main>` and no `body.immersive` rule hides it, so while reading it still sits above `#reader` and eats the page. Measured in a 640x900 headless render with two short items showing: `#reader` falls to 794px, 88.2% of the height, already under the >=90% contract, and `#companions` is allowed to grow to `max-height: 40vh` (360px), which would leave the page near 60%. This is the exact "chrome eating the page" failure the phase exists to remove. {worthwhile}

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// TC-008. A pre-commit and CI gate over the assertion side of the test suite.
+// A pre-commit and CI gate over the assertion side of the test suite.
 //
 // The failure it exists to stop is quiet. An assertion written as `assert.equal(out.length, 1)`
 // is a claim about the fixture, not about the code, and the moment somebody adds a second row to

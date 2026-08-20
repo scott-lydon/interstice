@@ -64,7 +64,7 @@ test('read-ahead that failed is retried later, not abandoned for the session', (
   assert.match(src, /readAheadFailedAt = Date\.now\(\)/, 'a failure is remembered');
   assert.match(src, /readAhead\(\)\s*\{[\s\S]*?readAheadFailedAt[\s\S]*?5000/, 'and retried after a cooldown');
   // The poll is what retries it. That call moved out of the route body and into the reading
-  // surface with the rest of the reader's sequencing (UC-MOD-001); the route now names no member
+  // surface with the rest of the reader's sequencing; the route now names no member
   // of the Reader at all, so this looks where the sequencing actually lives.
   const reading = fs.readFileSync(path.join(ROOT, 'lib', 'reading.js'), 'utf8');
   assert.match(reading, /reader\.readAhead\(\)/, 'and the poll is what retries it');

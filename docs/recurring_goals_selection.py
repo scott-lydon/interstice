@@ -59,15 +59,17 @@ TARGET = _required_path("TARGET_REPO", "the repo the rules are being evaluated a
 # product: this very file is Python, and an unscoped `**/*.py` probe reported
 # "python: True" for a repo that ships no Python. A probe that can see itself is
 # not measuring the thing it claims to measure.
-SOURCE_DIRS = ("lib", "bin", "test", "web", "hooks", "launchd")
+SOURCE_DIRS = ("lib", "bin", "test", "web", "hooks")
 
 
 def probe_target(target):
     """Return the boolean facts the decision table depends on.
 
-    Each fact is a filesystem question, so the table below is falsifiable: if
-    the repo grows a `src/` directory or a Swift file, the fact flips and the
-    affected rules change verdict without anyone editing prose.
+    Every fact but one is a filesystem question, so the table below is falsifiable: if
+    the repo grows a `src/` directory or a Swift file, the fact flips and the affected
+    rules change verdict without anyone editing prose. The exception is
+    `gauntlet_assignment`, which no file on disk answers; it and any future fact like it
+    are listed in STATED_FACTS and emitted as stated rather than passed off as measured.
     """
     def has(pattern):
         """True if `pattern` matches anything inside a source directory."""
@@ -100,10 +102,32 @@ def probe_target(target):
         "migrations": has("**/migrations"),
         "website_index": os.path.exists(os.path.join(target, "website", "index.html")),
         "claude_design_bundle": os.path.isdir(os.path.join(target, "design", "claude-design")),
-        "gauntlet_assignment": False,   # Interstice is a personal tool, not a graded submission
-        "icloud_synced": False,         # lives in ~/Developer, which is not iCloud-synced
+        "gauntlet_assignment": False,   # stated, not probed; see STATED_FACTS below
+        "icloud_synced": _under_icloud(target),
         "graphified": os.path.isdir(os.path.join(target, ".graphify")),
     }
+
+
+# Facts the filesystem cannot answer, asserted by the author instead. The emitted table
+# names them as stated so a reader is never told an assumption was measured.
+STATED_FACTS = {
+    "gauntlet_assignment": "stated: Interstice is a personal tool, not a graded submission",
+}
+
+
+def _under_icloud(target):
+    """True if the target really resolves inside the iCloud Drive container.
+
+    A filesystem question rather than an assertion about one machine's layout. Everything
+    iCloud syncs, including the Desktop and Documents mirror, lives under
+    ~/Library/Mobile Documents, and ~/Desktop and ~/Documents become links into it when that
+    mirror is on, so resolving symlinks and comparing prefixes answers it for any checkout.
+    """
+    container = os.path.realpath(
+        os.path.join(os.path.expanduser("~"), "Library", "Mobile Documents")
+    )
+    resolved = os.path.realpath(target)
+    return resolved == container or resolved.startswith(container + os.sep)
 
 # --- The decision table -------------------------------------------------------
 # Keyed by (sheet, applies_to). Value is (verdict, reason).
@@ -111,9 +135,10 @@ def probe_target(target):
 I, C, X = "include", "conditional", "exclude"
 
 NO_SWIFT = "no Swift source in this repo"
-NO_PY = ("the only Python in the repo is docs/recurring_goals_selection.py, the "
-         "manifest generator itself; it is audit tooling, not product source, and "
-         "the product ships no Python. Scoped out deliberately, not absent")
+NO_PY = ("`git ls-files '*.py'` returns five files, every one of them under docs/: this "
+         "manifest generator and four audit-record scripts. `find lib bin web test scripts "
+         ".githooks -name '*.py'` returns nothing, so the product itself ships no Python and "
+         "these rules have no product source to run against. Scoped out deliberately, not absent")
 NO_REACT = ("the glob matches this repo's .js files, and most rules on the React/Next "
             "sheet presume a React component tree, Server Actions, RSC nesting, or a "
             "bundler, none of which this repo has. The plain-JavaScript and plain-web "
@@ -409,10 +434,10 @@ def main():
     print()
     print("## Probed facts about the target")
     print()
-    print("| fact | value |")
-    print("|---|---|")
+    print("| fact | value | how |")
+    print("|---|---|---|")
     for k, v in sorted(facts.items()):
-        print(f"| `{k}` | {v} |")
+        print(f"| `{k}` | {v} | {STATED_FACTS.get(k, 'probed from the filesystem')} |")
     print()
     print("## Per sheet")
     print()
@@ -435,7 +460,7 @@ def main():
     print("| sheet | applies_to | rules dropped | reason |")
     print("|---|---|---:|---|")
     for (sheet, applies, reason), n in sorted(seen.items(), key=lambda kv: -kv[1]):
-        print(f"| {sheet} | `{applies[:60]}` | {n} | {reason} |")
+        print(f"| {sheet} | `{applies}` | {n} | {reason} |")
     print()
     print("## Conditional rules (each worker must record how it resolved)")
     print()
@@ -447,7 +472,7 @@ def main():
             k = (r["_sheet"], (r.get("applies_to") or "").strip(), reason)
             cseen[k] = cseen.get(k, 0) + 1
     for (sheet, applies, reason), n in sorted(cseen.items(), key=lambda kv: -kv[1]):
-        print(f"| {sheet} | `{applies[:60]}` | {n} | {reason} |")
+        print(f"| {sheet} | `{applies}` | {n} | {reason} |")
     print()
     n_routed = sum(1 for _, v, _ in verdicts if v in ("include", "conditional"))
     print(f"## Row ids routed to workers ({n_routed}: every included row plus every conditional one)")

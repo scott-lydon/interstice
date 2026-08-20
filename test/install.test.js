@@ -106,7 +106,7 @@ test('the LaunchAgent plist is well formed and absolute', () => {
 });
 
 /**
- * DEP-003 and DEP-010. The install used to print `launchctl load failed: ...` and then
+ * The install used to print `launchctl load failed: ...` and then
  * `launchctl    loaded` on the very next line, and return true either way, so the one place
  * this project makes a shipped-claim asserted an outcome nothing had checked. These drive the
  * launchd query with a stub `exec`, because the real launchd on this machine is running the

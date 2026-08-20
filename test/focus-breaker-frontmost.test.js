@@ -35,7 +35,7 @@ test('the match is case-insensitive substring, catching window-suffixed names', 
 
 test('no frontmost app is not a break', async () => {
   // The list is passed explicitly: there is no default blacklist literal in the breaker any more,
-  // because the shipped one lives only in config/interstice.config.default.json (UC-PRIN-001).
+  // because the shipped one lives only in config/interstice.config.default.json.
   const breaker = createFrontmostBreaker({ blacklistApps: ['Slack'], frontmost: async () => null });
   assert.equal(await breaker.probe(AT), null);
 });

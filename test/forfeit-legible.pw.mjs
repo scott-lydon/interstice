@@ -24,10 +24,10 @@ try {
     const el = document.getElementById('forfeit-note');
     return { visible: el.classList.contains('show'), text: el.textContent, causeAttr: el.querySelector('.fn-cause')?.dataset.cause, when: el.querySelector('.fn-when')?.textContent };
   }, rec);
-  if (!shown.visible) fails.push('4.6: forfeit banner not visible');
-  if (shown.causeAttr !== 'video') fails.push(`4.6: cause not surfaced (got ${shown.causeAttr})`);
-  if (shown.when !== '14:07') fails.push(`4.6: wall-clock time not surfaced (got "${shown.when}")`);
-  if (!/forfeited/i.test(shown.text)) fails.push('4.6: banner does not name the forfeit');
+  if (!shown.visible) fails.push('forfeit banner not visible');
+  if (shown.causeAttr !== 'video') fails.push(`cause not surfaced (got ${shown.causeAttr})`);
+  if (shown.when !== '14:07') fails.push(`wall-clock time not surfaced (got "${shown.when}")`);
+  if (!/forfeited/i.test(shown.text)) fails.push('banner does not name the forfeit');
   await browser.close();
   if (fails.length) { console.log('FAIL:\n' + fails.join('\n')); process.exit(1); }
   console.log('PASS: forfeit surfaces cause ("video") and wall-clock time (14:07), not silent');

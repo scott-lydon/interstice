@@ -330,7 +330,7 @@ test('the sign-in verdict outlasts a slow book', async () => {
 });
 
 test('every reader throw names a remedy the reader can render', () => {
-  // 1.5: a failure path must not merely say what went wrong; it must say what to do about it, so
+  // A failure path must not merely say what went wrong; it must say what to do about it, so
   // #reader-failed-why can carry an actionable line. This scans the reader source for throw sites
   // and requires each `throw new Error(...)` string to name a remedy. A bare rethrow (`throw err`)
   // carries whatever remedy the original error already had and is not a new site.

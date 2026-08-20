@@ -35,7 +35,7 @@ test('a playing video is reported with playing:true; a paused one false; a media
   assert.equal(records.length, targets.length, 'the medialess tab is reported as not playing, still a record');
 });
 
-test('the probe is read-only: no navigation, activation, or tab creation (4.2)', async () => {
+test('the probe is read-only: no navigation, activation, or tab creation', async () => {
   const targets = [{ type: 'page', url: 'https://youtube.com/x', sessionId: 's1' }];
   const session = fakeSession({ targets, playingByTarget: { 'https://youtube.com/x': true } });
   await probeVideo({ browsers: [{ name: 'Chrome', wsUrl: 'ws://x' }], connect: async () => session });
@@ -43,7 +43,7 @@ test('the probe is read-only: no navigation, activation, or tab creation (4.2)',
   for (const m of mutating) assert.ok(!session.calls.includes(m), `the probe must not call ${m}`);
 });
 
-test('no reachable browser launches nothing and returns an empty list (4.2)', async () => {
+test('no reachable browser launches nothing and returns an empty list', async () => {
   const records = await probeVideo({ browsers: [{ name: 'Chrome', wsUrl: 'ws://dead' }], connect: async () => { throw new Error('refused'); } });
   assert.deepEqual(records, []);
 });

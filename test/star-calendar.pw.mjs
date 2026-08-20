@@ -20,13 +20,13 @@ try {
   await page.goto(PANEL);
   await page.evaluate(() => { if (typeof setView === 'function') setView('reading'); });
 
-  // open the menu, then the calendar (behind the Phase 2 menu)
+  // open the menu, then the calendar (behind the reading menu)
   await page.click('#reader-menu');
   const menuOpen = await page.evaluate(() => document.getElementById('reader-menu-overlay').classList.contains('open'));
-  if (!menuOpen) fails.push('3.8: reader menu did not open');
+  if (!menuOpen) fails.push('reader menu did not open');
   await page.click('#open-star-cal');
   const calOpen = await page.evaluate(() => document.getElementById('star-cal-overlay').classList.contains('open'));
-  if (!calOpen) fails.push('3.8: star calendar did not open from the menu');
+  if (!calOpen) fails.push('star calendar did not open from the menu');
 
   // seed one real star into the month view and assert it renders on the correct day cell
   const seed = { id: 'seed1', startedAt: '2026-08-19T09:12:00-07:00', endedAt: '2026-08-19T09:37:00-07:00', day: '2026-08-19' };
@@ -35,7 +35,7 @@ try {
     const cell = document.querySelector('.cal-cell[data-day="2026-08-19"]');
     return !!cell && !!cell.querySelector('.cal-star');
   }, seed);
-  if (!cellHasStar) fails.push('3.8: seeded star did not render on the 2026-08-19 cell');
+  if (!cellHasStar) fails.push('seeded star did not render on the 2026-08-19 cell');
 
   // activate the star, assert revealed start and end match the seeded values exactly
   const reveal = await page.evaluate(() => {
@@ -43,13 +43,13 @@ try {
     const r = document.getElementById('cal-reveal');
     return { hidden: r.hidden, text: r.textContent };
   });
-  if (reveal.hidden) fails.push('3.8: activating the star revealed nothing');
-  if (!/09:12/.test(reveal.text)) fails.push(`3.8: revealed start != seeded 09:12 (got "${reveal.text}")`);
-  if (!/09:37/.test(reveal.text)) fails.push(`3.8: revealed end != seeded 09:37 (got "${reveal.text}")`);
+  if (reveal.hidden) fails.push('activating the star revealed nothing');
+  if (!/09:12/.test(reveal.text)) fails.push(`revealed start != seeded 09:12 (got "${reveal.text}")`);
+  if (!/09:37/.test(reveal.text)) fails.push(`revealed end != seeded 09:37 (got "${reveal.text}")`);
 
   // month/day toggle works
   const dayView = await page.evaluate(() => { document.getElementById('cal-view-toggle').click(); return document.getElementById('cal-title').textContent; });
-  if (!/Stars on/.test(dayView)) fails.push(`3.8: day view toggle failed (title "${dayView}")`);
+  if (!/Stars on/.test(dayView)) fails.push(`day view toggle failed (title "${dayView}")`);
 
   await browser.close();
   if (fails.length) { console.log('FAIL:\n' + fails.join('\n')); process.exit(1); }

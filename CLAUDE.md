@@ -1,7 +1,8 @@
 # interstice: session constraints
 
-This repo is under an active goal loop. Before changing anything, read the loop and its
-settled decisions; do not re-derive or re-ask what they already resolve.
+This repo was built under a goal loop, and the decisions that loop settled still hold.
+Before changing anything, read it and them; do not re-derive or re-ask what they already
+resolve.
 
 - **Goal loop:** `docs/GOAL_LOOP_STARS_READER_2026-08-17.md`. Its RULE block is binding: the
   only edits permitted to that file are ticking completed boxes and appending one parallel-notes

@@ -159,7 +159,7 @@ test('the tracker stamps local time, so an evening block is not filed on tomorro
 });
 
 /**
- * UC-PRIN-002. The tracker wired the breakers in, which was the point of it, but the video breaker
+ * The tracker wired the breakers in, which was the point of it, but the video breaker
  * was handed `probeVideo` itself where the breaker calls `probe()` with no arguments. `probeVideo`
  * destructures its options, so every tick threw "Cannot read properties of undefined (reading
  * 'browsers')", the catch turned that into a warning and a no-break, and the feature had been off
