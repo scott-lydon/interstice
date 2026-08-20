@@ -157,3 +157,26 @@ test('the tracker stamps local time, so an evening block is not filed on tomorro
   assert.equal(localISO(evening).slice(0, 10), '2026-08-19');
   assert.notEqual(localISO(evening).slice(0, 10), '2026-08-20');
 });
+
+/**
+ * UC-PRIN-002. The tracker wired the breakers in, which was the point of it, but the video breaker
+ * was handed `probeVideo` itself where the breaker calls `probe()` with no arguments. `probeVideo`
+ * destructures its options, so every tick threw "Cannot read properties of undefined (reading
+ * 'browsers')", the catch turned that into a warning and a no-break, and the feature had been off
+ * for as long as it had been on: four warnings a minute in logs/launchd.out.log and never one
+ * forfeit. A caller that exists but cannot be called is the same as no caller, which is the finding
+ * this test closes.
+ */
+test('the real video breaker can actually be probed, rather than throwing on every tick', async () => {
+  const warnings = [];
+  const tracker = createFocusTracker({
+    config: {},
+    stars: { award: () => ({ id: 'x' }) },
+    logger: { warn: (msg, extra) => warnings.push({ msg, ...extra }), info: () => {}, error: () => {} },
+  });
+
+  await tracker.tick('2026-08-19T09:00:00-07:00');
+
+  const video = warnings.filter((w) => w.breaker === 'video');
+  assert.deepEqual(video, [], `the video breaker could not be probed: ${JSON.stringify(video)}`);
+});

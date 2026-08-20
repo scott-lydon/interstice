@@ -715,7 +715,7 @@ rules against it in one pass.
   - Verify: a findings file carries one verdict per selected `row_id`, and the set of
     `row_id`s in the findings file is exactly the selected set from the manifest — no
     extras, no omissions, checked by a script rather than by eye.
-- [ ] **7.3 Every `severity: blocker` and `severity: high` finding is fixed or refuted.**
+- [x] **7.3 Every `severity: blocker` and `severity: high` finding is fixed or refuted.**
   - Verify: no finding at those severities is left in an open state; each is either fixed
     with a commit reference or refuted with a cited reason specific to this repo.
 - [x] **7.4 Resolve all 16 conditional rows explicitly.** The 13 `the deployed system`

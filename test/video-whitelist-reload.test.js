@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { load } from '../lib/config.js';
+import { loadCached } from '../lib/config.js';
 import { isWhitelisted } from '../lib/video/whitelist.js';
 import { ROOT } from '../lib/paths.js';
 
@@ -18,7 +18,7 @@ test('a host added to the user config passes after a reload, no code change', ()
     fs.writeFileSync(CONFIG_FILE, JSON.stringify({
       focus: { videoWhitelist: ['udemy.com', '*.udemy.com', 'newschool.example'] },
     }, null, 2));
-    const cfg = load({ force: true });
+    const cfg = loadCached({ force: true });
     const wl = cfg.focus?.videoWhitelist ?? [];
     assert.ok(wl.includes('newschool.example'), 'the reloaded config carries the new host');
     assert.equal(isWhitelisted('https://www.newschool.example/lesson', wl), true, 'the new host now passes');
@@ -26,6 +26,6 @@ test('a host added to the user config passes after a reload, no code change', ()
   } finally {
     if (had) fs.writeFileSync(CONFIG_FILE, backup);
     else fs.rmSync(CONFIG_FILE, { force: true });
-    load({ force: true }); // reload back to the original state for any later test
+    loadCached({ force: true }); // reload back to the original state for any later test
   }
 });

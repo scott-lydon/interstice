@@ -1,6 +1,6 @@
 {
  "batch": "perf-test",
- "target": "every .js and .html file in the repo, plus test/",
+ "target": "every source and page file in the repo: bin/interstice.js; lib/ (24 files); lib/actuators/index.js; lib/focus/blocks.js, lib/focus/stars-routes.js, lib/focus/store.js, lib/focus/tracker.js; lib/focus/breakers/display.js, lib/focus/breakers/frontmost.js, lib/focus/breakers/video.js; lib/state/ (8 files); lib/video/probe.js, lib/video/whitelist.js; scripts/literal-detector.mjs; test/ (44 files); web/dashboard.html, web/debug.html, web/panel.html",
  "rules": [
   {
    "row_id": "RN-ASYNC-DEPENDENCIES",

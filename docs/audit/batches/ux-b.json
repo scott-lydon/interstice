@@ -1,6 +1,6 @@
 {
  "batch": "ux-b",
- "target": "web/panel.html, web/dashboard.html, web/learn.html",
+ "target": "web/dashboard.html, web/debug.html, web/panel.html",
  "rules": [
   {
    "row_id": "UX-PERF-005",

@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import process from 'node:process';
 import { readToken } from '../lib/auth.js';
-import { load } from '../lib/config.js';
+import { loadCached } from '../lib/config.js';
 import { Daemon } from '../lib/daemon.js';
 import { createLogger, readJsonl } from '../lib/logger.js';
 import { runDoctor } from '../lib/doctor.js';
@@ -32,7 +32,7 @@ const USAGE = `interstice - fills the dead moment after you dispatch an AI agent
 `;
 
 async function api(pathname, { method = 'GET', body } = {}) {
-  const config = load();
+  const config = loadCached();
   // The control surface authenticates every request. A local client proves it is local by reading
   // the mode 0600 token the daemon minted, which a web page on another origin cannot do.
   const token = readToken(LOG_DIR);
@@ -96,7 +96,7 @@ async function main() {
         console.error(`already running (pid ${existing}). Use "interstice stop" first.`);
         process.exit(1);
       }
-      const config = load();
+      const config = loadCached();
       const logger = createLogger({ toFile: !has('--foreground') });
       const daemon = new Daemon({ config, logger });
       await daemon.start();
@@ -144,21 +144,21 @@ async function main() {
       break;
 
     case 'hotkeys': {
-      const config = load();
+      const config = loadCached();
       const built = await buildHotkeyApps({ port: config.port });
       console.log(instructions(built));
       break;
     }
 
     case 'dashboard': {
-      const config = load();
+      const config = loadCached();
       await openUrl(`http://127.0.0.1:${config.port}/`);
       break;
     }
 
     case 'stats': {
       const gaps = readJsonl(GAPS_LOG);
-      const s = summarize(gaps, load());
+      const s = summarize(gaps, loadCached());
       console.log(`gaps             ${s.totals.gaps} real (${s.totals.synthetic} synthetic, excluded)`);
       console.log(`delivered        ${s.totals.delivered} (${(s.totals.deliveryRate * 100).toFixed(1)}%)`);
       console.log(`reclaimed        ${s.totals.minutesReclaimed} min inside activities`);

@@ -336,12 +336,12 @@ data; simulated gaps are tagged `synthetic: true` and excluded from the statisti
   "ladder": ["flashcards", "reading", "queue_prompt", "todo"],
   "focusMode": "take",
   "idleVetoMs": 4000,
-  "panel": { "width": 440, "height": 620, "margin": 24, "raiseOnDeliver": true },
+  "panel": { "width": 640, "height": 900, "margin": 24, "side": "bottom-right", "raiseOnDeliver": true },
   "reading": { "app": "Amazon Kindle", "carrySession": true, "readerPort": 7421, "idleCloseMs": 900000 },
   "todo": { "source": "notes", "maxLists": 3 },
   "companions": {
     "enabled": true,
-    "binaural": { "app": "Music", "match": "binaural|isochronic|[0-9]{2,3} ?hz|gamma|focus" },
+    "binaural": { "app": "Music", "match": "binaural|isochronic|solfeggio|[0-9]{2,3} ?hz|gamma|alpha|theta|delta|focus|concentration" },
     "pomodoro": { "app": "Be Focused", "minTimerWidth": 44, "sampleGapMs": 1200 }
   }
 }
@@ -441,6 +441,11 @@ A completed 25-minute unbroken focus block earns one star. Configure it under `f
   domain, so `www.udemy.com` and `sub.udemy.com` pass and a lookalike does not (default: Udemy).
 - `focus.videoBreakAfterMs` — how long non-whitelisted video must play continuously before it
   forfeits the block, so a one-frame autoplay costs nothing (default `4000`).
+- `focus.videoBrowsers` — the browsers to read play state from, as
+  `{ "name": "Chrome", "wsUrl": "ws://127.0.0.1:9222/devtools/browser/..." }` entries. Ships empty,
+  because a browser that was not started with `--remote-debugging-port` has no endpoint to read and
+  there is no way to discover one after the fact. With no entries the video breaker reads nothing
+  and forfeits nothing; the app and display breakers are unaffected.
 
 **Scope (S3): browsers only.** Video detection covers Chromium-family and Safari browser tabs via
 tab URL plus real play state. Native video apps (a desktop Netflix app, QuickTime) are out of scope.

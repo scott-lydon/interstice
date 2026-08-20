@@ -460,3 +460,66 @@ e6c8a0a Immersive reading: fix the rule that hid every floating affordance
 
 Working tree clean after the fifth. The PR body names every box left open and what is missing
 from each, so the next session does not have to re-derive it.
+
+## 7.3 — every blocker and high finding fixed or refuted
+
+64 rows. 58 fixed, 6 refuted, none left open. `docs/audit/merge_resolutions.py` folds the
+per-cluster resolution files into the findings and checks the bar by script, because a campaign
+this size is exactly where an eye slides past the one row nobody did:
+
+```
+$ python3 docs/audit/merge_resolutions.py; echo "EXIT=$?"
+resolutions merged      : 62
+blocker/high FAIL rows  : 64
+  fixed                 : 58
+  refuted               : 6
+  still open            : 0 []
+  malformed             : 0 []
+by severity             : {'high': 50, 'blocker': 14}
+7.3 CHECK: PASS, every blocker and high finding is fixed or refuted with a recorded reason
+EXIT=0
+```
+
+Every fixed row records the real command and output that verified it; every refuted row records a
+reason specific to this repo rather than a general argument. Full detail in
+`docs/audit/resolutions/` and in the `resolution` key of each row in `docs/audit/findings_merged.json`.
+
+### The six refutations, in short
+
+- **TS-PP-002** `lib/state/index.js` is not a facade. Its own documentation says it gathers what the
+  router needs under a ceiling; nine modules import its siblings directly against two importers of
+  `index.js`, and making it a barrel would put the companions graph on the router hot path.
+- **RN-ASYNC-DEPENDENCIES** the two operations are not independent. The first writes a macOS
+  defaults key that Cocoa reads at process start, so running them concurrently lets the process
+  launch before the write lands, which is the exact failure that path exists to prevent. The
+  dependency runs through the defaults database rather than a JavaScript value.
+- **UC-CUPID-002** splitting the 1700-line Reader was declined, not deferred vaguely: its
+  lifecycle, auth and session-carry thirds have no reachable test coverage, and the live reader
+  cannot be driven on this machine right now, so a split could be claimed but not verified.
+- **DF-008** the rule is conditional on a Claude Design handoff bundle. This project ships none,
+  and the general-model route was recorded before the artifact existed rather than after the fact.
+- **AB-012** the clause it objects to has no on-disk existence, and it was load bearing: nine
+  writers ran concurrently in one working tree with no branch or worktree isolation.
+- **AB-016** the fix it prescribes is forbidden by the loop's own item 0.7, and the teardown handle
+  it says is missing is recorded in these notes under item 0.8.
+
+### The two defects the campaign found that nobody had reported
+
+**The video breaker was silently dead in production.** Verifying UC-PRIN-002 showed that the
+tracker wiring passed `probe: probeVideo` with no arguments, so the function threw on destructuring
+every 15 seconds. The tracker's own "a breaker that throws is a broken sensor, not a break" design
+then swallowed it into a warning, which is correct behaviour that happened to hide a real fault.
+Success condition 5 could never have held. Counted against the live log across the restart:
+
+```
+video-breaker throw warnings BEFORE the restart: 736
+video-breaker throw warnings AFTER  the restart: 0
+```
+
+with the daemon up 5:25 and `/api/focus` reporting a running block with all three breakers armed.
+
+**A second README drift nobody had reported.** The DI-010 pinning test was made to fail first
+against the known panel-size drift, and on being fixed it failed again on a binaural `match` regex
+that had also gone stale. That is the test doing its job on its first run.
+
+Suite: 336 passing, 0 failing, `npm test` exits 0. It was 275 at the start of the session.

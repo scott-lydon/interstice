@@ -1,6 +1,6 @@
 {
  "batch": "ux-a",
- "target": "web/panel.html (the product's whole interface)",
+ "target": "web/dashboard.html, web/debug.html, web/panel.html",
  "rules": [
   {
    "row_id": "UX-A11Y-001",

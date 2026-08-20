@@ -128,6 +128,9 @@
   tr.detail td { white-space: pre-wrap; font-family: var(--mono); font-size: .72rem; color: var(--muted); background: var(--sunk); }
 
   .excluded { margin-top: 9px; font-family: var(--mono); font-size: .72rem; color: var(--faint); }
+  /* A parse failure is not a footnote: it means a figure above is wrong, so it is coloured
+     like the other things that are wrong rather than like the synthetic-gap note. */
+  .excluded.crit { color: var(--crit); }
   .empty { border: 1px dashed var(--rule); padding: 30px; text-align: center; color: var(--muted); }
   .empty b { color: var(--ink); font-weight: 600; }
 
@@ -179,6 +182,11 @@
     <div class="tile"><span class="v skeleton">000</span><span class="k">False positives</span></div>
   </div>
   <p class="excluded" id="excluded" hidden></p>
+  <!-- A line of logs/gaps.jsonl that will not parse is a gap that is missing from every
+       figure above. It used to be skipped in silence, which made a truncated log
+       indistinguishable from a quiet day. Said out loud here, with the line numbers, so
+       the file can be looked at. -->
+  <p class="excluded crit" id="malformed" hidden></p>
 
   <section id="rungs-sec">
     <div class="sec-head"><h2>Where it sent you</h2><span class="note" id="rung-note"></span></div>
@@ -305,6 +313,22 @@ function renderTiles(s) {
       (s.totals.gaps === 0 ? ', which is why they read zero while the table below has rows' : '');
   } else {
     ex.hidden = true;
+  }
+
+  // A gap that did not parse is a gap that is not in any number on this page. Naming the count
+  // and the first few line numbers is the difference between a figure that is wrong and a figure
+  // that is wrong and says so.
+  const bad = $('malformed');
+  const rows = s.malformed ?? [];
+  if (rows.length) {
+    bad.hidden = false;
+    const where = rows.slice(0, 5).map((m) => m.line).join(', ');
+    bad.textContent =
+      `${rows.length} line${rows.length === 1 ? '' : 's'} of logs/gaps.jsonl could not be parsed ` +
+      `and ${rows.length === 1 ? 'is' : 'are'} missing from every figure above ` +
+      `(line${rows.length === 1 ? '' : 's'} ${where}${rows.length > 5 ? ', and more' : ''}: ${rows[0].error})`;
+  } else {
+    bad.hidden = true;
   }
 }
 

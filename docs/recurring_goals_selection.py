@@ -30,8 +30,27 @@ import os
 import sys
 from collections import Counter, defaultdict
 
-ROOT = os.environ.get("RECURRING_GOALS_ROOT", "/Users/scottlydon/Developer/Recurring_goals")
-TARGET = os.environ.get("TARGET_REPO", "/Users/scottlydon/Developer/interstice")
+def _required_path(env, what):
+    """A path this pipeline cannot guess, read from the environment.
+
+    Defaulted to one machine's absolute paths until PS-007: a default meant the script ran
+    somewhere it was never pointed at and silently classified the wrong tree, which for a
+    selection manifest is the failure that looks like a result. Required and named instead.
+    """
+    value = os.environ.get(env)
+    if not value:
+        raise SystemExit(
+            f"{env} is not set, and there is no sensible default for it.\n"
+            f"  It must be {what}.\n"
+            f"  Fix: {env}=/path/to/it python3 {os.path.basename(__file__)}"
+        )
+    if not os.path.isdir(value):
+        raise SystemExit(f"{env}={value!r} is not a directory. It must be {what}.")
+    return os.path.abspath(value)
+
+
+ROOT = _required_path("RECURRING_GOALS_ROOT", "the Recurring_goals checkout holding the rule spreadsheets")
+TARGET = _required_path("TARGET_REPO", "the repo the rules are being evaluated against")
 
 # --- Facts about the target, probed rather than assumed -----------------------
 

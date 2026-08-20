@@ -1,6 +1,6 @@
 {
  "batch": "js-a",
- "target": "lib/focus/**, lib/video/**, lib/latency.js, lib/reader.js",
+ "target": "test/ (44 files)",
  "rules": [
   {
    "row_id": "TS-001",

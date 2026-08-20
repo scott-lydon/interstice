@@ -1,6 +1,6 @@
 {
  "batch": "js-b",
- "target": "lib/server.js, lib/daemon.js, lib/panel.js, lib/router.js, bin/, hooks/",
+ "target": "bin/interstice.js; lib/ (24 files); lib/actuators/index.js; lib/focus/blocks.js, lib/focus/stars-routes.js, lib/focus/store.js, lib/focus/tracker.js; lib/focus/breakers/display.js, lib/focus/breakers/frontmost.js, lib/focus/breakers/video.js; lib/state/ (8 files); lib/video/probe.js, lib/video/whitelist.js; scripts/literal-detector.mjs",
  "rules": [
   {
    "row_id": "TS-059",
