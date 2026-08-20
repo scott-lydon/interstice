@@ -8,3 +8,6 @@ config/interstice.config.json
 coverage/
 hotkeys/
 chrome/port.js
+
+# Python bytecode from the docs/ manifest generator
+__pycache__/

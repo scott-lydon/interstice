@@ -252,7 +252,7 @@ discarding them silently throws away a diagnosis someone already paid for.
 
 ### 0.7 Blocker Resolver Monitor (stand this up before feature work, keep it running the whole loop)
 
-- [ ] **0.7 Blocker Resolver Monitor is live.** A recurring agent fires **every 3 minutes**
+- [x] **0.7 Blocker Resolver Monitor is live.** A recurring agent fires **every 3 minutes**
   for the duration of this loop. Its job is to detect an *artificial* blocker — a
   non-real blocker that appears real, typically a limitation being imagined or incorrectly
   assumed rather than actually present — and to produce a concrete route around it.
@@ -274,7 +274,7 @@ discarding them silently throws away a diagnosis someone already paid for.
   - Verify: `list_triggers` shows an enabled recurring task named for this loop, AND
     `test -f $R/logs/blockers.json` succeeds, AND that file contains at least one entry
     with an `attempts` array by the time Phase 1 completes.
-- [ ] **0.8 Monitor teardown is scheduled, not forgotten.** The monitor is deleted at the
+- [x] **0.8 Monitor teardown is scheduled, not forgotten.** The monitor is deleted at the
   end of the loop (item Z8), so it cannot outlive the work and fire forever.
   - Verify: the trigger id is recorded in parallel notes so Z8 can delete it by id.
 
@@ -382,7 +382,7 @@ crashing. The diagnosis must therefore start from what that surface actually say
   `web-design-guidelines`. D is not done when the design exists; D is done when every open
   worthwhile UX item is addressed.
   - Verify: `test -s $R/docs/design-immersive-reading.html && ! grep -qE '^- \[ \].*\{worthwhile\}' $R/UX_FEEDBACK.md 2>/dev/null && echo PASS || echo FAIL`
-- [ ] **2B.2 U — Synthetic UX review (design only, no interaction).** Spin up a UX subagent
+- [x] **2B.2 U — Synthetic UX review (design only, no interaction).** Spin up a UX subagent
   given personas derived from this spec, reviewing as the users and not as an engineer.
   Personas, at minimum:
   - **Scott, the operator.** Goal: read a real book in the four dead minutes after
@@ -401,11 +401,11 @@ crashing. The diagnosis must therefore start from what that surface actually say
   - It writes or updates `$R/UX_FEEDBACK.md`, one checkable item per issue, in the form
     `- [ ] (severity) [persona] issue`.
   - Verify: `test -s $R/UX_FEEDBACK.md && echo PASS || echo FAIL`
-- [ ] **2B.3 J — Judge worthwhile feedback.** Spin up a judge agent with **fresh context**,
+- [x] **2B.3 J — Judge worthwhile feedback.** Spin up a judge agent with **fresh context**,
   given this spec plus `$R/UX_FEEDBACK.md`. For each item it rules `{worthwhile}` (real
   user value, in scope) or `{skip}` (nitpick, out of scope, taste only).
   - Verify (converged): `grep -qE '^- \[ \].*\{worthwhile\}' $R/UX_FEEDBACK.md && echo "FAIL: rework D" || echo PASS`
-- [ ] **2B.4 Ping-pong until convergence.** When U produces worthwhile feedback confirmed by
+- [x] **2B.4 Ping-pong until convergence.** When U produces worthwhile feedback confirmed by
   J, **U unticks D**. D addresses every worthwhile item, checks each to `- [x]`, then
   **unticks U** so U must re-review. Repeat until J finds nothing worthwhile open.
   - Verify: the convergence command in 2B.3 prints PASS on a U pass that ran *after* the
@@ -606,11 +606,11 @@ path). This phase surfaces that knowledge inside the panel.
 Same three roles as 2B, with one difference: the UX subagent **can interact with the
 running UI**.
 
-- [ ] **6.1 D — UI revision pass on the running build.** Revise the shipped UI using
+- [x] **6.1 D — UI revision pass on the running build.** Revise the shipped UI using
   `frontend-design` + `design-reference`; self-check with `web-design-guidelines`.
   - Verify: `cd $R && npm test` passes AND
     `! grep -qE '^- \[ \].*\{worthwhile\}' $R/UX_FEEDBACK.md && echo PASS || echo FAIL`
-- [ ] **6.2 U — Synthetic UX review (interactive).** Same personas as 2B.2, plus one more:
+- [x] **6.2 U — Synthetic UX review (interactive).** Same personas as 2B.2, plus one more:
   - **A forfeited-star user.** Goal: understand why a block did not earn a star. Context:
     just watched a two-minute clip and lost 20 minutes of credit. Likely frustration: no
     explanation, or an explanation that feels like an accusation.
@@ -619,10 +619,10 @@ running UI**.
   - It updates `$R/UX_FEEDBACK.md` in the same convention.
   - Verify: a `webapp-testing` Playwright driver script exists and exits 0, AND
     `test -s $R/UX_FEEDBACK.md`.
-- [ ] **6.3 J — Judge worthwhile feedback (fresh context).** Tags each item `{worthwhile}`
+- [x] **6.3 J — Judge worthwhile feedback (fresh context).** Tags each item `{worthwhile}`
   or `{skip}` against this spec.
   - Verify: `grep -qE '^- \[ \].*\{worthwhile\}' $R/UX_FEEDBACK.md && echo "FAIL: rework D" || echo PASS`
-- [ ] **6.4 Ping-pong until convergence.** Identical mechanic to 2B.4: U unticks D on
+- [x] **6.4 Ping-pong until convergence.** Identical mechanic to 2B.4: U unticks D on
   worthwhile feedback; D addresses and unticks U; repeat until J finds nothing worthwhile
   open.
   - Verify: 6.3 prints PASS on a U pass that ran after the most recent D change, provable
@@ -711,19 +711,19 @@ rules against it in one pass.
     exits 0 (a non-zero exit means an unclassified pair, which must be classified before
     proceeding), AND `git diff --exit-code docs/RECURRING_GOALS_SELECTION.md` shows either
     no change or a change that is committed with a reason.
-- [ ] **7.2 Route and run the audit over the 303 selected rules.**
+- [x] **7.2 Route and run the audit over the 303 selected rules.**
   - Verify: a findings file carries one verdict per selected `row_id`, and the set of
     `row_id`s in the findings file is exactly the selected set from the manifest — no
     extras, no omissions, checked by a script rather than by eye.
 - [ ] **7.3 Every `severity: blocker` and `severity: high` finding is fixed or refuted.**
   - Verify: no finding at those severities is left in an open state; each is either fixed
     with a commit reference or refuted with a cited reason specific to this repo.
-- [ ] **7.4 Resolve all 16 conditional rows explicitly.** The 13 `the deployed system`
+- [x] **7.4 Resolve all 16 conditional rows explicitly.** The 13 `the deployed system`
   rows, the 1 `design tokens` row, and the 2 `every guide` rows each need a recorded
   resolution: does the precondition hold here, and therefore does the rule apply?
   - Verify: a table with one row per conditional `row_id`, each naming its precondition and
     whether it held. No conditional may be left unresolved.
-- [ ] **7.5 Adversarially spot-check the exclusions.** Selection is only trustworthy if
+- [x] **7.5 Adversarially spot-check the exclusions.** Selection is only trustworthy if
   someone tries to break it. Spin up a fresh-context agent given the manifest's exclusion
   table and the repo, told to find any excluded rule that in fact applies.
   - Verify: the agent's written finding is either "no wrongly excluded rule found", with
