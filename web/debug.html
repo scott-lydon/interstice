@@ -10,9 +10,9 @@
     --ground: #F1F3F5; --raised: #FFFFFF; --sunk: #E4E8EC;
     /* ink */
     --ink: #12161C; --muted: #5A6673; --faint: #5E6977;
-    /* lines. --rule is a divider, drawn to be barely there: 1.32:1 on the ground. As the
-       only boundary of a button or a field that is under the 3:1 WCAG 1.4.11 bar for an
-       interface component, so interactive edges get their own token, measured at 3.2:1
+    /* --rule is a divider, drawn to be barely there: 1.32:1 on the ground. That is under the
+       3:1 WCAG 1.4.11 bar for an interface component, so it cannot be the only boundary of a
+       button or a field. Interactive edges get --edge instead, measured at 3.2:1 or better
        against every surface in both themes. */
     --rule: #CFD6DD; --edge: #6D8298;
     /* accent. --on-accent is the label that sits on a filled accent button; #fff
@@ -82,9 +82,9 @@
 
   <section>
     <div class="banner">
-      Gaps opened here are tagged <b>synthetic</b> and excluded from the dashboard figures.
-      Next rung and Stand down drive the live engine, so they change a real gap if one is
-      already open.
+      Every control here drives the live engine. With a real gap already open, Open gap extends
+      it and End closes it and fetches you back. Only a gap opened with nothing in flight is
+      tagged <b>synthetic</b> and excluded from the dashboard figures.
     </div>
     <div class="row">
       <span class="status" id="status">reading status <span class="spinner"></span></span>

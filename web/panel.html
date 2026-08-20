@@ -989,7 +989,7 @@ let readerTextBusy = false;
 // rather than a thing you have to take on trust.
 let readerShelf = null;
 
-/**
+/*
  * Words by default, the picture on request.
  *
  * Amazon draws each page as a single image with no text in it anywhere, so the words
@@ -1222,8 +1222,9 @@ function startReader(asin) {
   $('reader-over').hidden = false;
   readerSay('opening your book', true);
   tickReader();
-  // Slow on purpose. The reader pushes a frame whenever it repaints, so this poll
-  // is only asking whether anything happened, not driving the rendering.
+  // Slow on purpose. Frames are pulled, not pushed: each tick takes one screenshot, and an
+  // unchanged page costs a comparison and no download. Pushing them was tried and rejected, see
+  // the trap table in the README.
   readerTimer = setInterval(tickReader, 1500);
 }
 
@@ -2062,7 +2063,7 @@ document.addEventListener('keydown', (e) => {
   if (['1', '2', '3', '4'].includes(e.key) && !$('ease').hidden) answer(Number(e.key));
 });
 
-/**
+/*
  * The panel tells the daemon it is on screen, and the daemon answers with the rung
  * that should be showing. One poll does both, which is why a second window never
  * gets opened on top of this one.

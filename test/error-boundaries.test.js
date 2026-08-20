@@ -73,7 +73,7 @@ test('a request body that is not JSON answers 400 naming the parse error, not 20
       body,
     });
 
-  // A truncated body. Before, this was `{}`, so the route answered "text is required" about a
+  // A truncated body. Before, this was `{}`, so the route answered "empty" about a
   // body that did contain text, and the one true fact went unsaid.
   const res = await post('/api/queued', '{"text":"hello"');
   assert.equal(res.status, 400, 'a body this daemon cannot parse is the caller\'s error, not a 500');
@@ -82,7 +82,10 @@ test('a request body that is not JSON answers 400 naming the parse error, not 20
   assert.match(body.error, /not valid JSON/);
   assert.ok(body.parseError.length > 0, 'the parser\'s own message is passed through');
   assert.equal(body.bytes, 15, 'the size received is reported');
-  assert.doesNotMatch(body.error, /text is required/, 'a parse failure is never reported as a business error');
+  // Not a substring check: the parse error's own remedy says "send no body at all for an empty
+  // one", so /empty/ matches it legitimately. The defect being pinned is the route answering
+  // WITH the business error, which is the exact string 'empty'.
+  assert.notEqual(body.error, 'empty', 'a parse failure is never reported as a business error');
 
   // No body at all still means "no arguments", which several routes rely on: this one answers on
   // its own terms (the field is missing) rather than as a parse failure.
