@@ -442,3 +442,21 @@ clearing on arrival with a distinct, non-overlapping arrival note.
   step `test ! -f package-lock.json` which now fails on every push. The item's verify requires all
   of them fixed and a second pass returning zero findings; that has not been done, so the box stays
   open.
+
+## Commit, push, PR
+
+Branched off `main` rather than committing to it. Five logical commits on
+`stars-reader-loop-session-2`, pushed, PR opened:
+
+**https://github.com/scott-lydon/interstice/pull/7**
+
+```
+7db8e9e Loop notes and box ticks for this session, plus a gitignore for __pycache__
+a72e5f6 Recurring goals: per-row overrides, and the audit over the selected rules
+7aa8ea1 Playwright specs: launch the bundled Chromium, not a Chrome channel
+e6c8a0a Immersive reading: fix the rule that hid every floating affordance
+14520ee Wire the focus engine into the running daemon, and stamp local time
+```
+
+Working tree clean after the fifth. The PR body names every box left open and what is missing
+from each, so the next session does not have to re-derive it.

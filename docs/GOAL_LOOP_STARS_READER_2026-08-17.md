@@ -819,7 +819,7 @@ rules against it in one pass.
     - [ ] Demo: open up the windows to the work you've completed. Show me your work.
     - [ ] Create a manual verification checklist for the user to go to in order to verify
       and check your work, if not already explicitly requested.
-- [ ] If you wrote or modified code, then commit all your changes, either one per checkmark
+- [x] If you wrote or modified code, then commit all your changes, either one per checkmark
   item or one big commit per this goal loop whichever is logical. Push them, raise a PR.
   Share a link to the PR with the user.
 
