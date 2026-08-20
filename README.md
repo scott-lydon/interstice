@@ -379,6 +379,36 @@ this project can least afford. `doctor` proves each of them rather than assuming
 | Be Focused asks before skipping an interval | its confirmation never takes keyboard focus, so Return, Escape and a click at the button's coordinates all leave it open, and it then swallows every keystroke meant for the timer | the confirmation is answered through accessibility, by the button's title |
 | Be Focused's start shortcut is a toggle, and it starts the new interval itself after a skip | pressing start on top of that pauses the timer you just asked for: the menu bar read 24:56 and stayed there | the menu bar is read before start is pressed, and the answer the panel shows is that reading rather than the press |
 
+## The control surface is authenticated
+
+The daemon's HTTP surface binds to loopback, and loopback binding is not access control. Any page
+you visit in an ordinary browser can reach `127.0.0.1`, and a `text/plain` POST is not preflighted,
+so without a check a web page could reschedule your Anki cards, write your to-do state, or type
+into the signed-in Amazon session the reader holds. DNS rebinding would let it read the responses
+too.
+
+Three checks run before any handler sees a request:
+
+| check | what it stops |
+|---|---|
+| `Host` must be loopback on this port | DNS rebinding, which arrives carrying the attacker's hostname |
+| `Origin`, when present, must be this daemon's own | a cross-origin POST from a page you are visiting |
+| `x-interstice-token` must match | anything else that can reach the port |
+
+The token is generated on first run into `logs/control-token` with mode `0600`, never shipped as
+a default, and compared in constant time. The served pages are the only unauthenticated route,
+because serving a page is how the browser is given the token: a small bootstrap in the document
+head wraps `fetch` so every request the page makes carries it.
+
+Local clients read the same file. `interstice status`, `doctor`, and the hotkey apps all do this
+for you; nothing asks you to copy a value anywhere. If you drive the API by hand:
+
+```bash
+curl -H "x-interstice-token: $(cat logs/control-token)" http://127.0.0.1:7420/api/health
+```
+
+A request that is refused says which check refused it and how to satisfy it.
+
 ## Privacy
 
 Interstice reads message *timestamps and structure* from agent transcripts. It never

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import process from 'node:process';
+import { readToken } from '../lib/auth.js';
 import { load } from '../lib/config.js';
 import { Daemon } from '../lib/daemon.js';
 import { createLogger, readJsonl } from '../lib/logger.js';
 import { runDoctor } from '../lib/doctor.js';
 import { install, uninstall } from '../lib/install.js';
-import { PID_FILE, GAPS_LOG } from '../lib/paths.js';
+import { PID_FILE, GAPS_LOG, LOG_DIR } from '../lib/paths.js';
 import { summarize, suggestThresholds } from '../lib/stats.js';
 import { openUrl } from '../lib/state/system.js';
 import { buildHotkeyApps, instructions } from '../lib/hotkeys.js';
@@ -32,9 +33,15 @@ const USAGE = `interstice - fills the dead moment after you dispatch an AI agent
 
 async function api(pathname, { method = 'GET', body } = {}) {
   const config = load();
+  // The control surface authenticates every request. A local client proves it is local by reading
+  // the mode 0600 token the daemon minted, which a web page on another origin cannot do.
+  const token = readToken(LOG_DIR);
+  const headers = {};
+  if (body) headers['content-type'] = 'application/json';
+  if (token) headers['x-interstice-token'] = token;
   const res = await fetch(`http://127.0.0.1:${config.port}${pathname}`, {
     method,
-    headers: body ? { 'content-type': 'application/json' } : undefined,
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   return res.json();

@@ -741,7 +741,13 @@
   "severity": "blocker",
   "evidence": "Every one of the ~35 route handlers in lib/server.js:81-538 reads or mutates state with no authentication and no authorization check of any kind: grep for origin, authoriz, token, csrf, referer and password across lib/server.js and lib/focus/stars-routes.js returns zero hits, and the dispatcher at :542-545 keys purely on `${req.method} ${url.pathname}`. Loopback binding (:573) is not a substitute, because readBody (:36-51) JSON-parses the body regardless of content-type, so any page the user visits can issue no-preflight cross-origin POSTs that mutate real state: POST /api/cards/answer reschedules Anki cards (:163-171), POST /api/todos/toggle writes todo state (:428-440), POST /api/reading/input types keystrokes into a signed-in Amazon session (:317-343), and POST /debug/companions, /debug/submit and /debug/end drive the daemon (:497-537). Verified live: `curl -X POST http://127.0.0.1:7420/api/queued -H 'Content-Type: text/plain;charset=UTF-8' -H 'Origin: https://evil.example' -d '{\"text\":\"\"}'` was accepted and routed (400 'empty', the handler's own validation at :115, no auth rejection), and `curl -H 'Host: attacker.example' -H 'Origin: https://evil.example' /api/health` returned 200, so neither Origin nor Host is validated and DNS rebinding would also read responses.",
   "fix": "In the http.createServer handler at lib/server.js:540, before dispatching, reject any request whose Host header is not `127.0.0.1:<port>` or `localhost:<port>`, and reject any request carrying an Origin header that is not the daemon's own origin (a same-origin fetch from /panel sends no Origin on GET and its own origin on POST). Additionally require a per-install token, generated at install time into config/interstice.config.json and injected into the served HTML, on every mutating method and on all /debug/* routes.",
-  "_file": "ops.jsonl"
+  "_file": "ops.jsonl",
+  "resolution": {
+   "state": "fixed",
+   "commit": "pending",
+   "how": "lib/auth.js adds three independent checks run once at the dispatcher before any handler: Host must be loopback on this port (defeats DNS rebinding), Origin when present must be this daemon's own (defeats the no-preflight cross-origin POST), and x-interstice-token must match a per-daemon 0600 token compared in constant time. Page loads are the only exempt route, because serving a page is how a browser is given the token; a bootstrap in the head wraps fetch so every page request carries it. CLI, doctor and the hotkey apps read the same file.",
+   "verified": "Live against the running daemon: the exact cross-origin POST the finding fired went 200 -> 403, an untokened GET 200 -> 401, a raw-socket rebound Host 200 -> 403, and a tokened GET 200. test/auth.test.js pins all of it, including the attack over a raw socket because Host is a forbidden header for fetch."
+  }
  },
  "SEC-005": {
   "row_id": "SEC-005",
