@@ -1,0 +1,586 @@
+{
+ "batch": "js-b",
+ "target": "lib/server.js, lib/daemon.js, lib/panel.js, lib/router.js, bin/, hooks/",
+ "rules": [
+  {
+   "row_id": "TS-059",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "No dynamic code evaluation",
+   "severity": "blocker",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Do not use eval, the Function constructor with a string body, setTimeout or setInterval with a string argument, or any other dynamic code evaluation, except in a loader that is explicitly designed for it.\n\nHOW TO DETECT: Flag eval, `new Function('...')`, and string-argument timers.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-060",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "No non-standard features",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Do not use non-standard or vendor-specific language features, proposals below stage 3, or features removed from the standard.\n\nHOW TO DETECT: Flag legacy or proposal-stage syntax and vendor-prefixed runtime APIs used with no fallback.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-061",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Never modify builtin objects",
+   "severity": "blocker",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Never add to or modify builtin prototypes or global objects, including Object, Array, String, and the global scope. Polyfills of standardized behavior through an established polyfill library are the only exception.\n\nHOW TO DETECT: Flag assignments to a builtin prototype, additions to globalThis or window, and monkeypatching of a library's exported object.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-062",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Identifiers are ASCII and use the standard case per kind",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Identifiers use only ASCII letters, digits, underscores, and rarely the dollar sign. UpperCamelCase for classes, interfaces, types, enums, and decorators. lowerCamelCase for variables, parameters, functions, methods, properties, and module aliases. CONSTANT_CASE for global constant values including enum values. No identifier is a single character except a loop index or a short-lived callback parameter.\n\nHOW TO DETECT: Flag identifiers violating the case rule for their kind, non-ASCII identifiers, and dollar signs outside a library convention.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-063",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Names are descriptive and abbreviations are not invented",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Names are descriptive and use words a reader outside the project would recognize. Do not abbreviate by deleting letters within a word, and do not invent an abbreviation. Widely understood abbreviations are fine.\n\nHOW TO DETECT: Flag invented abbreviations, single-letter names outside the allowed cases, and names whose meaning depends on project-local jargon with no definition.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-064",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Camel case treats acronyms as words",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: When forming a camel-case name from a phrase, treat an acronym as a word: `loadHttpUrl`, not `loadHTTPURL`. The one exception is a platform-mandated name.\n\nHOW TO DETECT: Flag identifiers containing two or more consecutive capital letters that are not a platform-mandated name.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-065",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "The underscore prefix and suffix are not used",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Do not use a leading or trailing underscore on any identifier, including private members. Use the `private` keyword or a `#private` field. The one convention allowed is a lone `_` for an intentionally unused parameter, and even that is discouraged.\n\nHOW TO DETECT: Flag identifiers beginning or ending with an underscore, other than a lone `_`.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-066",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Constant case is for deeply immutable global values only",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: CONSTANT_CASE names a value that is deeply immutable and is a global or module-level constant, not merely a `const` binding. A `const` holding a mutable object is lowerCamelCase.\n\nHOW TO DETECT: Flag CONSTANT_CASE names holding mutable objects or arrays that are not frozen, and module-level deeply immutable values named in lowerCamelCase.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-067",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Aliases are const and mirror the original name",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: When creating a local alias for an imported or long-path value, use const, and keep the alias name the same as or clearly derived from the original so a reader can trace it.\n\nHOW TO DETECT: Flag aliases whose name shares nothing with the original, and aliases declared with let.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-068",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Rely on inference; annotate only where it adds information",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Do not annotate a type the compiler can trivially infer, such as `const x: number = 5`. Do annotate function parameters, and annotate exported API return types where inference would leak an implementation type or where the explicit type documents the contract.\n\nHOW TO DETECT: Flag redundant annotations on initialized locals, and missing return types on exported functions.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-069",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Do not create nullable or undefined type aliases",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Do not create a type alias whose only job is to add null or undefined (`type MaybeFoo = Foo | null`). Write the union at the use site so the nullability is visible where it matters.\n\nHOW TO DETECT: Flag aliases of the shape `T | null` or `T | undefined`.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-070",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Prefer an optional field over an explicit undefined union",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Prefer `foo?: string` to `foo: string|undefined` for object fields and parameters, because the optional form also permits omission.\n\nHOW TO DETECT: Flag `: T | undefined` on interface fields and parameters where `?:` is correct.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-071",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Use structural types",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Do not add a nominal-typing brand or a marker field just to prevent a structurally compatible type from being assignable, unless the domain genuinely requires nominal identity. Prefer describing the shape you need.\n\nHOW TO DETECT: Flag brand fields and phantom-type parameters with no stated reason.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-072",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Use T[] for simple element types, Array<T> for complex ones",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use the `T[]` shorthand when T is a simple type name, and `Array<T>` when T is a longer or compound type such as a union or a function type, because the shorthand becomes hard to read.\n\nHOW TO DETECT: Flag `(A|B)[]` and `(() => void)[]` forms that should be Array<...>, and `Array<string>` that should be `string[]`.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-073",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Index signatures are a last resort; prefer Map or a Record with a known key union",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Avoid `{[key: string]: T}` index signatures, because every read is typed as present when it may not be. Use a Map for an open key space, or Record with a known key union for a closed one.\n\nHOW TO DETECT: Flag index signatures and report the Map or Record rewrite. Also flag reads from an index-signature type used without a presence check.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-074",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Mapped and conditional types are used only where a simpler type will not do",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Mapped and conditional types are powerful but hard to read and slow to compile. Use them only when a plain interface, a union, or generics cannot express the constraint, and add a comment explaining what the type computes.\n\nHOW TO DETECT: Flag conditional types nested more than one level and mapped types with no explanatory comment.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-075",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Do not use any",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: The `any` type disables all checking. Provide a more specific type instead, or use `unknown` where the value is genuinely of unknown shape and narrow before use. If a suppression is genuinely needed, keep it as narrow as possible and add a comment explaining why.\n\nHOW TO DETECT: Flag every explicit `any`, every implicit any from a missing annotation, and every `unknown` used without narrowing. Report the specific type each should be.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-076",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Do not use the {} type",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Do not use `{}` as a type. It means any non-null, non-undefined value and is almost never what the author meant. Use `object`, `unknown`, or a specific shape.\n\nHOW TO DETECT: Flag `: {}` annotations and `extends {}` constraints.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-077",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Tuple types carry element names",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: When a tuple type has more than one element, label the elements (`[first: string, second: number]`) so the meaning of each position is visible. Prefer an interface when there are more than three elements.\n\nHOW TO DETECT: Flag unlabeled multi-element tuple types and tuples with four or more elements.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-078",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Do not use wrapper types in type positions",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Never use `String`, `Boolean`, `Number`, `Object`, or `Symbol` (capitalized) in a type position. Use the lowercase primitive types and `object`.\n\nHOW TO DETECT: Flag capitalized primitive names used as types.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-079",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "No return-type-only generics",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Do not declare a type parameter that appears only in the return type, because the caller can pick any type and the compiler will accept it, which is an unchecked assertion in disguise.\n\nHOW TO DETECT: Flag generic functions whose type parameter appears in the return type but in no parameter type.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-080",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "ts-ignore is not used; ts-expect-error carries a reason",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Do not use @ts-ignore. Where a suppression is unavoidable use @ts-expect-error with a comment explaining why, so the suppression fails the build once it becomes unnecessary.\n\nHOW TO DETECT: Flag every @ts-ignore, and every @ts-expect-error with no explanation.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-081",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "JSDoc documents the API; line comments explain the implementation",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use JSDoc (`/** ... */`) for anything a consumer of the API needs to know, and line comments (`//`) for implementation notes. Do not use JSDoc for an internal comment, and do not use a line comment where a documentation tool needs to pick up the text.\n\nHOW TO DETECT: Flag JSDoc blocks on internal implementation notes and line comments on exported API surfaces.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-082",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Every top-level export of a module is documented",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: All top-level exports of a module carry a JSDoc comment explaining what the symbol is for. Document the parameters and the return value only where the signature does not already make them clear; a comment that merely restates the signature adds nothing.\n\nHOW TO DETECT: List exported symbols with no JSDoc. Separately flag JSDoc that only restates the signature, and @param tags whose text repeats the parameter name.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-083",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "JSDoc never duplicates type information the compiler already has",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Do not write JSDoc type annotations (`@param {string} name`) in TypeScript. The type is in the signature; duplicating it means the two can drift apart.\n\nHOW TO DETECT: Flag every JSDoc tag carrying a brace-delimited type in a TypeScript file.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-084",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Comments add information the code does not",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Make comments that actually add information. Do not restate what the code says. Where a call site's arguments are not self-explanatory, a parameter-name comment (`/* isEnabled= */ true`) is the right tool rather than a prose comment.\n\nHOW TO DETECT: Flag comments that restate the adjacent statement, and boolean or numeric literal arguments at call sites with no parameter-name comment.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-085",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Match the surrounding file's existing style",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: When editing existing code, match the file's existing style even where it differs from your preference. Do not reformat unrelated code in the same change; a pure reformatting change is submitted separately from a behavior change.\n\nHOW TO DETECT: Compare the diff's style against the surrounding file. Flag reformatting hunks mixed into a behavior change.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-086",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Deprecated symbols carry @deprecated with the replacement",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Mark a deprecated symbol with the @deprecated JSDoc tag and name the replacement in the text, so callers know what to move to.\n\nHOW TO DETECT: Flag @deprecated tags with no named replacement, and symbols described as deprecated in prose with no tag.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-087",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Generated code is exempt from style but is never hand-edited",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Generated code is mostly exempt from the style guide, but it must be clearly marked as generated and must never be hand-edited. Fix the generator instead.\n\nHOW TO DETECT: Flag generated files with no generated-file header, and diffs that hand-edit a generated file.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-088",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "License and copyright go in a JSDoc at the top of the file",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: If license or copyright information is necessary in a file, add it in a JSDoc at the top of the file.\n\nHOW TO DETECT: Flag license or copyright text in a line comment or below the imports rather than in a top-of-file JSDoc.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-089",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "import type for type-only symbols, plain import for values",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: You may use `import type {...}` when you use the imported symbol only as a type, and regular imports for values. The compiler runs in two modes: a fast development transpile without full type information, which requires import type in certain cases, and a production mode that type checks and enforces correct import type usage. To force a runtime load for side effects, use `import '...';`.\n\nHOW TO DETECT: Flag symbols imported plainly but used only in type positions, and symbols imported with import type but used as a value. Flag a bare module import whose purpose is a side effect but which imports a binding it does not use.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-090",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "export type for type re-exports, and split symbols for a real guarantee",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use `export type` when re-exporting a type, so file-by-file transpilation works. Note that export type does not guarantee a value symbol is never exported, because downstream code can still import through another path. The better way to split and guarantee type versus value usage is to split the symbols, for example UserService and AjaxUserService, which is less error prone and communicates intent.\n\nHOW TO DETECT: Flag type re-exports not marked export type. Separately flag any comment or design note claiming export type guarantees a symbol is type-only.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-091",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Function bodies and generator syntax follow the formatting rules",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Blank lines at the start or end of a function body are not allowed. A single blank line may be used within a function body sparingly, to create logical groupings. Generators attach the asterisk to the function and yield keywords: `function* foo()` and `yield* iter`, never `function *foo()` or `yield *iter`. Parentheses around the left-hand side of a single-argument arrow function are recommended but not required. Do not put a space after the ellipsis in rest or spread syntax.\n\nHOW TO DETECT: Flag leading and trailing blank lines inside function bodies, `function *`, `yield *`, and `... x` with a space, and report each clause separately since the fixes differ.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-092",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "this only appears where it has a real receiver",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Only use `this` in class constructors and methods, in functions with an explicit `this` type declared such as `function func(this: ThisType, ...)`, and in arrow functions defined in a scope where this may be used. Never use this to refer to the global object, to the context of an eval, to the target of an event, or in a function unnecessarily called with call() or apply().\n\nHOW TO DETECT: Flag `this` in a plain function with no declared this type, `this` used as the event target inside a handler, and `this` reached through call or apply.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-093",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Return type annotations are the author's call, and the local policy is honored",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Whether to include a return type annotation is up to the code author. Reviewers may ask for annotations to clarify complex return types. A project may have a local policy to always require them, but that is not a general TypeScript style requirement. The two benefits are more precise documentation and surfacing a type error faster when a later change alters the return type.\n\nHOW TO DETECT: Report the project's stated policy, then report every function that violates it. If the project has no stated policy, report only the functions whose inferred return type is complex enough that a reader cannot see it, and do not report the rest.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-094",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Absence is undefined or null, chosen by context, not by preference",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: TypeScript code can use either undefined or null to denote the absence of a value, and there is no general guidance preferring one. Many JavaScript APIs use undefined (Map.get) while many DOM and Google APIs use null (Element.getAttribute), so the appropriate absent value depends on the surrounding context. Nullable types are constructed as a union; there is no special syntax for a union of both.\n\nHOW TO DETECT: Flag code that mixes null and undefined for the same concept within one module or one API surface, and code that returns undefined where the surrounding API family returns null (or the reverse).\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-095",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Replace any with a specific type",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Where any appears, provide a more specific type: an interface, an inline object type, or a type alias.\n\nHOW TO DETECT: For each any, propose the specific interface, inline object type, or alias it should be, derived from how the value is actually used at that site.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-096",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Use unknown over any where the type is genuinely not known",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: The any type allows assignment into any other type and dereferencing any property off it, which is usually neither necessary nor desirable. Where the code just needs to express that a type is unknown, use the built-in `unknown` type: it expresses the concept and is much safer because it does not allow dereferencing arbitrary properties. To use an unknown value safely, narrow it with a type guard.\n\nHOW TO DETECT: Flag any used purely to mean not-known, and flag unknown values dereferenced or passed on without a narrowing type guard.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-097",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "A legitimate any carries a suppression comment saying why",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Sometimes any is legitimate, for example in a test constructing a mock object. In such cases add a comment that suppresses the lint warning AND documents why it is legitimate.\n\nHOW TO DETECT: Flag every any-suppressing lint comment with no explanation, and every legitimate-looking any with no suppression comment at all.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-098",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "The dollar sign is not used in identifiers",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Identifiers should not generally use the dollar sign, except when required by the naming conventions of a third-party framework.\n\nHOW TO DETECT: Flag identifiers containing a dollar sign and name the third-party convention that would justify each.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-099",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Type parameters are a single uppercase letter or UpperCamelCase",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Type parameters, as in Array<T>, may use a single uppercase character or UpperCamelCase.\n\nHOW TO DETECT: Flag type parameters in lowerCamelCase, snake_case, or with a leading underscore or T-prefix convention borrowed from another language.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-100",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Test method names may use underscore separators",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Test method names in xUnit-style test frameworks may be structured with underscore separators, for example testX_whenY_doesZ().\n\nHOW TO DETECT: Do not flag underscores in test method names. Report test names that carry no when or does clause and therefore do not say what behavior they pin.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-101",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Namespace imports are lowerCamelCase even though files are snake_case",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Module namespace imports are lowerCamelCase while files are snake_case, so an import correctly will not match the file's casing. The only libraries exempt from this scheme, because overwhelmingly common open source use makes the violating style more readable, are jquery with the dollar prefix and threejs with the THREE prefix.\n\nHOW TO DETECT: Flag namespace import aliases in snake_case or UpperCamelCase, applying the jquery and threejs exemptions.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-102",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Every file passes type checking",
+   "severity": "blocker",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: All TypeScript files must pass type checking using the standard tool chain.\n\nHOW TO DETECT: Run the project's type checker and report every error. A project whose build skips type checking is itself the finding.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-103",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Conformance rules on globals and unsafe sinks are honored",
+   "severity": "blocker",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Google-style TypeScript abides by any applicable global or framework-local conformance rules. These commonly enforce critical restrictions such as defining globals, which can break a codebase, and security patterns such as using eval or assigning to innerHTML.\n\nHOW TO DETECT: Flag global definitions, eval, Function-with-string, innerHTML and outerHTML assignment, dangerouslySetInnerHTML, and document.write. For each, report the safe sink that replaces it.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-104",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Unsettled style questions follow the file, then the directory; new files use the guide",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: For any style question this specification does not settle, do what the other code in the same file already does. If that does not resolve it, emulate the other files in the same directory. Brand new files must use the style guide regardless of the choices of other files in the package. When adding code to a file that is not in guide style, reformatting the existing code first is recommended; if that is not done, new code is as consistent as possible with the file but must not violate the guide.\n\nHOW TO DETECT: For each new file, report divergence from the guide. For each edited legacy file, report new code that copied a legacy pattern the guide actually forbids, which is the case the consistency rule does NOT excuse.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-105",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Multi-line comments are stacked line comments, not blocks or boxes",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Multi-line comments are indented at the same level as the surrounding code and must use multiple single-line double-slash comments, not block comment style. Comments are not enclosed in boxes drawn with asterisks or other characters.\n\nHOW TO DETECT: Flag block comments that are not JSDoc, comment boxes drawn with asterisks, dashes, or equals signs, and multi-line comments indented differently from the code they describe.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-106",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "JSDoc comments are well-formed",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: JSDoc uses the /** ... */ form. A single-line JSDoc that overflows into multiple lines must convert to the multi-line style with the opening and closing delimiters on their own lines. Many tools extract metadata from JSDoc to perform validation and optimization, so these comments must be well-formed.\n\nHOW TO DETECT: Flag JSDoc opened with a single asterisk, single-line JSDoc wrapped across lines with the delimiters still inline, and malformed or unterminated blocks.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-107",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "JSDoc is Markdown, so lists are written as Markdown lists",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: JSDoc is written in Markdown, and may include HTML when necessary. Tooling parsing JSDoc ignores plain text formatting, so a hand-drawn list rendered with line breaks collapses into one paragraph. Write a Markdown list instead.\n\nHOW TO DETECT: Flag JSDoc bodies containing hand-formatted lists, hand-formatted tables, or indentation used for layout, none of which survive Markdown rendering.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-108",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "JSDoc uses the allowed tag subset, each tag on its own line",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Google style allows a subset of JSDoc tags. Most tags must occupy their own line, with the tag at the beginning of the line.\n\nHOW TO DETECT: Flag tags sharing a line with prose or with another tag, tags not at the start of their line, and tags outside the allowed subset.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-109",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Wrapped JSDoc block tags indent four spaces",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Line-wrapped block tags are indented four spaces. Wrapped description text may be lined up with the description on previous lines, but that horizontal alignment is discouraged. Do not indent when wrapping a @desc or @fileoverview description.\n\nHOW TO DETECT: Flag wrapped block tags indented by other than four spaces, horizontally aligned continuation text, and indented @desc or @fileoverview continuations.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-110",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Class JSDoc says how and when to use the class",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: JSDoc for a class gives the reader enough information to know how and when to use the class, plus any additional considerations needed to use it correctly. A textual description may be omitted on the constructor.\n\nHOW TO DETECT: Flag class JSDoc that only restates the class name, and class JSDoc that describes the implementation rather than when to reach for the class.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-111",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Method descriptions are third-person verb phrases, and obvious ones are omitted",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Method, parameter, and return descriptions may be omitted if they are obvious from the rest of the method's JSDoc or from the method name and type signature. A method description begins with a verb phrase describing what the method does, written in the third person as if an implied \"This method ...\" preceded it, not as an imperative sentence.\n\nHOW TO DETECT: Flag method descriptions written as imperatives (\"Return the ...\" rather than \"Returns the ...\"), and descriptions that only restate the method name.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-112",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Parameter properties are documented with @param",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: A parameter property is a constructor parameter prefixed with private, protected, public, or readonly, which declares both a parameter and an instance property and implicitly assigns into it. Document these fields with JSDoc's @param annotation, because editors show that description on both constructor calls and property accesses.\n\nHOW TO DETECT: Find constructors using parameter properties. Flag each property with no @param description on the constructor JSDoc, and each documented instead with a separate property comment.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-113",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Parameter-name comments where the value does not convey the meaning",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use a parameter-name comment whenever the method name and the parameter value do not sufficiently convey the meaning of the parameter. Before adding these comments, consider refactoring the method to accept an interface and destructure it, which improves call-site readability far more. Parameter-name comments go BEFORE the parameter value and include the name with an equals suffix, as in `/* isEnabled= */ true`. Existing code may use a legacy style that places the comment after the value with no equals sign; continuing that style within the same file for consistency is acceptable.\n\nHOW TO DETECT: Flag boolean, null, and bare-numeric arguments at call sites with no parameter-name comment. For call sites with three or more such arguments, propose the interface-plus-destructure refactor instead of the comments.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-114",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "JSDoc goes before the decorator, never between it and the declaration",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: When a class, method, or property has both a decorator such as @Component and JSDoc, write the JSDoc BEFORE the decorator. Do not write JSDoc between the decorator and the decorated statement.\n\nHOW TO DETECT: Flag every JSDoc block sitting between a decorator and its declaration.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-PP-001",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Zustand selectors do not allocate",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: A Zustand (or equivalent store) selector must not allocate a new object or array on each call, because the default reference equality check then reports a change on every render and produces a re-render storm. Select primitives, or pass a shallow comparator.\n\nHOW TO DETECT: Flag store selectors returning an object or array literal, and useEffect updaters that allocate inside dependency-tracked state. Report the primitive-selector or shallow-comparator rewrite.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TS-PP-002",
+   "sheet": "Code/JavaScript_TypeScript_Development",
+   "title": "Modules talk through small interfaces and plain data",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx,mts,cts}",
+   "verdict": "include",
+   "reason": "the entire lib/, bin/ and test/ tree is ES-module JavaScript",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Make the code modular so a bug in one module can be fixed by reading only that module and the contracts of its direct dependencies, not the whole codebase. Modules talk to each other only through small interfaces and plain data types, never by reaching into each other's internals.\n\nHOW TO DETECT: For each module, list its imports and every reach into another module's internals. Flag deep import paths into another module's implementation folder, imports of a concrete class where an interface is the right dependency, and functions taking another module's internal object as a parameter.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  }
+ ]
+}

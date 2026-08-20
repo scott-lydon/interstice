@@ -92,10 +92,13 @@ def probe_target(target):
 I, C, X = "include", "conditional", "exclude"
 
 NO_SWIFT = "no Swift source in this repo"
-NO_PY = "no Python source in this repo"
-NO_REACT = ("the glob matches this repo's .js files, but every rule on the "
-            "React/Next sheet presumes a React component tree, which this repo "
-            "does not have")
+NO_PY = ("the only Python in the repo is docs/recurring_goals_selection.py, the "
+         "manifest generator itself; it is audit tooling, not product source, and "
+         "the product ships no Python. Scoped out deliberately, not absent")
+NO_REACT = ("the glob matches this repo's .js files, and most rules on the React/Next "
+            "sheet presume a React component tree, Server Actions, RSC nesting, or a "
+            "bundler, none of which this repo has. The plain-JavaScript and plain-web "
+            "subset of the sheet is restored row by row in ROW_OVERRIDES")
 NOT_ASSIGNMENT = "Interstice is a personal tool, not a Gauntlet assignment submission"
 CONVERSATIONAL = ("governs how the agent writes its replies, not anything in the "
                   "codebase; remains in force continuously and is not a code-audit row")
@@ -240,6 +243,66 @@ DECISIONS = {
         (I, "the panel is a user-facing surface and its display strings live in matching files"),
 }
 
+# --- Per-row overrides ---------------------------------------------------------
+# DECISIONS is keyed by (sheet, applies_to), and applies_to is a PATH GLOB. That is the
+# wrong question for a rule whose normative text is about a KIND OF SYSTEM rather than a
+# kind of file. An adversarial review of the exclusions on 2026-08-19 found eight such
+# rules: `server/**` excluded the daemon-restart rule from a project that IS a daemon,
+# `**/*UITests*/**` excluded a UI-test-timeout rule from a project with five Playwright
+# UI specs, and so on. The pair verdict is still the default; this table overrides it for
+# named rows, each with the evidence in THIS repo that forced the change.
+#
+# Rule for adding a row here: quote the rule BODY (not its glob) and name the concrete
+# file or process in this repo that the body has a referent in.
+
+ROW_OVERRIDES = {
+    # Deployment: the glob says server/**, but the rule bodies are about a long-lived
+    # process loaded at startup, which bin/interstice.js start --foreground is.
+    "DEP-005": (I, "the rule body says 'anything loaded at startup'; the Interstice daemon "
+                   "is exactly that, and lib/install.js drives launchctl unload/load"),
+    "DEP-019": (I, "lib/server.js dispatches /api/* routes alongside static HTML from one "
+                   "handler, which is the hazard shape; no test asserts its content-type"),
+
+    # Testing: excluded on a directory name while conceding the subject exists.
+    "TC-005": (I, "five Playwright UI specs live in test/*.pw.mjs with no playwright.config.js "
+                  "and no CI timeout branch, so the rule has a real target here"),
+
+    # Security: the Incorrect shape is literally present in lib/server.js.
+    "SEC-005": (I, "lib/server.js declares module-scope mutable request state "
+                   "(companionOverrides) that later requests read back"),
+
+    # Project structure: the detect clause runs against any project, new or not.
+    "PS-002": (I, "the detect clause asks whether the project appears in the Atlas index, "
+                  "which is answerable for an existing project too"),
+
+    # Design fidelity: docs/design-immersive-reading.html is canonical for work that has
+    # not landed yet, so the drift-direction rules have a live referent during Phase 2C.
+    "DF-005": (C, "applies if docs/design-immersive-reading.html is treated as the canonical "
+                  "design artifact; record whether the panel drifted from it"),
+    "DF-006": (C, "same precondition as DF-005: does a canonical design artifact exist here"),
+}
+
+# React/Next sheet: the blanket reason ('every rule presumes a React component tree') is
+# false for a plain-JavaScript subset whose rule sentence names no React construct and
+# whose SCOPE line reads 'the target codebase'. Those rows are restored. Rows that are
+# genuinely Next-bound (Server Actions, API routes, RSC nesting, JSX conditional
+# rendering) or bundler-bound (this repo has no bundler) stay excluded.
+REACT_FREE_ROWS = [
+    "RN-ASYNC-DEPENDENCIES", "RN-ASYNC-PARALLEL",
+    "RN-CLIENT-LOCALSTORAGE-SCHEMA",
+    "RN-JS-BATCH-DOM-CSS", "RN-JS-CACHE-FUNCTION-RESULTS", "RN-JS-CACHE-PROPERTY-ACCESS",
+    "RN-JS-CACHE-STORAGE", "RN-JS-COMBINE-ITERATIONS", "RN-JS-EARLY-EXIT",
+    "RN-JS-FLATMAP-FILTER", "RN-JS-INDEX-MAPS", "RN-JS-LENGTH-CHECK-FIRST",
+    "RN-JS-MIN-MAX-LOOP", "RN-JS-REQUEST-IDLE-CALLBACK", "RN-JS-SET-MAP-LOOKUPS",
+    "RN-RENDERING-ANIMATE-SVG-WRAPPER", "RN-RENDERING-CONTENT-VISIBILITY",
+    "RN-RENDERING-SCRIPT-DEFER-ASYNC", "RN-RENDERING-SVG-PRECISION",
+    "RN-SERVER-HOIST-STATIC-IO",
+]
+for _rid in REACT_FREE_ROWS:
+    ROW_OVERRIDES[_rid] = (I, "plain-JavaScript or plain-web rule: its rule sentence names no "
+                              "React construct and its applies_to glob matches this repo's .js "
+                              "and .html files")
+
 
 def load_rows(root):
     """Read every rows.csv under root, tagged with its sheet name.
@@ -277,6 +340,10 @@ def classify(rows):
             unknown[key].append(r.get("row_id", "<no row_id>"))
             continue
         verdict, reason = DECISIONS[key]
+        # A named row beats its (sheet, applies_to) pair: see ROW_OVERRIDES.
+        rid = (r.get("row_id") or "").strip()
+        if rid in ROW_OVERRIDES:
+            verdict, reason = ROW_OVERRIDES[rid]
         verdicts.append((r, verdict, reason))
     if unknown:
         lines = [
