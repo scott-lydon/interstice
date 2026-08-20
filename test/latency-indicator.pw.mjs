@@ -40,7 +40,7 @@ try {
   const clearedShown = await page.evaluate(() => document.getElementById('latency-chip').classList.contains('show'));
   if (clearedShown) fails.push('chip did not clear after completion');
 
-  // The arrival notification appeared, is distinct from the chip, and fires once per completion.
+  // The arrival notification appeared and is a different element from the chip.
   const arrival = await page.evaluate(() => {
     const n = document.getElementById('arrival-note');
     return { shown: n.classList.contains('show'), sameNode: n === document.getElementById('latency-chip'), cls: n.className };

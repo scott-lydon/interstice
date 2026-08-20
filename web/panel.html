@@ -139,7 +139,8 @@
   .view { display: none; flex-direction: column; gap: 12px; height: 100%; }
   .view.active { display: flex; }
 
-  /* Immersive reading: while reading, the page fills the panel and every control except the page-turn pager is behind one menu affordance. Scoped to body.immersive, which setView sets only for the
+  /* Immersive reading: while reading, the page fills the panel and every control except the page-turn pager and whatever the reader note is offering is behind
+  one menu affordance. Scoped to body.immersive, which setView sets only for the
      reading view, so the other rungs are untouched. */
   body.immersive header,
   body.immersive #why-open,
@@ -164,7 +165,7 @@
      carries an id and three classes, so it outranks every `body.immersive .thing { display: … }`
      below it, and the pager, the calendar, the latency chip, the arrival note and the forfeit
      banner all computed to `display: none` even with their own state class applied. */
-  body.immersive #view-reading > :not(#reader):not(.reader-menu):not(.reader-menu-overlay):not(.reader-pager-overlay):not(.reader-hint):not(#reader-note):not(.star-cal-overlay):not(.latency-chip):not(.arrival-note):not(.forfeit-note) { display: none; }
+  body.immersive #view-reading > :not(#reader):not(.reader-menu):not(.reader-menu-overlay):not(.reader-pager-overlay):not(.reader-hint):not(#reader-note):not(.star-cal-overlay):not(.latency-row):not(.forfeit-note) { display: none; }
   body.immersive #reader { border-radius: 0; border: 0; }
   /* The single menu affordance: one button, top-right, present whenever the menu it opens is not. */
   .reader-menu { display: none; }
@@ -243,26 +244,35 @@
      screen while immersive, overlapping the pager and costing the page 33px of the >=90%
      contract. Inline styles are unreachable by the displacement rule, so it lives here. */
   #book-actions { display: flex; flex-direction: column; gap: 6px; }
-  /* Prompt-latency indicator: a quiet chip, never in the page's way (position:absolute
-     so it does not change the #reader box, satisfying the >=90% contract while visible). */
+  /* Prompt-latency indicator: a quiet chip, never in the page's way. The row is positioned
+     absolutely so it does not change the #reader box, which is what keeps the >=90% contract
+     while it is visible; the two children inside it are laid out normally.
+
+     A ROW rather than two absolutely-positioned boxes. They were placed at fixed left offsets,
+     8 and 108, which held for a short chip and not for a long one: "your agent: 599:59" reaches
+     144px and slid under the note, so the seconds were buried at exactly the moment somebody
+     would want them. Any fixed offset is a guess about the widest string; a row is not. */
+  .latency-row {
+    position: absolute; top: 8px; left: 8px; z-index: 25; display: flex; gap: 8px;
+    align-items: center; pointer-events: none; max-width: calc(100% - 16px);
+  }
   .latency-chip {
-    position: absolute; top: 8px; left: 8px; z-index: 25; display: none;
+    display: none; flex: 0 0 auto;
     font: 600 10px/1 var(--mono); letter-spacing: .04em;
     color: var(--muted); background: color-mix(in srgb, var(--ground) 70%, transparent);
     border: 1px solid var(--rule); border-radius: 999px; padding: 5px 9px; backdrop-filter: blur(4px);
   }
   .latency-chip.show { display: inline-block; }
-  /* The arrival notification is visually and structurally distinct: filled, accented, brief.
-     It sits beside the chip, not on it and not under it. Not on it, because with two prompts in
-     flight one arriving must not hide the timer still counting for the other, and an arrival
-     cannot be its own distinct notification while it covers the thing it is distinct from. Not
-     under it, because the forfeit banner owns the full width of the row below and never
-     auto-hides, so anything parked there is covered for the rest of the session once a block
-     forfeits. */
+  /* The arrival notification is visually and structurally distinct: filled, accented, brief. It
+     sits beside the chip, never on it: with two prompts in flight, one arriving must not hide the
+     timer still counting for the other, and an arrival cannot be its own distinct notification
+     while it covers the thing it is distinct from. It is not below it either, because the forfeit
+     banner owns the full width of the row beneath and never auto-hides. */
   .arrival-note {
-    position: absolute; top: 8px; left: 108px; z-index: 26; display: none;
+    display: none; flex: 0 1 auto; min-width: 0;
     font: 600 10px/1 var(--display); text-transform: uppercase; letter-spacing: .1em;
     color: var(--ground); background: var(--accent); border-radius: 999px; padding: 6px 10px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .arrival-note.show { display: inline-block; }
   /* Legible forfeit: a bounded, dismissible banner naming the cause and the wall-clock
@@ -603,11 +613,13 @@
       </div>
       <div id="book-actions"></div>
       <!-- Immersive affordances: shown only while body.immersive. -->
-      <div class="latency-chip" id="latency-chip" aria-live="polite"></div>
-      <div class="arrival-note" id="arrival-note" role="status">Your agent answered. Go back to it.</div>
+      <div class="latency-row" id="latency-row">
+        <div class="latency-chip" id="latency-chip" aria-live="polite"></div>
+        <div class="arrival-note" id="arrival-note" role="status">Your agent answered. Go back to it.</div>
+      </div>
       <div class="forfeit-note" id="forfeit-note" role="alert" aria-live="assertive"></div>
       <button class="reader-menu" id="reader-menu" type="button" aria-label="Reading menu" aria-expanded="false" aria-controls="reader-menu-overlay">&#8943;</button>
-      <div class="reader-hint">Press &#8594; for the next page, &#8592; to go back. Everything else is behind &#8943;</div>
+      <div class="reader-hint">Press &#8594; for the next page, &#8592; to go back. The rest is behind &#8943;</div>
       <div class="reader-pager-overlay" aria-label="Turn the page">
         <button class="act" id="page-prev-imm" type="button">&#8249; Back</button>
         <span class="mono now" id="page-now-imm" aria-live="polite"></span>
@@ -1583,9 +1595,16 @@ async function loadBook() {
     $('book-title').textContent = b.title;
     // A remembered position is never shown as a live one. The book still opens at
     // the right page, because Amazon holds that; this is only about what we know.
+    // `stale` is set for ANY failed read, and only one of those is a permission refusal. Saying
+    // macOS refused when the store was merely busy sends the reader to Full Disk Access to fix a
+    // thing that is not broken, and it was doing exactly that: the busy-store guard is the most
+    // common reason of the three.
+    const refused = String(d.reason || '').startsWith('book_data_forbidden');
     $('book-why').textContent = d.stale
       ? 'Remembered from ' + new Date(d.staleSince).toLocaleString()
-        + '. macOS is refusing the read now, so this position may have moved since.'
+        + (refused
+          ? '. macOS is refusing the read now, so this position may have moved since.'
+          : '. The last read did not come back, so this position may have moved since.')
       : 'Most recently read book you have not finished · ' + bookLine(b);
     $('book-bar').style.width = (b.percent || 0) + '%';
     $('book-actions').innerHTML =

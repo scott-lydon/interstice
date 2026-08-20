@@ -17,7 +17,7 @@ const has = (flag) => args.includes(flag);
 
 const USAGE = `interstice - fills the dead moment after you dispatch an AI agent
 
-  doctor              Prove every dependency. Exits non-zero on any failure.
+  doctor              Prove every dependency. Exits non-zero when a required check fails.
   install             Write config, install hooks and the LaunchAgent.
   uninstall           Remove hooks and the LaunchAgent. Leaves your logs.
   start [--foreground]

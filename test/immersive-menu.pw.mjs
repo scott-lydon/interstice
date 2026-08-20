@@ -7,7 +7,8 @@ import path from 'node:path';
 
 const PANEL = pathToFileURL(path.resolve('web/panel.html')).href;
 const ENUMERATED = ['rungs', 'book-title', 'book-why', 'book-bar', 'reader-pager', 'page-prev',
-  'page-next', 'reader-mode', 'reader-page', 'book-actions', 'reader-note', 'status', 'advance'];
+  'page-next', 'reader-mode', 'reader-page', 'book-actions', 'reader-note', 'status', 'advance', 'companions-recheck'
+];
 
 // Browser choice: Playwright's bundled Chromium by default, because it is the engine the
 // repo installs with `@playwright/test` and is therefore always present. `channel: 'chrome'`

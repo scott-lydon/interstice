@@ -155,8 +155,8 @@ async function withServer(reader, fn) {
 }
 
 /**
- * The routes that do not first read the Kindle store. POST /api/reading/view and POST
- * /api/reading/signin are deliberately absent: both open another application's container, which is
+ * The routes exercised here. POST /api/reading/view and POST /api/reading/signin are absent
+ * because both open another application's container, which is
  * a real permission-gated read on the machine under test and not what this file is pinning.
  */
 test('every reading route reaches the reader operation it is named for', async () => {

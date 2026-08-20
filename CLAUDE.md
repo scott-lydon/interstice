@@ -6,7 +6,8 @@ resolve.
 
 - **Goal loop:** `docs/GOAL_LOOP_STARS_READER_2026-08-17.md`. Its RULE block is binding: the
   only edits permitted to that file are ticking completed boxes and appending one parallel-notes
-  link. Every item there carries a machine-runnable verify.
+  link. Every item there carries a machine-runnable or agent-runnable verify, bar a handful of closing
+  housekeeping items.
 - **Predecessor spec and vocabulary:** `docs/GOAL_LOOP.md` and `README.md`. Match the existing
   vocabulary (rung, gap, ladder, actuator, companion); do not invent a parallel one.
 - **Config:** `config/interstice.config.default.json` is the source of truth for tunables.

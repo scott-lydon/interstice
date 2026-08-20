@@ -176,8 +176,8 @@ content area; what arrives is the picture, and what goes back is your clicks and
 keys. It is the reader, not a screenshot of one: arrow keys turn the page, links
 work, and the position you reach syncs the way it would anywhere else.
 
-Two things it does to the page it is showing. It renders at 480 points wide,
-whatever the panel's width, because Chrome will not lay out narrower and the parts
+Two things it does to the page it is showing. It renders at least 480 points wide, because Chrome will not lay out narrower; a panel already
+wider than that is rendered at its own width and and the parts
 the reader positions from the right edge otherwise land on top of the text; the
 panel scales the picture down. And it hides Amazon's floating copy of the book
 title, with a stylesheet rather than by deleting the node, because the reader
@@ -208,10 +208,10 @@ part that is easy to get wrong, and four signals do it, none of which works alon
 - **A short line ends a paragraph**, but only on a justified page. Justified text
   reaches the right margin on every line but the last. On a ragged one, a list or
   verse or a title, most lines stop short and the rule would make every line its own
-  paragraph, so it is switched off when fewer than 60% of the lines reach the edge.
+  paragraph, so it is switched off unless more than 60% of the lines reach the edge.
 - **Tall lines are a heading**, measured against the page's own type size taken low
-  in the distribution. Against the median, a chapter opening with three large lines
-  over four of prose has no heading at all, and the title joins the first paragraph.
+  in the distribution. Against the median, a chapter opening whose large type outnumbers the prose has no heading at
+  all, and the title joins the first paragraph.
 - **A trailing hyphen is a word the renderer broke**, so it is rejoined. `--`, which
   this book uses for an em dash, is not that and is left alone.
 - **A gap wider than the usual line spacing ends a block**, measured per kind, because
@@ -327,7 +327,7 @@ verdict can be checked rather than trusted.
 ## Commands
 
 ```
-interstice doctor          Prove every dependency. Exits non-zero on any failure.
+interstice doctor          Prove every dependency. Exits non-zero when a required check fails.
 interstice install         Write config, install hooks and the LaunchAgent, which
                            starts Interstice at login and restarts it if it dies.
 interstice uninstall       Remove the hooks and the LaunchAgent. Leaves your logs.

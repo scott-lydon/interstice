@@ -6,8 +6,8 @@
 // A generator would be the other answer, and it is the worse one here: the README's configuration
 // block is a chosen subset, written for a reader rather than dumped, and generating it would mean
 // either printing all sixty-odd keys or encoding the subset somewhere else. So the copy stays hand
-// written and this test is what keeps it true. Every value the README quotes is checked against
-// the file it was copied from, and a drift fails here instead of on a reader's screen.
+// written and this test is what keeps it true. Every value in the README's configuration block,
+// and the focus bullets named below, is checked against the file it was copied from, and a drift fails here instead of on a reader's screen.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
