@@ -5,7 +5,8 @@
 # fail in a way that blocks you. It writes one line to a FIFO-ish log the daemon
 # watches and exits. No node startup, no network, no JSON parsing.
 #
-# Target: well under 50ms. Measured by test/hook-latency.test.js.
+# Target: well under 50ms. Nothing in the suite measures this yet, so treat it as a budget
+# this script is written to, not a figure anything checks.
 
 LOG_DIR="$(cd "$(dirname "$0")/.." && pwd)/logs"
 mkdir -p "$LOG_DIR" 2>/dev/null

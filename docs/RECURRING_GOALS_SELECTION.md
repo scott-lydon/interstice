@@ -1,5 +1,9 @@
 # Recurring_goals selection for Interstice
 
+_Generated 2026-08-20 against commit 6fb9a7d. The counts and the exclusion reasons below
+describe that tree and are not re-checked as it moves. Regenerate with
+`RECURRING_GOALS_ROOT=... TARGET_REPO=... python3 docs/recurring_goals_selection.py`._
+
 Source tree : `Recurring_goals` (from RECURRING_GOALS_ROOT)
 Target repo : `interstice` (from TARGET_REPO)
 Total rules : 643 across 19 sheets (counted with a CSV reader; `wc -l` overcounts because agent_prompt contains newlines)

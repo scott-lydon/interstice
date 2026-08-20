@@ -22,7 +22,7 @@ test('an app not on the blacklist emits no break', async () => {
 });
 
 test('the Interstice panel never breaks its own block, even if blacklisted', () => {
-  // S4: encoded as a constant. Even with the panel on the blacklist, it is whitelisted.
+  // Encoded as a constant. Even with the panel on the blacklist, it is whitelisted.
   for (const panel of PANEL_APPS) {
     assert.equal(decideFrontmost({ app: panel, at: AT }, { blacklistApps: [panel, 'Slack'] }), null);
   }

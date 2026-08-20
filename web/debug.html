@@ -174,7 +174,7 @@ const trimImages = (d) => ({
   companions: (d.companions || []).map((c) => (c.image ? { ...c, image: `<${c.image.length} byte capture>` } : c)),
 });
 $('comp-read').addEventListener('click', async () => {
-  $('out').innerHTML = '<span class="spinner"></span> capturing the menu bar twice, a second apart';
+  $('out').innerHTML = '<span class="spinner"></span> capturing the menu bar three times, about a second apart';
   await post('/debug/companions', {});
   show(trimImages(await get('/api/companions?force=1')));
 });

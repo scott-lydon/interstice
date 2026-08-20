@@ -13,7 +13,7 @@ test('a whitelisted host emits no break; a non-whitelisted one emits exactly one
   assert.equal(await ud.probe('2026-08-19T09:00:00-07:00'), null, 'udemy playing does not break');
 });
 
-test('the reader profile never emits a video break (S4)', () => {
+test('the reader profile never emits a video break', () => {
   const hit = decideVideo([rec('https://read.amazon.com/x', true, { readerProfile: true })], { whitelist: WL });
   assert.equal(hit, null);
 });

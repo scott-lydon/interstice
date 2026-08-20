@@ -17,7 +17,7 @@ test('an unlocked screen emits no break', async () => {
   assert.equal(await breaker.probe(AT), null);
 });
 
-test('idle without a lock is not a break (S2: reading is focus)', () => {
+test('idle without a lock is not a break, because reading is focus', () => {
   // The decision keys only on the lock state; there is no idle input, by design.
   assert.equal(decideLock({ locked: false, at: AT }), null);
 });

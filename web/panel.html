@@ -2104,9 +2104,6 @@ window.addEventListener('load', () => {
   beat();
   $('reader-mode').textContent = readerMode() === 'text' ? 'See the real page' : 'Back to the text';
   // ------------------------------------------------------------- immersive menu ---
-  // One menu affordance holds everything the immersive page displaced. Opening it moves the
-  // displaced reading-view controls into the overlay; closing it puts them back, so nothing is
-  // duplicated and every displaced control is reachable from exactly one place.
   // Everything the immersive page displaces, moved into the one menu when it opens and restored to
   // its exact original position when it closes, so nothing is duplicated and nothing is lost when
   // the reading view is left. The ids below cover every element the reading view displaces.

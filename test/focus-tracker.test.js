@@ -149,7 +149,7 @@ test('the tracker stamps local time, so an evening block is not filed on tomorro
   assert.match(s, /[+-]\d{2}:\d{2}$/, 'must carry a numeric offset, never a bare Z');
   assert.doesNotMatch(s, /Z$/, 'a UTC stamp is exactly the bug this pins');
 
-  // The day it reports is the LOCAL calendar day, which is what S5 makes a star belong to.
+  // The day it reports is the LOCAL calendar day, which is the day a star belongs to.
   assert.equal(s.slice(0, 10), new Date().toLocaleDateString('en-CA'));
 
   // And it survives the boundary that broke it: 23:33 local must stay on its own date.

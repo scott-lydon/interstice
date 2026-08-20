@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createMachine } from '../lib/focus/blocks.js';
 
 // The block state machine, pure and testable. One star per unbroken block; a break
-// forfeits the block (S2). These cover the required cases: exact-25 completion, 24m59s forfeiture,
+// forfeits the block. These cover the required cases: exact-25 completion, 24m59s forfeiture,
 // break at t=0, break at t=24m59s, back-to-back blocks, and two breaks in the same millisecond.
 
 const OFF = '-07:00';
@@ -75,7 +75,7 @@ test('two breaks in the same millisecond forfeit once, then no-op', () => {
 
 test('a completed block records the local calendar day it completed on', () => {
   const m = createMachine({ blockMinutes: 25 });
-  // start before local midnight, complete after: credited to the day it completed (S5)
+  // start before local midnight, complete after: credited to the day it completed
   const base = Date.parse(`2026-08-19T23:50:00${OFF}`);
   m.send({ type: 'start', at: at(0, base) });
   const out = m.send({ type: 'tick', at: at(25 * MIN, base) });

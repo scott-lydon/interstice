@@ -48,7 +48,7 @@ outside `test/`, or treat the feature as unshipped no matter how green the suite
 
 ## A UTC timestamp read by a local-offset reader files the record on the wrong day (2026-08-20)
 **Cause.** The focus tracker minted `new Date().toISOString()`, which is always UTC, while
-`localDay` in `lib/focus/blocks.js:22` takes the calendar day by slicing the first ten characters
+`localDay` in `lib/focus/blocks.js` takes the calendar day by slicing the first ten characters
 of the timestamp. That slice is only correct when the timestamp carries the offset it is meant to
 be read in. The first star the live tracker awarded, at 23:33 local, was filed on the following
 day. **Prevention.** When a timestamp is written by one module and its date part is read by
