@@ -245,9 +245,13 @@ your ordinary profile into the reader's, while nothing holds either.
 - **Turn it off** with `"reading": { "carrySession": false }`, and undo it by
   deleting `logs/reader-profile`.
 
-If your ordinary browser is not signed in either, the sign-in page appears in the
-panel, live, and you can type into it: the reader forwards what you type. `doctor`
-says which of the two profiles has a session.
+If your ordinary browser is not signed in either, the panel's primary offer is
+**Sign in to Amazon in Chrome**: a visible Chrome window opens on Amazon's own
+sign-in page, on the reader's own profile, and closes itself the moment the session
+lands. Carrying the session from your ordinary browser is the quieter second
+option, offered underneath, and it only works while that browser is still signed in.
+The sign-in page can also be typed into inside the panel, live, with the reader
+forwarding your keystrokes. `doctor` says which of the two profiles has a session.
 
 **A passkey is the exception, and it cannot be otherwise.** The QR code in that flow
 is drawn by Chrome itself, not by the page, and a browser with no screen has nowhere
@@ -255,8 +259,11 @@ to draw it: asked for a passkey, headless Chrome does not refuse, it simply neve
 answers. There is no image in the page to capture and none in the session to read.
 Amazon's own sign-in form has no QR of its own either; it asks for an email address
 and then for a code or a password, and all of that types straight into the panel.
-So the passkey route is the one thing here that needs your ordinary browser, and
-carrying the session from it is what this section is about.
+So a passkey needs a browser with a screen, which is exactly why the panel opens a
+real Chrome window rather than trying to draw the QR itself, and why that is the
+primary offer rather than the fallback. Carrying a session out of a browser that is
+already signed in is the other way to the same place, and is what this section is
+about.
 
 ### The setup check
 
