@@ -568,3 +568,74 @@ alone.
 Worth recording, since it was visible while setting this up: the daemon was already timing a real
 in-flight prompt from the session driving this work before the test started, which is the same
 mechanism answering for a third party. The clock was not stood up for the test.
+
+## The reading rung: what the wall actually was
+
+Worth correcting the record from session one, which reported this as an environment problem.
+
+`POST /api/reading/view` answered "the reader browser never opened its debugging port: fetch
+failed" for the whole of the first session, and that was taken as the reader being unavailable on
+this machine. It was our bug. `findBrowser` returned the first Chromium-family browser that
+EXISTED and the reader gave up when it did not answer.
+
+Google Chrome 151 on this machine starts, stays alive, and never opens a DevTools port. Proven,
+not inferred: no `DevToolsActivePort` written into the profile, no listening socket bound by the
+process, nothing in its own `--enable-logging=stderr --v=1` output, no managed policy plist
+present, and the same result with a clean temp profile and with `--remote-debugging-port=0`. Brave,
+installed beside it, writes the port file and answers `/json/version` on the first try.
+
+So the reading rung was dead on a machine that had a working browser installed the whole time.
+`launchFirstWorkingBrowser` now tries each installed browser in turn and, when none answers, names
+every one it tried and what each did.
+
+After that, against the live daemon:
+
+```
+ ok: True | ready: False | seq: 1 | signedOut: True
+```
+
+A real 960x1212 JPEG, rendered by Brave. Looking at it: Amazon's own sign-in page, the yellow
+button and the email field.
+
+**Where the wall is now.** The carried session in `logs/reader-profile` has expired, and signing in
+needs the account holder: a password, an emailed code, or a passkey. That is not something to
+route around. So 1.1 and 1.7 stay open, and item 1 of the video stays absent, on a blocker that is
+genuinely the operator's rather than a broken tool. One sign-in through the panel's "Sign in to
+Amazon in Chrome" button carries the session, and 1.7 becomes runnable immediately after.
+
+## 9.1, what was recorded
+
+`docs/demo/interstice-demo.mp4` with `docs/demo/README.md` indexing every moment by timestamp, and
+one still per moment under `docs/demo/frames/`. Five of the six behaviours, against the running
+daemon, with real data: twelve real stars the tracker earned today, a forfeit record the real video
+breaker produced against a real browser playing a real ffmpeg-encoded file, and a latency cycle
+through the panel's own surface.
+
+The box stays unticked because item 1 is absent, which the item's own verify does not allow for.
+
+Recording it was worth doing for its own sake, because watching the first take found a defect that
+nine UX passes and thirteen professionalism scans had all missed: the arrow-key hint ran under the
+pager buttons, and the tail of the sentence was printed beneath them. Bounding the hint's width
+does not fix it, which is the interesting part: the pager is centred on the reader, so its left
+edge moves with the panel, and at 480 wide it reaches further left than any fixed bound would allow
+for. Two things whose widths both vary cannot be kept apart by choosing a number for one of them.
+The hint moved above the pager's band instead, and is clear at five widths and two heights.
+
+The first take also appeared to show the latency chip failing to clear on arrival. It was not a
+bug: a real prompt was in flight from the session driving this work, the heartbeat reported it, and
+the panel went on timing it, which is exactly right.
+
+## Closing block
+
+- **Incidental iCloud downloads**: none to evict. The repo is on `/dev/disk3s5`, not an
+  iCloud-managed path, and nothing in this work read from `~/Library/Mobile Documents`.
+- **Tabs and processes**: every browser this work started is closed. What remains running is the
+  product and the loop's own monitor: the daemon, the Brave instance the daemon owns for the
+  reader, and the blocker resolver that item 0.7 requires until Z8.
+- **Demo**: the recording, the live panel and the dashboard were opened for review.
+- **Manual verification checklist**: `docs/MANUAL_VERIFICATION.md`. Every command in it was run
+  verbatim before it was written down, and the expected output in the document is the output that
+  came back.
+
+The parent box stays unticked because its text is "After you've finished everything", and four
+items are not finished.

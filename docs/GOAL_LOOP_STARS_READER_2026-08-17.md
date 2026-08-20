@@ -812,12 +812,12 @@ rules against it in one pass.
 ## Closing block
 
 - [ ] After you've finished everything
-    - [ ] If you did any searches, you may have incidentally downloaded more resources than
+    - [x] If you did any searches, you may have incidentally downloaded more resources than
       are needed from icloud. Please go through the unused ones and evict them off this
       machine back onto icloud.
-    - [ ] Close the tabs you've 1. opened yourself, and 2. are currently done using.
-    - [ ] Demo: open up the windows to the work you've completed. Show me your work.
-    - [ ] Create a manual verification checklist for the user to go to in order to verify
+    - [x] Close the tabs you've 1. opened yourself, and 2. are currently done using.
+    - [x] Demo: open up the windows to the work you've completed. Show me your work.
+    - [x] Create a manual verification checklist for the user to go to in order to verify
       and check your work, if not already explicitly requested.
 - [x] If you wrote or modified code, then commit all your changes, either one per checkmark
   item or one big commit per this goal loop whichever is logical. Push them, raise a PR.
