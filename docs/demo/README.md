@@ -35,5 +35,7 @@ containing its host and got no break.
 
 **Item 3, a block completing on camera, is shown by its result rather than its passage.** A block
 is 25 minutes and the recording is under a minute. What the calendar shows at 17.5s and 22.6s are
-twelve real blocks that really completed on 2026-08-20, each 25 minutes apart to the second, with their
+twelve real blocks the daemon filed under 2026-08-20, eleven of them 25 minutes apart to the
+second. The first is the pre-`14520ee` UTC record, which really ran 23:08 to 23:33 on 2026-08-19
+and is filed a day late for exactly the reason `docs/BUG_ISSUE_PREVENTION.md` records. With their
 real start and end times legible when a star is activated.

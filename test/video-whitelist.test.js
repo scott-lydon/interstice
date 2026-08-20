@@ -4,7 +4,7 @@ import { isWhitelisted, registrableDomain, BadVideoURLError } from '../lib/video
 
 const WL = ['udemy.com', '*.udemy.com'];
 
-test('the whitelist matches on registrable domain, rejecting lookalikes', () => {
+test('the whitelist matches the whole host, exactly or as a dot-suffix, rejecting lookalikes', () => {
   assert.equal(isWhitelisted('https://www.udemy.com/course/x', WL), true, 'www.udemy.com passes');
   assert.equal(isWhitelisted('https://sub.udemy.com/x', WL), true, 'sub.udemy.com passes');
   assert.equal(isWhitelisted('https://udemy.com.evil.example/x', WL), false, 'a lookalike parent fails');

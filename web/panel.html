@@ -162,7 +162,8 @@
   body.immersive #view-reading { gap: 0; height: 100%; }
   /* Everything in the reading view except the page and the menu is displaced behind the menu.
      The floating affordances are named here rather than left to their own rules: this selector
-     carries an id and three classes, so it outranks every `body.immersive .thing { display: … }`
+     carries three ids and eight classes (a `:not()` takes its argument's specificity), so it outranks
+     every `body.immersive .thing { display: … }`
      below it, and the pager, the calendar, the latency chip, the arrival note and the forfeit
      banner all computed to `display: none` even with their own state class applied. */
   body.immersive #view-reading > :not(#reader):not(.reader-menu):not(.reader-menu-overlay):not(.reader-pager-overlay):not(.reader-hint):not(#reader-note):not(.star-cal-overlay):not(.latency-row):not(.forfeit-note) { display: none; }
@@ -1141,7 +1142,9 @@ function readerNote(text, { again = false } = {}) {
  * without telling them how much of it was in doubt.
  */
 function weakLinesPhrase(d) {
-  const lines = Number(d.lines) || 0;
+  // The scored lines, not every line: `weak` is a fraction of the lines that were scored, and the
+  // reader's own toolbar and location strip are not among them.
+  const lines = Number(d.scoredLines) || Number(d.lines) || 0;
   const weak = Math.round((Number(d.weak) || 0) * lines);
   if (weak > 0 && lines > 0) {
     return ' \u00b7 ' + weak + ' of ' + lines + (lines === 1 ? ' line' : ' lines') + ' read poorly';
@@ -1929,6 +1932,11 @@ async function runFix(key, button) {
     if (!d.ok && how) {
       how.innerHTML = esc(d.detail || d.reason || 'that did not work')
         + (d.how && d.how.length ? '<ul>' + d.how.map((h) => '<li>' + esc(h) + '</li>').join('') + '</ul>' : '');
+    } else if (d.ok && d.note && how) {
+      // A fix can succeed and still not do the thing its label promised. "Start a full interval"
+      // resumes the current one when Be Focused has no skip shortcut set, and said so in `note`,
+      // which nothing rendered: the user got eleven minutes back and was told "started".
+      how.innerHTML = esc(d.note);
     }
     say(d.ok ? (d.playing ? 'playing ' + String(d.playing).slice(0, 40) : 'started') : 'could not do that');
   } catch {

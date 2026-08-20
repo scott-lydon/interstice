@@ -5,7 +5,9 @@ import { fitViewport, MIN_WIDTH, MIN_HEIGHT } from '../lib/reader.js';
 // The immersive layout asks the reader for >=90% of the panel's usable area. That request
 // must never fall below the reader's own minimums, i.e. fitViewport must return it unchanged.
 function immersiveViewport({ panelWidth, panelHeight }) {
-  // 90% of each usable dimension, rounded, which is what the immersive layout will request.
+  // 90% of each usable dimension, rounded: the lower bound on what the immersive layout requests.
+  // Text mode asks for a taller page still (TEXT_RENDER_SCALE in web/panel.html), so this is the
+  // floor the viewport must satisfy rather than the exact request.
   return { width: Math.round(panelWidth * 0.9), height: Math.round(panelHeight * 0.9) };
 }
 

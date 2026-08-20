@@ -470,8 +470,10 @@ A completed 25-minute unbroken focus block earns one star. Configure it under `f
 - `focus.blockMinutes`: minutes of unbroken focus that earn one star (default `25`).
 - `focus.blacklistApps`: apps whose coming frontmost forfeits the block (default: Slack, Discord,
   Messages, Mail, X, Twitter, Instagram, TikTok). The Interstice panel itself never forfeits a block.
-- `focus.videoWhitelist`: video source domains that do not forfeit a block; matched on registrable
-  domain, so `www.udemy.com` and `sub.udemy.com` pass and a lookalike does not (default: Udemy).
+- `focus.videoWhitelist`: video source domains that do not forfeit a block; matched on the whole
+  host, exactly or as a dot-suffix, so `www.udemy.com` and `sub.udemy.com` pass, `bbc.co.uk`
+  matches itself and its subdomains and nothing else under `.co.uk`, and a lookalike like
+  `udemy.com.evil.example` does not (default: Udemy).
 - `focus.videoBreakAfterMs`: how long non-whitelisted video must play continuously before it
   forfeits the block, so a one-frame autoplay costs nothing (default `4000`).
 - `focus.videoBrowsers`: the browsers to read play state from, as
