@@ -72,8 +72,27 @@ prompt only appears when two positions disagree, and the reopen landed on the re
 position, so there was nothing to reconcile. Note the standing divergence that did not produce one:
 the Kindle app reports `percent: 39` while the reader sits at 94%.
 
-Inducing it needs the server-side position moved by a different device, that is, reading in the
-Kindle app and then opening the web reader. That is the next step for this row and it is not done.
+**Second attempt, same day, after being challenged on parking the row.** The Kindle app is installed
+and addressable, so "needs a different device" was a task and not a gate. The book was opened in the
+newer Kindle app by bundle id, `com.amazon.Lassen`, the app was given time to sync, and the web
+reader was then closed and cold-opened. The reader's own position moved from page 217 to page 219 of
+220, so the two did interact, but no prompt appeared.
+
+This time the DOM was queried directly over the debugging port rather than the page text, because
+the first attempt used `GET /api/reading/text`, which reads the captured page IMAGE. A dialog can sit
+outside the clip that capture uses, so that instrument could not have seen the prompt even if it were
+on screen. The direct query found no matching element and no `[role=dialog]` at all.
+
+E1 therefore stays without a verdict after two real attempts rather than one assumption. What is
+still missing is genuine divergence: both attempts reconciled to the same position, and the prompt
+only exists when two positions disagree.
+
+**One measurement worth keeping, taken while looking.** With no prompt on screen and the reader
+perfectly healthy, the page holds **four `ion-modal` elements and one `ion-popover`**, and zero
+`ion-alert`. So the containers `dismissScript` searches are present in the normal state, and the
+count of them proves nothing about whether a prompt is showing. Any fix for 1.2 that keys on "an ion
+container exists" would fire constantly; the text match is doing all the work, which is exactly why
+the container list being too narrow is the risk item 1.1 names.
 
 **The latent defect item 1.1 names is still there and is worth stating separately from the verdict.**
 `dismissScript` at `lib/reader.js` searches only `ion-alert`, `ion-modal` and `ion-popover`. If
