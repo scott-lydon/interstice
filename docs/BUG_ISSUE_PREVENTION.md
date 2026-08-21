@@ -154,3 +154,45 @@ implementations can satisfy a dependency, try them in order and report every one
 with what each did. `launchFirstWorkingBrowser` does that, and both reader launch sites use it.
 The same lesson applies to `doctor`: its reading-rung check reported "browser present, port free,
 session carried" for a rung that could not open a browser at all.
+
+## A recovery that finds nothing to carry must not leave the reader closed (2026-08-20)
+**Cause.** `reauthenticate` closes the browser before a forced carry, because the forced path
+deletes the cookie store before it writes and must not run against a live session. When the carry
+then found nothing to carry it returned from there, leaving the reader down, while `ensure` still
+answered `ok: true` over a browser that was no longer running. The caller read success and the panel
+showed a blank page with no error to explain it. A warm poll loop hid it by opening again a second
+later; one cold call did not. **Prevention.** Any path that closes a resource as a precondition owns
+reopening it on every exit, the failing ones included. And test the cold call: a poll loop is a
+second caller that repairs the state under you, so a test that polls proves the loop works and says
+nothing about the operation.
+
+## A liveness probe that answers ok over a dead process is worse than an error (2026-08-20)
+**Cause.** The same failure above was invisible because `ensure` reported success without
+establishing that the browser it was reporting on was alive. **Prevention.** A health answer must be
+derived from the thing itself in the same call, never from a field set when it was last known good.
+The cheap check: kill the subject out from under the probe and require the probe to change its
+answer.
+
+## A preflight that reports a gap and still exits 0 is one nobody has to read (2026-08-20)
+**Cause.** Tool preflights printed a missing row and exited successfully, so a caller that gated on
+the exit status was gated on nothing. **Prevention.** Every gate exits non-zero on the condition it
+exists to catch, and the proof is running it against a deliberately broken input and seeing the
+non-zero. A gate never demonstrated to refuse is a check that cannot fail. Related: a preflight must
+export the environment the tools need (`JAVA_HOME`, `ANDROID_HOME`) before deciding a tool is
+absent, or it reports as missing something that is sitting on disk unexported.
+
+## Match a load gate on the real binary, not the wrapper that exits (2026-08-20)
+**Cause.** The build-load gate matched process names like `gradlew`, which exits immediately and
+leaves a JVM behind, so the gate reported all clear while a build was running. **Prevention.** Match
+what actually holds the CPU (`swift-frontend`, `swift-build`, `GradleDaemon`), and prefer exiting
+non-zero over queueing, because a gate that blocks forever is one people work around.
+
+## A README that omits a repair still describes the old behavior (2026-08-21)
+**Cause.** Three reader repairs landed with tests and no document change, so the README's account of
+the carry path ended with the browser closed, said nothing about what the panel shows when a page
+fails to arrive, and named Node 22 as the reader's only extra dependency when the rung also needs a
+Chromium-family browser that opens a debugging port. Nothing in it was contradicted by a test; it
+was simply behind. **Prevention.** Treat a behavior change as unshipped until the sentence a reader
+would trust has been re-read against it. The cheap check is per-repair rather than per-release: for
+each new or changed test name, grep the README for the noun it is about and confirm the paragraph
+that turns up still describes what the test asserts.
