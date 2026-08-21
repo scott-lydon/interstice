@@ -728,3 +728,75 @@ about is a defect that comes back.
   The lesson, now also in `docs/BUG_ISSUE_PREVENTION.md`: when a module speaks a wire protocol, at
   least one test has to speak it to a real implementation. A stub is free to be wrong in exactly the
   way the code is wrong, and then a green suite is evidence of nothing.
+
+---
+
+## 1.1 Capture the failure verbatim, 2026-08-21T00:50Z
+
+Driven from the running daemon (pid 833, up 393 minutes) plus the full event log. Capture file:
+`logs/reader-failure-2026-08-20.log`.
+
+### The finding: the reading rung does NOT fail, and the telemetry says so plainly
+
+7,564 events. **195 deliveries, 1 failure.** By rung:
+
+```
+delivered by rung: {'reading': 178, 'flashcards': 13, 'queue_prompt': 4}
+```
+
+**There are zero reading failures.** The single `deliver_failed` in the entire log is the flashcards
+rung, verbatim:
+
+```json
+{"kind": "deliver_failed", "gapId": "28973cf0-2174-44c0-8d47-9848fa9c9e5c",
+ "rung": "flashcards", "error": "AnkiConnect timed out after 2000ms (App Nap?)"}
+```
+
+The most recent reading delivery, verbatim, carries the book and the synced position:
+
+```json
+{"kind": "delivered", "gapId": "690bd670-1050-4f15-bd61-e917fd98005b", "rung": "reading",
+ "reason": "armed at 25s",
+ "detail": {"app": "Amazon Kindle", "generation": "current",
+            "title": "Early Retirement Extreme: A philosophical and practical guide to financial independence",
+            "asin": "B0046LU7H0", "percent": 39, "position": 226766}}
+```
+
+`doctor` agrees: every reading check passes, including "the reader is signed in, the reader carries
+your Amazon session" and "a book in progress is identifiable, Early Retirement Extreme at 39%".
+
+### So what does `#reader-failed-why` say?
+
+Nothing, because it never renders. That string is a hardcoded constant at `web/panel.html:1307` and
+is written only when a delivery fails. No reading delivery has failed, so it has never been shown.
+Its literal text, for the record:
+
+> Amazon would not open this book here. Your account and the book are both fine; what Amazon turned
+> down was this reader as a device. Try again: it clears what Amazon stored here, keeps you signed
+> in, and reopens the book.
+
+### Why the item expected a failure
+
+Items 1.2 through 1.6 are already ticked: the failure was classified and repaired in an earlier
+session. 1.1 is the capture step that was never run afterwards, so it still reads as though the
+failure is live. Capturing it now shows the repair holding across 178 deliveries.
+
+### What IS still failing, and it is not the reader
+
+`delivered=0` on the current daemon's counter is a per-run counter, not a lifetime one, and it is
+misleading next to a lifetime total of 195. Separately, the decision log shows most gaps never route
+at all:
+
+```
+  534  idle_veto
+  520  wrong_app
+  194  armed at 25s
+   55  already_there
+   32  cooldown
+```
+
+1,141 of 1,335 decisions chose no rung. That is the routing gate doing its job (the operator was in
+the wrong app, or idle), not a reader defect, but it is why the counter looks dead on a short run.
+
+The one genuine open failure is AnkiConnect timing out at 2000 ms, attributed in the error string
+itself to App Nap. That belongs to the flashcards rung.

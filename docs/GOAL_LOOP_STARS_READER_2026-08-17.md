@@ -286,7 +286,7 @@ The panel already has a dedicated failure surface (`#reader-failed`, `#reader-fa
 in `$R/web/panel.html`), which means the failure is being caught and reported rather than
 crashing. The diagnosis must therefore start from what that surface actually says.
 
-- [ ] **1.1 Capture the failure verbatim.** Drive the reading rung from a cold start and
+- [x] **1.1 Capture the failure verbatim.** Drive the reading rung from a cold start and
   capture the exact text rendered into `#reader-failed-why`, plus the full daemon log for
   that attempt.
   - Verify: parallel notes contain the literal failure string and a log excerpt with
@@ -795,7 +795,7 @@ rules against it in one pass.
   - Verify: the video file exists with non-zero size, and a fresh-context agent watches it
     and confirms in writing that all six behaviours are visibly demonstrated, naming the
     timestamp in the recording where each occurs.
-- [ ] **9.2 Professionalism scan.** Spin up an agent with a new context to scan the whole
+- [x] **9.2 Professionalism scan.** Spin up an agent with a new context to scan the whole
   submission for professionality. For example, in another project the README bragged that
   the project was completed in two days; if work then continued, the README would be out of
   sync. Stupid on multiple levels. Look for exactly this class of defect: stale boasts,
