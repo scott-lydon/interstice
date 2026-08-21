@@ -800,3 +800,44 @@ the wrong app, or idle), not a reader defect, but it is why the counter looks de
 
 The one genuine open failure is AnkiConnect timing out at 2000 ms, attributed in the error string
 itself to App Nap. That belongs to the flashcards rung.
+
+## 1.7 cold-start proof, 2026-08-20
+
+`scripts/cold_start_proof.mjs` opens three genuinely cold readers, one per round, and asserts a
+non-blank page plus a position within 2 points of the Kindle-synced one. It found a real defect on
+its first run, and then found the wall that stops it passing today.
+
+**The defect.** A cold `ensure()` returned `{ok: true}` over a browser that was no longer running:
+
+```
+ensure returned: {"ok":true,"asin":null,"recarried":0}
+after: running false asin null error null
+```
+
+The chain: `ensure` saw a signed-out arrival, called `recoverIfPossible`, which called
+`reauthenticate`, which closes the reader before a forced carry (the forced path deletes the cookie
+store before writing, so it must not run against a live browser). The carry found nothing to carry
+and returned from there, leaving the reader closed. `ensure` then reported success with no error
+set. The daemon hides this because its poll opens again 1.5 seconds later. One cold call does not,
+which is why 178 successful warm deliveries never surfaced it.
+
+Fixed in `lib/reader.js`: `reauthenticate` now reopens on the book it was reading before it gives
+up. `test/reader.test.js` covers it, and the test fails on the old code (26 pass / 1 fail) and
+passes on the new (27 / 0). Full suite 347 / 0.
+
+**The wall.** With the reader kept alive, the honest state is visible, and it is that Amazon has
+expired the session:
+
+```
+href: https://www.amazon.com/ap/signin?...openid.return_to=https%3A%2F%2Fread.amazon.com%2F%3Fasin%3DB0046LU7H0
+```
+
+`carry` reports "your browser is holding the same session this reader already has", so the reader
+profile and Chrome hold the identical mark: both are expired, and there is no live session anywhere
+on this machine to carry across. The remedy is the product's own `startSignIn()`, a Chrome window on
+the reader's profile that takes a password, an emailed code, or a passkey. That needs the account
+holder, so 1.7 stays open until someone signs in, then the script is one command.
+
+**Worth noting for a later item.** `doctor` reports "the reader is signed in, the reader carries
+your Amazon session" while the live page is Amazon's sign-in form. The check reads the cookie store,
+not the page, so it cannot see an expired session. That is a separate finding, not fixed here.

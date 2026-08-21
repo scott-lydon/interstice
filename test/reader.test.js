@@ -384,3 +384,32 @@ test('the launcher tries every installed browser, not just the first one that ex
     /no Chromium-family browser found/
   );
 });
+
+test('a recovery that finds nothing to carry leaves the reader open, not closed', async () => {
+  // The forced carry deletes the cookie store before it writes, so `reauthenticate`
+  // closes the browser before asking. When there turns out to be nothing to carry it
+  // used to return from there, leaving the reader down while `ensure` still answered
+  // `ok: true` over it. A poll loop hid that by opening again a second later; one cold
+  // call did not, and the panel showed a blank page with no error to explain it.
+  const reader = new Reader({ config: {}, logger: { info() {}, warn() {}, error() {} } });
+  Object.defineProperty(reader, 'running', { get: () => false, configurable: true });
+  reader.asin = 'B0046LU7H0';
+  reader.viewport = { width: 900, height: 1200 };
+
+  let closed = 0;
+  const reopened = [];
+  reader.close = async () => { closed += 1; };
+  reader.carry = async () => ({ carried: 0, reason: 'your browser is holding the same session this reader already has' });
+  reader.ensure = async (opts) => { reopened.push(opts); return { ok: true }; };
+
+  const out = await reader.reauthenticate();
+
+  assert.equal(out.carried, 0);
+  assert.equal(out.signedIn, false);
+  assert.equal(closed, 1, 'the forced carry still closes the reader before asking');
+  assert.deepEqual(
+    reopened,
+    [{ asin: 'B0046LU7H0', width: 900, height: 1200 }],
+    'and reopens it on the book it was reading before it gave up'
+  );
+});
