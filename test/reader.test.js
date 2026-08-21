@@ -338,12 +338,53 @@ test('every reader throw names a remedy the reader can render', () => {
   const sites = [...src.matchAll(/throw new Error\((['"`])([\s\S]*?)\1\)/g)].map((m) => m[2]);
   assert.ok(sites.length >= 2, 'the reader has explicit throw sites to check');
   for (const message of sites) {
+    // Item 1.9 asks for four things in every throw, not just the remedy: what was being
+    // attempted, what was expected, what was found, and what to do. The first three are
+    // one sentence in practice ("no X found to Y with" says the attempt was Y, the
+    // expectation was an X, and the finding was none), so they are checked as that shape
+    // rather than as four separate labels nobody would write.
     assert.match(
       message,
       /Remedy:/,
       `reader throw "${message.slice(0, 60)}" must name a remedy`
     );
+    const [situation] = message.split('Remedy:');
+    assert.match(
+      situation,
+      /\bno\b|\bnot\b|\bcould not\b|\bfailed\b/i,
+      `reader throw "${message.slice(0, 60)}" must say what was found, or was not`
+    );
+    assert.match(
+      situation,
+      /\bto\b|\bwhile\b|\bwhen\b/i,
+      `reader throw "${message.slice(0, 60)}" must say what was being attempted`
+    );
+    assert.ok(
+      situation.trim().split(/\s+/).length >= 6,
+      `reader throw "${message.slice(0, 60)}" is too terse to name a situation`
+    );
+    const remedy = message.split('Remedy:')[1] || '';
+    assert.ok(
+      remedy.trim().split(/\s+/).length >= 4,
+      `reader throw "${message.slice(0, 60)}" names a remedy too short to act on`
+    );
   }
+});
+
+test('the panel status line never replaces a daemon error with a fixed phrase', () => {
+  // Item 1.10. The failure already carries `reason` and `detail`, and the row renders them,
+  // but the status line above it used to substitute a phrase that named nothing, so the
+  // first line a user reads was the one line they could not act on. Built from parts here
+  // rather than written out, so this test does not reintroduce the very string whose
+  // absence the item verifies with a grep.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const banned = ['could', 'not', 'do', 'that'].join(' ');
+  assert.ok(!html.includes(banned), 'the phrase that names nothing is gone from the panel');
+  assert.match(
+    html,
+    /d\.detail \|\| d\.reason/,
+    'and the status line reads the daemon\'s own reason instead'
+  );
 });
 
 test('the launcher tries every installed browser, not just the first one that exists', async () => {

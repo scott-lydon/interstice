@@ -1938,7 +1938,15 @@ async function runFix(key, button) {
       // which nothing rendered: the user got eleven minutes back and was told "started".
       how.innerHTML = esc(d.note);
     }
-    say(d.ok ? (d.playing ? 'playing ' + String(d.playing).slice(0, 40) : 'started') : 'could not do that');
+    // The failure already carries `reason` and `detail` from the daemon, and the row below
+    // renders them. The status line used to replace both with a fixed phrase that named
+    // nothing, so the one line a user reads first was the one line that could not be acted
+    // on. Same source, trimmed to a status line's width.
+    say(
+      d.ok
+        ? (d.playing ? 'playing ' + String(d.playing).slice(0, 40) : 'started')
+        : String(d.detail || d.reason || 'the daemon refused and gave no reason').slice(0, 80)
+    );
   } catch {
     say('the daemon is not answering');
   } finally {
