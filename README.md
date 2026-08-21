@@ -52,7 +52,12 @@ This is not a system that fires twice a day.
 
 Requires macOS and Node 22 or newer. Node 20 runs everything except the in-panel
 reader, which needs the global `WebSocket` that arrived in 22; `doctor` says so by
-name rather than letting the rung fail at first use. There are no runtime dependencies (a
+name rather than letting the rung fail at first use. That reader also needs a
+Chromium-family browser it can drive, and it tries every one that is installed rather
+than the first it finds: a Chrome that starts and never opens its debugging port is
+passed over for a Brave beside it that does. `doctor` checks the reading rung for all
+three of its dependencies, the browser, the port and the session, and names the fix
+for whichever is missing. There are no runtime dependencies (a
 devDependency, `@playwright/test`, is used only to drive automated UI tests
 and is never required to run Interstice itself).
 
@@ -183,6 +188,14 @@ one is rendered at 480 and the picture is scaled down to fit. And it hides Amazo
 title, with a stylesheet rather than by deleting the node, because the reader
 rebuilds its own DOM on every page turn.
 
+When a page does not arrive, the panel says so in a state of its own rather than
+showing you a blank page of the book, and the line it shows names what to do: every
+failure the reader raises carries its own remedy, so there is always something on the
+screen more useful than "it did not work". Under that line is **Read it again**, which
+clears the site data before it loads the book, because the registration Amazon refused
+lives in the profile and a fresh browser on the same profile lands on the same refusal.
+That button appears only on the failure, never under a page that rendered.
+
 The browser shuts down after fifteen minutes with no reading in it. The only page ever written
 to disk is the JPEG Vision has to be handed in order to read one, in a temporary directory that
 is removed as soon as it answers.
@@ -245,7 +258,9 @@ your ordinary profile into the reader's, while nothing holds either.
   session across again and reloads, at most once every ten minutes, and the panel
   carries the same thing as a button. The browser is closed first, because Chrome
   reads its cookie store at launch and rewrites it on its own schedule: rows written
-  underneath a running one change nothing and are then overwritten.
+  underneath a running one change nothing and are then overwritten. If there turns out
+  to be nothing to carry, the reader is opened again on the book it was reading, so a
+  recovery that fails costs the session it could not replace and nothing else.
 - **Nothing leaves the machine**, and no credential is created, read or stored.
 - **Turn it off** with `"reading": { "carrySession": false }`, and undo it by
   deleting `logs/reader-profile`.
