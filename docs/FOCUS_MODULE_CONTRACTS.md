@@ -1,4 +1,4 @@
-# Focus, star, break, video, and latency — module contracts
+# Focus, star, break, video, and latency: module contracts
 
 Design record from 2026-08-19, written before the implementation and kept for the boundary
 reasoning. The boundaries it fixed are the ones the code still holds to; the names and signatures
@@ -10,7 +10,7 @@ Each new capability is a module that talks to the rest of the system only throug
 and plain data types, never by reaching into another module's internals. Plain data types crossing
 a boundary are JSON-serializable objects with the fields named below and nothing else.
 
-## lib/focus/blocks.js — the block state machine (pure)
+## lib/focus/blocks.js, the block state machine (pure)
 
 Pure, no I/O, no timers of its own. Given events and a clock reading, it decides block state.
 
@@ -24,7 +24,7 @@ Pure, no I/O, no timers of its own. Given events and a clock reading, it decides
 - Emits a **BlockCompleted** `{ type: 'blockCompleted', startedAt, endedAt, day /* local YYYY-MM-DD */ }` and a
   **BlockForfeited** `{ type: 'blockForfeited', cause, at, elapsedMs }`.
 
-## lib/focus/store.js — durable persistence
+## lib/focus/store.js, durable persistence
 
 - `open(path) -> Store`
 - `Store.award(blockCompleted) -> Star` where a **Star** is `{ id: string, startedAt, endedAt, day }`.
@@ -32,7 +32,7 @@ Pure, no I/O, no timers of its own. Given events and a clock reading, it decides
 - `Store.starsForMonth(yyyyMM) -> Star[]`
 - Crossing data: **BlockCompleted** in, **Star** out. The store knows nothing about breakers or the clock.
 
-## lib/focus/breakers/*.js — one breaker per cause
+## lib/focus/breakers/*.js, one breaker per cause
 
 Each breaker exports the same three-function interface and knows nothing about stars or blocks.
 
@@ -43,7 +43,7 @@ Each breaker exports the same three-function interface and knows nothing about s
   (display sleep or screen lock, via `ioreg` IOConsoleLocked), `video.js` (delegates to
   lib/video/probe.js). Each emits only a **BreakEvent**; none imports another breaker or the store.
 
-## lib/video/probe.js — browser video detection
+## lib/video/probe.js, browser video detection
 
 - `probeVideo({ browsers, connect }) -> Promise<VideoRecord[]>`
 - Reuses lib/cdp.js for Chromium-family tabs (URL + play state) via the injectable `connect`.
