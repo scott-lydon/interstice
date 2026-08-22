@@ -462,7 +462,13 @@ test('the failure surface reads as a heading and its evidence is legible', () =>
   const rule = html.slice(html.indexOf('.failwhat {'), html.indexOf('.failwhat[hidden]'));
   assert.match(rule, /color: var\(--faint\)/, 'the evidence line uses a token');
   assert.ok(!/opacity/.test(rule), 'and is not dimmed with opacity below the contrast floor');
-  assert.match(rule, /font-family: var\(--mono\)/, 'a URL is read character by character');
+  // The monospaced face belongs to the URL, not to every kind of evidence. A URL is read
+  // character by character; Amazon's question is a sentence, and setting a sentence in 11px mono
+  // says "machine output" and is harder to read. They shared one presentation with nothing
+  // saying which was which.
+  assert.match(html, /\.failwhat\.isurl \{ font-family: var\(--mono\)/, 'a URL is monospaced');
+  assert.match(html, /\.failwhat\.isquote/, "and a question is not");
+  assert.match(html, /id="reader-failed-detail-label"/, 'each is labelled with what it is');
 
   // The live region has to cover the part that names the failure, not only the paragraph that
   // explains it, or a screen reader hears an explanation of something never named.
@@ -552,4 +558,58 @@ test('checking again says what it found, including nothing', () => {
   // A fresh failure must not arrive carrying the previous check's outcome.
   const helper = html.slice(html.indexOf('const setFailAction ='), html.indexOf('const setFrameHidden'));
   assert.match(helper, /reader-recheck-said'\)\.hidden = true/, 'a new failure clears the old outcome');
+});
+
+
+test('the loading state ages, and does not animate under a failure', () => {
+  // Pass 10 findings 5 and 6. The shimmer is this panel's signal for "still working", and it kept
+  // animating under a hard named failure, so on a slow link a reader reads the animation and
+  // waits for something that already stopped. And the loading line was re-fired every 1500ms with
+  // an identical string, so five seconds and five minutes were pixel-identical.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+
+  const say = html.slice(html.indexOf('function readerSay(text, spin)'), html.indexOf('function readerSay(text, spin)') + 900);
+  assert.match(say, /\.skeleton/, 'the skeleton is governed by the same call that sets the words');
+  assert.match(say, /hidden = !spin/, 'and it is only shown while something is actually in progress');
+
+  // RUN it, rather than grep it. Asserting that the source contains the words "longer than
+  // usual" passes just as well when that branch is unreachable: an early return above it froze
+  // the line again and this test did not notice, which is the same vacuous assertion this loop
+  // has now been caught making three separate times.
+  const line = html.slice(html.indexOf('function openingLine()'), html.indexOf('function readerSay'));
+  assert.match(line, /readerOpenedAt/, 'the line knows when the open began');
+  const at = (secs) => {
+    // eslint-disable-next-line no-new-func
+    const fn = new Function('readerOpenedAt', 'Date', `${line}; return openingLine();`);
+    return fn(1, { now: () => 1 + secs * 1000 });
+  };
+  const early = at(1);
+  const middle = at(15);
+  const late = at(120);
+  assert.notEqual(early, middle, 'a wait of fifteen seconds does not look like a wait of one');
+  assert.notEqual(middle, late, 'and two minutes does not look like fifteen seconds');
+  assert.match(late, /longer than usual/, 'a long wait says so, so the reader can stop waiting');
+  assert.match(middle, /15/, 'and the elapsed time is shown while it is still ordinary');
+  // Every place that says it is opening goes through the ageing line, or the state stops ageing
+  // on whichever path was missed.
+  assert.equal(
+    (html.match(/readerSay\('opening your book'/g) || []).length,
+    0,
+    'no site still says it with a frozen string'
+  );
+});
+
+test('turning is unavailable until there is something to turn', () => {
+  // Pass 10 finding 7. Enabling was reached only by the transition OUT of a failure, so an open
+  // that never failed never enabled anything: the controls were live for the whole open because
+  // they had never been disabled. On a slow link Next and See the real page could be pressed
+  // against a book that did not exist yet, and nothing happened. That is the silent no-op the
+  // failure states were fixed for, in the state that comes before them.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const start = html.slice(html.indexOf('function startReader(asin)'), html.indexOf('tickReader();', html.indexOf('function startReader(asin)')));
+  assert.match(start, /setPagerDisabled\(true/, 'the pager starts unavailable');
+
+  const arrival = html.slice(html.indexOf('setReaderFrame(img, d.seq);'), html.indexOf('setReaderFrame(img, d.seq);') + 500);
+  assert.match(arrival, /setPagerDisabled\(false/, 'and becomes available when a page arrives');
+  assert.match(arrival, /!readerFailed && !readerSignedOut/, 'but not over a failure or a sign-in');
 });
