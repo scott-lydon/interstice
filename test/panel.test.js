@@ -522,7 +522,11 @@ test('a signed-out reader is never told their account is fine', () => {
   // button that discards their device registration. The panel had established nothing of the
   // kind. Not a missing explanation, a confident wrong one attached to an irreversible control.
   const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
-  const decide = html.slice(html.indexOf('const vendorBroken ='), html.indexOf('if (failing !== readerFailed)') + 40);
+  // The condition gained a second clause, so it is located by its stable head rather than by the
+  // whole expression: the redraw is now keyed on which failure it is, not only on whether there
+  // is one, because the copy was composed once on the way in and kept the previous failure's
+  // words when the kind changed underneath it.
+  const decide = html.slice(html.indexOf('const vendorBroken ='), html.indexOf('readerFailed = failing;') + 30);
 
   assert.match(decide, /const failing = !d\.signedOut &&/, 'signed out is not a failure of this kind');
   for (const flag of ['vendorBroken', 'askedSomething']) {
@@ -806,4 +810,95 @@ test('a refused turn points at the surface that explains it', () => {
   const statusAt = html.indexOf('id="reader-status"');
   const overEnd = html.indexOf('</div>', html.indexOf('id="reader-status"'));
   assert.ok(overAt > 0 && statusAt > overAt && overEnd > statusAt, 'the status line is inside the loading overlay');
+});
+
+
+test('pass 11: the panel does not rule out what it cannot rule out', () => {
+  // Pass 11 item 3, and the worst finding of the two reviews, because this loop exists to remove
+  // exactly this and I wrote it while removing it. The vendor copy asserted that the failure was
+  // Amazon's and not the account's, the book's, or this machine's, on the evidence that two
+  // script requests did not come back. A dropped connection, a captive portal, a DNS filter, a
+  // proxy and a content blocker all produce that same signal here, so on a filtered link the
+  // panel told the reader in absolute terms not to look at the thing that was actually wrong.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  const branch = html.slice(start, html.indexOf('// Back to a real page', start));
+  const outage = branch.slice(branch.indexOf('} else if (vendorBroken)'), branch.indexOf('} else {', branch.indexOf('} else if (vendorBroken)')));
+
+  assert.match(outage, /did not come back/, 'it reports the observation');
+  assert.match(outage, /anything between/, 'and leaves the local causes on the table');
+  assert.ok(!/not a problem with/.test(outage), 'it rules nothing out that it cannot rule out');
+});
+
+test('pass 11: a link that is a control is drawn as one', () => {
+  // Pass 11 item 1. Every .act rule was qualified to `button`, so an <a class="act"> picked up
+  // none of them and fell through to the bare `a` rule: on the question arm the reader saw a real
+  // button that cannot resolve the state above an underlined blue sentence that can.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  // Asserted by SELECTOR, not by searching for a prefix: 'button.act {' also matches
+  // '.pager button.act {', which is a different rule and correctly does not cover anchors.
+  for (const selector of ['button.act, a.act {', 'button.act:hover, a.act:hover', 'button.act.primary, a.act.primary']) {
+    assert.ok(html.includes(selector), `the anchor is covered by: ${selector}`);
+  }
+  assert.match(html, /a\.act \{[^}]*text-decoration: none/, 'and the anchor loses the link underline');
+});
+
+test('pass 11: the surface that prints a remedy carries the control it names', () => {
+  // Pass 11 item 4. Four of the five readerRemedy sentences end by telling the reader to press a
+  // button that lives on the failure surface, and the branch that prints them returns before that
+  // surface is ever unhidden. The reader was told to do a thing and given no way to do it.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const branch = html.slice(html.indexOf('if (!d.ok) {'), html.indexOf('return;', html.indexOf('if (!d.ok) {')));
+  assert.match(branch, /reader-over-act'\)\.hidden = false/, 'the control appears with the sentence');
+  assert.match(branch, /setPagerDisabled\(true/, 'and the pager goes with the page');
+  assert.match(html, /id="reader-over-act"/, 'the control exists');
+  // One action, one name, still.
+  assert.match(html.replace(/\s+/g, ' '), /id="reader-over-act"[^>]*>Read it again</, 'under the name every remedy uses');
+});
+
+test('pass 11: a failure that changes kind redraws', () => {
+  // Pass 11 item 2. All of the failure copy was composed inside a test of the boolean, so it ran
+  // once on the way in. A failure changing kind without a passing frame between kept the previous
+  // one's title, paragraph, evidence, control choice and pager reason.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  assert.match(html, /const failKind = /, 'the kind is named');
+  assert.match(html, /failing !== readerFailed \|\| failKind !== readerFailKind/, 'and a change of kind redraws');
+  assert.match(html, /readerFailKind = ''/, 'and a fresh open forgets the last one');
+});
+
+test('pass 11: the destructive answer is not the recommended one', () => {
+  // Pass 11 item 7. The irreversible answer wore the accent fill this panel uses for the
+  // recommended action and was the brightest thing on the surface, while focus sat on the keeping
+  // answer: colour and keyboard default disagreed about which answer was expected.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8').replace(/\s+/g, ' ');
+  assert.match(html, /id="reader-retry-yes"[^>]*class="act danger"|class="act danger" id="reader-retry-yes"/, 'the discard is drawn as danger');
+  assert.match(html, /class="act primary" id="reader-retry-no"|id="reader-retry-no"[^>]*class="act primary"/, 'and keeping is the recommended one');
+  assert.match(html, /\.danger[^}]*var\(--crit\)/, 'danger uses the token that exists for it');
+});
+
+test('pass 11: evidence that can grow does not push the actions off the surface', () => {
+  // Pass 11 item 8. Amazon's position prompts run to several sentences, the surface is top
+  // aligned, and .reader only guarantees a 200px minimum, so a long question filled the box and
+  // pushed both remedies below the fold with no scroll cue.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const rule = html.slice(html.indexOf('.failwhat.isquote {'), html.indexOf('}', html.indexOf('.failwhat.isquote {')));
+  assert.match(rule, /max-height/, 'the quote is bounded');
+  assert.match(rule, /overflow-y: auto/, 'and scrolls inside its own box');
+});
+
+test('pass 11: the sign-in surface names its state like its sibling does', () => {
+  // Pass 11 items 5 and 6. Two overlays occupy the same rectangle and named their state at two
+  // different ranks, and the sign-in one, which a reader lands in without warning, got the 10px
+  // uppercase caption role that the failure surface had already rejected for this job. And the
+  // cheap path overwrote its own label with an outcome and stayed disabled for the life of the
+  // panel, so a reader who signed in elsewhere to fix exactly this could not retry it.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const box = html.slice(html.indexOf("box.innerHTML ="), html.indexOf('host.prepend(box)'));
+  assert.match(box, /h2 class="failtitle"/, 'the sign-in names its state as a heading');
+
+  const handler = html.slice(html.indexOf("$('carry-session').textContent") >= 0
+    ? html.indexOf("$('carry-session').textContent")
+    : html.indexOf('signinSay(\'That session has expired'), html.indexOf('function watchSignIn'));
+  assert.ok(!/carry-session'\)\.textContent = 'That session/.test(html), 'the label is not used as a status line');
+  assert.match(handler, /carry-session'\)\.disabled = false/, 'and the control comes back');
 });

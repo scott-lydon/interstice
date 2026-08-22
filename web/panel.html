@@ -379,13 +379,13 @@
   .cardframe iframe { display: block; width: 100%; border: 0; background: var(--raised); }
 
   .ease { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  button.act {
+  button.act, a.act {
     font: 600 11px/1.1 var(--display);
     text-transform: uppercase; letter-spacing: .08em;
     padding: 10px 6px; border-radius: 3px; cursor: pointer;
     background: var(--raised); color: var(--ink); border: 1px solid var(--edge);
   }
-  button.act:hover { border-color: var(--accent); }
+  button.act:hover, a.act:hover { border-color: var(--accent); }
   /* Off screen until focused, then placed over the header rather than displacing it, so the
      page does not jump for people who never use it. */
   .visually-hidden {
@@ -399,7 +399,7 @@
     transition: top .12s ease;
   }
   .skip-link:focus { top: 8px; }
-  button.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button.act:focus-visible, a.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   /* Every other thing you can reach with a keyboard. Without these the focus ring existed on
      one class of button and nowhere else, so tabbing through the panel lost the cursor the
      moment it left that class. */
@@ -407,13 +407,21 @@
   #companions button.do:focus-visible,
   .forfeit-note .fn-dismiss:focus-visible,
   .skip-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  button.act.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  button.act.primary, a.act.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
   /* No opacity here. This sub-label sits on the accent fill, and .7 blended the foreground
      toward the background until the pair no longer cleared 4.5:1. A token that is a colour
      rather than a transparency keeps the contrast checkable: you can read it off the two
      values, which you cannot do once a blend is in the middle. */
-  button.act small { display: block; font-size: 9px; color: var(--on-accent-muted); letter-spacing: .04em; margin-top: 2px; }
+  button.act small, a.act small { display: block; font-size: 9px; color: var(--on-accent-muted); letter-spacing: .04em; margin-top: 2px; }
   button.act[disabled] { opacity: .45; cursor: default; }
+  button.act.danger, a.act.danger { border-color: var(--crit); color: var(--crit); }
+  button.act.danger:hover { border-color: var(--crit); background: color-mix(in srgb, var(--crit) 14%, transparent); }
+  /* Every rule above was qualified to `button`, so an <a class="act"> picked up none of them and
+     fell through to the bare `a` rule: the link that resolves the question state was drawn as a
+     15px serif underlined blue sentence beside a real 11px uppercase button, and the control that
+     actually clears the state was the one that did not look like a control. Anchors need the
+     text-decoration and colour reset too, since the `a` rule sets both. */
+  a.act { text-decoration: none; color: var(--ink); display: inline-block; text-align: center; }
 
   .bar { height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; }
   /* scaleX rather than width. Width is a layout property, so animating it relaid the bar on
@@ -511,7 +519,15 @@
      was which. The label above each says what it is, because an unlabelled string under an
      explanation is evidence for a claim the reader has to guess at. */
   .failwhat.isurl { font-family: var(--mono); }
-  .failwhat.isquote { font-style: italic; color: var(--muted); }
+  /* Bounded, and scrollable inside its own box. Amazon's position prompts run to several
+     sentences, this surface is top-aligned, and `.reader` only guarantees a 200px minimum, so in
+     a short window a long question filled the box and pushed both remedies below the fold with no
+     scroll cue: the reader concludes the surface has no actions. The evidence scrolls; the
+     actions stay. */
+  .failwhat.isquote {
+    font-style: italic; color: var(--muted);
+    max-height: 7.5em; overflow-y: auto; overscroll-behavior: contain;
+  }
   .faillabel {
     font: 600 10px/1 var(--display);
     text-transform: uppercase; letter-spacing: .14em; color: var(--faint); margin: 2px 0 -4px;
@@ -694,6 +710,15 @@
             <i class="shimmer" style="width:88%"></i>
           </div>
           <div class="mono" id="reader-status" role="status" aria-live="polite">opening your book</div>
+          <!--
+            The control the remedies on this surface name. Every readerRemedy sentence ends by
+            telling the reader to press something, and until now every one of them named a button
+            that lives on the failure surface, which the branch that prints those sentences
+            returns before unhiding. Same id and same handler as the note's button, so this is one
+            action with one name in a third place rather than a fourth label for the same thing.
+          -->
+          <button class="act primary" id="reader-over-act" type="button" hidden
+            style="margin-top:10px">Read it again</button>
         </div>
         <!--
           Amazon's own failure, said rather than photographed.
@@ -781,8 +806,15 @@
               stored here. Your sign-in stays, and the book opens fresh. There is no
               way to put the old registration back.</div>
             <div class="ease" style="grid-template-columns:1fr 1fr; margin-top:8px">
-              <button class="act primary" id="reader-retry-yes" type="button">Discard it and reopen</button>
-              <button class="act" id="reader-retry-no" type="button">Keep it</button>
+              <!--
+                The destructive answer is drawn in --crit, and the keeping one carries the accent.
+                They were the other way round: the irreversible answer wore the panel's
+                recommended-action fill and was the brightest thing on the surface, while focus
+                sat on "Keep it", so the colour and the keyboard default disagreed about which
+                answer was expected. --crit was defined in the tokens and used nowhere here.
+              -->
+              <button class="act danger" id="reader-retry-yes" type="button">Discard it and reopen</button>
+              <button class="act primary" id="reader-retry-no" type="button">Keep it</button>
             </div>
           </div>
         </div>
@@ -1319,6 +1351,8 @@ let readerSignedOut = false;
 // Whether the last poll found Amazon's failure page rather than a book. See the
 // `#reader-failed` block above, and `bookError` in the daemon's probe.
 let readerFailed = false;
+/** Which failure is on screen, so a change of kind redraws rather than keeping the old words. */
+let readerFailKind = '';
 let readerViewport = { width: 0, height: 0 };
 let readerBusy = false;
 let readerTextSeq = -1;
@@ -1595,6 +1629,7 @@ function startReader(asin) {
   readerTextSeq = -1;
   readerSignedOut = false;
   readerFailed = false;
+  readerFailKind = '';
   readerShelf = null;
   readerNote('');
   readerOpenedAt = Date.now();
@@ -1643,10 +1678,23 @@ function renderReader(d) {
   if (!d.ok) {
     setFrameHidden(true);
     $('reader-over').hidden = false;
+    // The pager goes with the page. This branch set neither `readerFailed` nor `readerSignedOut`,
+    // and those are the only two things `turnPage` guards on, so when the daemon stopped
+    // answering AFTER a page had painted the controls stayed lit under an overlay explaining a
+    // failure. Pressing one overwrote the remedy sentence with "turning" and a spinner in the
+    // same status line, and the remedy only came back on the next poll: the one instruction on
+    // screen was erased by a control that could not work.
+    setPagerDisabled(true, 'The reader is not answering, so there is no page to turn.');
     // The daemon's own sentence goes to the log, and the reader gets one that names a move.
+    // The remedy names a control, and this surface has none, so the control comes with it: four
+    // of the five remedy sentences end by naming a button that lives on the failure surface,
+    // which this branch returns before ever unhiding. The reader was told to do a thing and given
+    // no way to do it.
     readerSay(readerRemedy(d.error));
+    $('reader-over-act').hidden = false;
     return;
   }
+  $('reader-over-act').hidden = true;
 
   // Amazon opened something that is not the book. Said here, once, rather than left
   // to arrive as a transcription of its error page in the middle of your reading.
@@ -1674,7 +1722,17 @@ function renderReader(d) {
   // with no explanation while Amazon waits for an answer nobody can see. Item 1.3.
   const askedSomething = !d.signedOut && !d.bookError && !vendorBroken && Boolean(d.prompt);
   const failing = !d.signedOut && (Boolean(d.bookError) || vendorBroken || askedSomething);
-  if (failing !== readerFailed) {
+  // Keyed on the KIND, not on the boolean. All of this copy was composed inside a test of
+  // `failing !== readerFailed`, so it ran once on the way in and never again while the failure
+  // lasted. A failure that changed kind without a passing frame in between, an outage resolving
+  // into a refused device, or a question appearing over an already-failed reader, kept every
+  // word of the previous one: the title, the paragraph, the evidence and its label, the choice
+  // between the destructive control and the harmless one, and the pager's reason. The reader was
+  // then shown one failure's explanation beside the other failure's button, and "Checked just
+  // now. Still the same." confirmed the stale sentence as current.
+  const failKind = !failing ? '' : (askedSomething ? 'asked' : (vendorBroken ? 'vendor' : 'refused'));
+  if (failing !== readerFailed || failKind !== readerFailKind) {
+    readerFailKind = failKind;
     readerFailed = failing;
     $('reader-failed').hidden = !readerFailed;
     document.body.classList.toggle('reader-failing', readerFailed);
@@ -1697,9 +1755,9 @@ function renderReader(d) {
         // position in this book, and the operator is the only one who can answer it.
         $('reader-failed-title').textContent = 'Amazon is asking about your place in the book';
         $('reader-failed-why').textContent =
-          'Amazon put a question over the book and it is still there after this reader tried to '
-          + 'answer it. Nothing is lost. Open the book in the Kindle app or on read.amazon.com, '
-          + 'answer it once there, and it will not be asked again here.';
+          'Amazon put a question over the book and it is still there after Amazon\u2019s own '
+          + 'reader tried to answer it. Nothing is lost. Open the book in the Kindle app or on '
+          + 'read.amazon.com, answer it once there, and it will not be asked again here.';
         $('reader-failed-detail-label').textContent = 'What Amazon is asking';
         $('reader-failed-detail-label').hidden = false;
         $('reader-failed-detail').textContent = d.prompt;
@@ -1713,11 +1771,20 @@ function renderReader(d) {
         // second and nothing else on this surface lets them. Retrying is offered but not
         // promised: a missing file on Amazon's CDN comes back when Amazon puts it back.
         $('reader-failed-title').textContent = 'Amazon\u2019s reader failed to load';
+        // Says what was OBSERVED, and stops there. The previous wording ruled out three local
+        // causes by name, in absolute terms, on the evidence that two script requests did not
+        // come back. That is exactly the signal a
+        // dropped connection, a captive portal, a DNS filter, a proxy or a content blocker
+        // produces on this machine, so on a filtered link the panel told the reader, in absolute
+        // terms, not to look at the one thing that was actually wrong. Naming the files is the
+        // useful half and it survives; the three-way exculpation was a claim this program never
+        // established, which is the whole defect this loop exists to remove, committed while
+        // removing it.
         $('reader-failed-why').textContent =
-          'Amazon\u2019s own reader asked for a file its servers no longer have, so the book '
-          + 'never rendered. This is an outage on their side, not a problem with your account, '
-          + 'your book, or this machine. This panel keeps checking every couple of seconds and '
-          + 'will clear this by itself when Amazon puts the file back.';
+          'Amazon\u2019s own reader asked for these files and they did not come back, so the book '
+          + 'never rendered. That usually means Amazon is having trouble, though anything between '
+          + 'this machine and Amazon can cause it too. This panel keeps checking every couple of '
+          + 'seconds and will clear this by itself once the files load.';
         // Both are named when both are missing. Showing one of two and saying nothing about the
         // second invites the reader to check that one file, find it is genuinely gone, and still
         // not know whether it was the whole story.
@@ -1854,7 +1921,7 @@ function renderSignIn(d) {
   const box = document.createElement('div');
   box.className = 'signin';
   box.innerHTML =
-    '<div class="label">Amazon is asking you to sign in</div>'
+    '<h2 class="failtitle">Amazon is asking you to sign in</h2>'
     + '<button class="act primary" id="signin-chrome" type="button" style="width:100%;margin-top:6px">'
     + 'Sign in to Amazon in Chrome<small>password, emailed code, or scan the QR with your phone</small>'
     + '</button>'
@@ -1917,14 +1984,22 @@ function renderSignIn(d) {
         readerSay(openingLine(), true);
         return;
       }
-      // It cannot work until that browser has a live session again, so it stops
-      // offering itself rather than staying pressable and doing nothing.
-      $('carry-session').textContent = 'That session has expired';
+      // The OUTCOME goes where every other outcome of this control goes, and the button stays a
+      // button. It used to overwrite its own label with the outcome and stay disabled, so a
+      // control turned into a greyed sentence at 45% opacity, and `renderSignIn` early-returns
+      // while the box exists, so it never came back: a reader who signed into Amazon in their
+      // ordinary browser to fix exactly this could not retry the cheap path without reloading the
+      // panel. A label says what the control does; it is not a status line.
+      signinSay('That session has expired. Sign in to Amazon in your ordinary Chrome, then press '
+        + 'Use the session from your own Chrome instead again.');
     } catch {
       signinSay('Interstice is not running in the background. Open a terminal and run interstice start.');
       $('carry-session').disabled = false;
     } finally {
       $('signin-chrome').disabled = false;
+      // Re-enabled with its sibling. Only one of the two was ever restored here, so the cheap
+      // path was disabled for the life of the panel after a single failed attempt.
+      $('carry-session').disabled = false;
     }
   };
 }
@@ -2528,6 +2603,9 @@ $('reader-retry').addEventListener('click', () => readerRetryAsk(true));
 // Nothing is cleared and nothing is reopened. The next poll asks the daemon again, and if the
 // answer is the same the surface comes straight back, which is the honest outcome and is why
 // this control does not promise otherwise.
+// The same action as the note's "Read it again", reached from the loading surface, where the
+// remedy sentences that name it are printed.
+$('reader-over-act').addEventListener('click', () => $('read-again')?.click());
 $('reader-recheck').addEventListener('click', async () => {
   const b = $('reader-recheck');
   b.disabled = true;

@@ -1295,7 +1295,19 @@ test('the panel names the vendor outage instead of showing the failure it is not
     !/Try again:/.test(outage),
     'the outage copy does not promise the retry will fix it'
   );
-  assert.match(outage, /outage on their side/, 'and it says whose failure it is');
+  // The copy must NOT claim more than the panel observed. This assertion used to require the
+  // sentence "an outage on their side", which is the overclaim itself: all the panel knows is that
+  // two script requests did not come back, and a dropped connection, a captive portal, a DNS
+  // filter, a proxy or a content blocker produce exactly that signal on this machine. The test was
+  // enforcing the defect. It now requires the observation and forbids the absolute exculpation.
+  assert.match(outage, /did not come back/, 'it says what was observed');
+  for (const overclaim of [
+    /not a problem with your account/,
+    /not a problem with .{0,30}this machine/,
+  ]) {
+    assert.ok(!overclaim.test(outage), `the copy does not rule out what it cannot rule out: ${overclaim}`);
+  }
+  assert.match(outage, /anything between/, 'and it leaves the local causes on the table');
   // The element it writes into has to exist, or all of the above is writing to null.
   assert.match(html, /id="reader-failed-detail"/, 'the detail element exists in the markup');
   assert.match(html, /id="reader-failed-title"/, 'and so does the title it retitles');
