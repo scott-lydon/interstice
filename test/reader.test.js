@@ -684,3 +684,31 @@ test('retryBook does not report success for a book that did not come back', asyn
   const failurePage = await reader.retryBook();
   assert.equal(failurePage.ok, true, "the vendor's failure page is something arriving, not nothing");
 });
+
+test('revive reports whether the book came back, not whether its steps ran', async () => {
+  // The cause behind E4. `revive` awaited `settle` and discarded the result, so it answered true
+  // whenever its own steps completed without throwing. Both callers read that as "the book is
+  // back": retryBook told the panel so, and the turn path pressed a key into a page that was not
+  // there. Live, this produced {ok: true, cleared: true, reopened: true} on a reader that had not
+  // rendered a page in minutes.
+  const src = fs.readFileSync(path.join(ROOT, 'lib', 'reader.js'), 'utf8');
+  const revive = src.slice(src.indexOf('async revive('), src.indexOf('async clearSiteData'));
+  assert.ok(revive.length > 0, 'revive is found');
+
+  assert.match(revive, /const settled = await this\.settle\(\)/, "settle's answer is kept");
+  assert.ok(
+    !/^\s*return true;\s*$/m.test(revive),
+    'revive no longer returns an unconditional true from its success path'
+  );
+  assert.match(
+    revive,
+    /return Boolean\(settled && \(settled\.painted \|\| settled\.bookError \|\| settled\.signedOut\)\)/,
+    'and answers on what arrived'
+  );
+
+  // The three that count as arrival are deliberate, so each is named rather than left to a
+  // reader of the expression to infer.
+  for (const arrived of ['painted', 'bookError', 'signedOut']) {
+    assert.ok(revive.includes(arrived), `${arrived} counts as the page having arrived`);
+  }
+});
