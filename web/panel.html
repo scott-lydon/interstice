@@ -1492,8 +1492,12 @@ function renderReader(d) {
   // the book. Nothing here can fix a file missing from Amazon's servers. Saying so beats an
   // indefinite spinner, which is what this looked like before and reads as our bug.
   const vendorBroken = !d.bookError && Array.isArray(d.deadScripts) && d.deadScripts.length > 0;
-  if ((Boolean(d.bookError) || vendorBroken) !== readerFailed) {
-    readerFailed = Boolean(d.bookError) || vendorBroken;
+  // A question standing over the book, still there after the dismissal that should have answered
+  // it. The picture is refused for it, so without this the panel would sit on the last good page
+  // with no explanation while Amazon waits for an answer nobody can see. Item 1.3.
+  const askedSomething = !d.bookError && !vendorBroken && Boolean(d.prompt);
+  if ((Boolean(d.bookError) || vendorBroken || askedSomething) !== readerFailed) {
+    readerFailed = Boolean(d.bookError) || vendorBroken || askedSomething;
     $('reader-failed').hidden = !readerFailed;
     if (readerFailed) {
       $('reader-over').hidden = true;
@@ -1507,7 +1511,18 @@ function renderReader(d) {
       // Amazon's own wording, is a paragraph to decode at the moment the book failed to
       // open. Three short ones, in the order the reader needs them: what happened, whose
       // fault it is not, and what the button does.
-      if (vendorBroken) {
+      if (askedSomething) {
+        // Amazon's own words, shown rather than summarised: it is a question about this reader's
+        // position in this book, and the operator is the only one who can answer it.
+        $('reader-failed-title').textContent = 'Amazon is asking about your place in the book';
+        $('reader-failed-why').textContent =
+          'Amazon put a question over the book and it is still there after this reader tried to '
+          + 'answer it. Nothing is lost. Open the book in the Kindle app or on read.amazon.com, '
+          + 'answer it once there, and it will not be asked again here.';
+        $('reader-failed-detail').textContent = d.prompt;
+        $('reader-failed-detail').hidden = false;
+        setPagerDisabled(true, 'Amazon is waiting for an answer, so there is no page to turn.');
+      } else if (vendorBroken) {
         // Named, with the file, because the operator can check this one themselves in a
         // second and nothing else on this surface lets them. Retrying is offered but not
         // promised: a missing file on Amazon's CDN comes back when Amazon puts it back.

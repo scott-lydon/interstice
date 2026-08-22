@@ -1300,3 +1300,71 @@ test('the panel names the vendor outage instead of showing the failure it is not
   assert.match(html, /id="reader-failed-detail"/, 'the detail element exists in the markup');
   assert.match(html, /id="reader-failed-title"/, 'and so does the title it retitles');
 });
+
+test('a prompt the reader could not answer is never photographed', async () => {
+  // Item 1.3. The page behind Amazon's question IS painted, so the painted rule lets it through
+  // and the photograph has the dialog in the middle of it, set in the panel's reading type as
+  // the page. The dismissal runs before capture on the paths that expect one, so a prompt still
+  // standing here is one that was not answered.
+  const { reader, shots } = wiredReader({ label: 'Page 80 of 220', painted: true, bookError: false });
+  reader.frame = { seq: 4, jpeg: Buffer.from('the-last-real-page'), at: Date.now() - 10_000 };
+
+  // The prompt text is verbatim from the live reader, docs/evidence/2026-08-21/E1-VERDICT.md.
+  const out = await reader.capture({
+    force: true,
+    probe: {
+      label: 'Page 80 of 220',
+      painted: true,
+      bookError: false,
+      prompt: "Most Recent Page Read You're on location 4328. The most recent location is 4325. Go to location 4325? No Yes",
+    },
+  });
+
+  assert.equal(shots(), 0, 'no picture is taken of a page with a question over it');
+  assert.equal(out.jpeg.toString(), 'the-last-real-page', 'the last real page is what the panel keeps');
+});
+
+test('the probe reports a prompt only when it is actually showing', () => {
+  // Measured in this DOM: six elements match the three tags the dismissal searches and five are
+  // permanently mounted at zero by zero. Presence proves nothing here, which is exactly why the
+  // shown test exists, and the probe has to use the same one as the dismissal or the two will
+  // disagree about whether there is a question on screen.
+  const mk = (over) => ({
+    body: { innerText: 'Page 80 of 220' },
+    title: 'Kindle',
+    querySelector: () => null,
+    querySelectorAll: (q) => (q.includes('ion-alert') ? over : []),
+  });
+  const el = (text, box, hidden = false) => ({
+    classList: { contains: () => hidden },
+    getBoundingClientRect: () => ({ width: box[0], height: box[1], x: 0, y: 0 }),
+    innerText: text,
+  });
+  const ASK = "Most Recent Page Read You're on location 4328. The most recent location is 4325. Go to location 4325? No Yes";
+  // eslint-disable-next-line no-new-func
+  const run = (over) => JSON.parse(new Function('document', 'location', 'window', `return ${PROBE}`)(
+    mk(over), { href: 'https://read.amazon.com/' }, { devicePixelRatio: 2 }
+  ));
+
+  // The live shape: two permanently mounted ghosts and one real alert at 412x520.
+  const ghost = el('', [0, 0], true);
+  assert.equal(run([ghost, ghost, el(ASK, [412, 520])]).prompt, ASK, 'the shown one is reported');
+  assert.equal(run([ghost, ghost]).prompt, '', 'the mounted ghosts are not a question');
+  assert.equal(run([el(ASK, [0, 0])]).prompt, '', 'and neither is a matching element with no box');
+  assert.equal(run([el(ASK, [412, 520], true)]).prompt, '', 'nor one carrying the hidden class');
+  assert.equal(run([el('Rate this book on Goodreads?', [412, 520])]).prompt, '', 'other dialogs are left alone');
+});
+
+test('the panel shows the question rather than sitting on the last page', () => {
+  // Item 1.3's other half. With the picture refused, a panel that said nothing would hold the
+  // previous page on screen indefinitely while Amazon waited for an answer nobody could see.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  const branch = html.slice(start, html.indexOf('// Back to a real page', start));
+  assert.match(branch, /if \(askedSomething\)/, 'the question has a branch of its own');
+  const arm = branch.slice(branch.indexOf('if (askedSomething)'), branch.indexOf('} else if'));
+  assert.match(arm, /reader-failed-detail'\)\.textContent = d\.prompt/, "it shows Amazon's own words");
+  assert.match(arm, /setPagerDisabled\(true/, 'and there is no page to turn');
+  // The flag has to be computed from the probe, or the branch is unreachable.
+  assert.match(html, /const askedSomething = [^\n]*d\.prompt/, 'the flag comes from the probe');
+});
