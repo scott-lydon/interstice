@@ -113,3 +113,46 @@ A second book would be the last variable to eliminate, and the library holds non
 no other unfinished book and no second ASIN could be found on the library page. So the position
 cannot be varied and a second title cannot be tried, which is the honest end of what this machine
 can establish tonight.
+
+## Every client-side route, tried and eliminated
+
+The section above ends by saying the position cannot be steered from this machine. That was a claim
+about routes not yet tried. They have now been tried, and it is a finding.
+
+Two fresh tabs, created over the debugging port on the same profile whose library renders fine,
+twenty seconds each:
+
+```
+WITH location:    {"href":"...?asin=B0046LU7H0&location=1000","label":"Page 220 of 220 ● 95%",
+                   "spinner":true,"imgs":1,"bodyLen":238}
+WITHOUT location: {"href":"...?asin=B0046LU7H0",              "label":"Page 220 of 220 ● 95%",
+                   "spinner":true,"imgs":1,"bodyLen":238}
+```
+
+Byte-identical. So **Amazon ignores the location parameter**, which kills the one remaining
+suggestion in this document, and **a fresh tab wedges exactly as the old one did**, which kills the
+idea that any amount of closing and reopening could help.
+
+| Route | Result |
+|---|---|
+| Navigate the wedged tab elsewhere | `Page.navigate did not answer in 20000ms`; the renderer is hung |
+| Turn pages backward | needs a rendered page; the label never moves |
+| Close the tab and reopen (`revive`) | returns to the same position, wedges again |
+| Close the whole browser and reopen | same |
+| Open at a position via the URL | parameter ignored, identical result |
+| Move the position from the Kindle app | the app's number is local; the web reader uses Amazon's |
+| Open a different book | the library holds no other unfinished book |
+| Check the browser and session | both fine: the library renders 8325 characters, not signed out |
+
+**The conclusion this supports, and no more than it.** The book will not render at the position
+Amazon currently holds for it, from this machine, by any client-side means available. Everything
+around the book works. This is not the session, the profile, the browser, the tab, the daemon, or
+the code changed in this loop.
+
+**What it means for the items.** 1.5's live read, 1.11's ten-turn transition test, and Z.1's video
+all need a reader that paints. They are blocked on a condition outside the code, and the honest
+record is this table rather than a claim that the work was done.
+
+**The one thing that would still settle it** is reading forward in the Kindle app far enough that it
+pushes a new position to Amazon, which moves the book off page 220 for every client. That is a
+person reading, not a command, which is why it is written here rather than attempted.
