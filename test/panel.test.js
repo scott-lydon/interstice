@@ -406,3 +406,68 @@ test('a refused retry says why, instead of clearing the line', () => {
   const refusal = handler.slice(handler.indexOf('outcome.ok === false'), handler.indexOf('} else {'));
   assert.ok(!/say\(''\)/.test(refusal), "a refusal does not clear the status line");
 });
+
+
+test('the destructive control is not offered for a failure it cannot fix', () => {
+  // Item 2.1. `reader-retry` opens a confirmation about discarding the device registration
+  // Amazon has stored here. That is the answer when Amazon refused this profile as a device. It
+  // is useless AND destructive when the failure is a file missing from Amazon's CDN or a question
+  // waiting to be answered on another device, and offering it there is the interface lying about
+  // what the button does. One control at a time, chosen by which failure this is.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  const branch = html.slice(start, html.indexOf('// Back to a real page', start));
+
+  const arm = (from, to) => branch.slice(branch.indexOf(from), branch.indexOf(to, branch.indexOf(from)));
+  const asked = arm('if (askedSomething)', '} else if');
+  const outage = arm('} else if (vendorBroken)', '} else {');
+  // The third arm opens at the `} else {` that closes the second, not at the last one in the
+  // slice: the last is the outer else, the one for a reader that came back.
+  const refused = branch.slice(branch.indexOf('} else {', branch.indexOf('} else if (vendorBroken)')));
+
+  assert.match(asked, /setFailAction\('recheck'\)/, 'a question offers only the harmless control');
+  assert.match(outage, /setFailAction\('recheck'\)/, "an outage on Amazon's side offers only the harmless control");
+  assert.match(refused, /setFailAction\('retry'\)/, 'the registration failure offers the one that clears it');
+
+  // And the helper really is exclusive, or the copy above is decoration.
+  const helper = html.slice(html.indexOf('const setFailAction ='), html.indexOf('const setFrameHidden'));
+  assert.match(helper, /reader-retry'\)\.hidden = which !== 'retry'/, 'retry is hidden unless chosen');
+  assert.match(helper, /reader-recheck'\)\.hidden = which !== 'recheck'/, 'recheck is hidden unless chosen');
+  assert.match(helper, /reader-retry-confirm'\)\.hidden = true/, 'a half-answered confirmation does not survive');
+
+  // The harmless control must not reach the endpoint that clears anything.
+  const handler = html.slice(html.indexOf("$('reader-recheck').addEventListener"), html.indexOf("$('reader-recheck').addEventListener") + 700);
+  assert.ok(!/reading\/retry/.test(handler), 'checking again does not call the clearing route');
+  assert.match(handler, /tickReader\(\)/, 'it just asks the daemon again');
+});
+
+test('the failure surface reads as a heading and its evidence is legible', () => {
+  // Item 2.1. Three failures share this surface, so the title carries the meaning rather than
+  // labelling a section: `.label` is a 10px uppercase caption role at .14em tracking, and three
+  // sentences of very different lengths set that way are a wall at the moment the reader most
+  // needs to understand something.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const title = html.slice(html.indexOf('id="reader-failed-title"') - 120, html.indexOf('id="reader-failed-title"') + 60);
+  assert.match(title, /class="failtitle"/, 'the title is set as a heading');
+  assert.ok(!/class="label"/.test(title), 'and not as a caption');
+
+  // The evidence line is the one string here that has to be read exactly, so it does not get
+  // dimmed below the contrast floor. Computed, not asserted by eye: --muted #939EAC over
+  // --raised #161A21 is 6.42:1, the same colour at opacity .75 is 4.18:1, and --faint #7B8693
+  // is 4.71:1. Only one of those clears 4.5:1.
+  const rule = html.slice(html.indexOf('.failwhat {'), html.indexOf('.failwhat[hidden]'));
+  assert.match(rule, /color: var\(--faint\)/, 'the evidence line uses a token');
+  assert.ok(!/opacity/.test(rule), 'and is not dimmed with opacity below the contrast floor');
+  assert.match(rule, /font-family: var\(--mono\)/, 'a URL is read character by character');
+
+  // The live region has to cover the part that names the failure, not only the paragraph that
+  // explains it, or a screen reader hears an explanation of something never named.
+  const surface = html.slice(html.indexOf('id="reader-failed"') - 200, html.indexOf('id="reader-failed-why"') + 80);
+  const liveOnSurface = /id="reader-failed"[^>]*aria-live/.test(surface)
+    || /aria-live[^>]*id="reader-failed"/.test(surface);
+  assert.ok(liveOnSurface, 'the whole explanation is one live region');
+  assert.ok(
+    !/id="reader-failed-why"[^>]*aria-live/.test(surface),
+    'and not a second one nested inside it, which would announce twice'
+  );
+});

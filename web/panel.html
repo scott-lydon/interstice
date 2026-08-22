@@ -465,6 +465,9 @@
     overflow-y: auto; overscroll-behavior: contain;
   }
   .reader .over[hidden] { display: none; }
+  /* Top aligned and a little looser than the centred overlays, because this one is a title, a
+     paragraph, an evidence line and a control: a stack to read in order, not a centred message. */
+  .reader .over.failsurface { justify-content: flex-start; gap: 10px; }
   /* The per-page note, and the reason it is a class rather than an inline style.
      `hidden` works by way of the user-agent rule `[hidden] { display: none }`, which
      an inline `display: flex` on the same element outranks: the note was therefore
@@ -473,6 +476,30 @@
      to it saying what to read again. Declared here so `[hidden]` can win. */
   .note { display: flex; align-items: center; gap: 8px; }
   .note[hidden] { display: none; }
+
+  /* The failure surface. Three different failures share it now, so the title carries the
+     meaning rather than labelling a section, and it is set like a heading instead of like an
+     eyebrow: `.label` is 10px uppercase at .14em tracking, which is a caption role, and three
+     sentences of very different lengths set that way are a wall to read at the moment the
+     reader most needs to understand something. Same face as `h2`, because that is what this
+     panel already uses for a heading. */
+  .failtitle {
+    font: 600 13px/1.3 Charter, Georgia, serif;
+    color: var(--warn); letter-spacing: -0.01em; text-wrap: balance; margin: 0;
+  }
+  /* The evidence line: a URL, or Amazon's own question, quoted back so the reader can check the
+     sentence above rather than take it. Monospaced because a URL is read character by character,
+     and coloured with a token rather than dimmed with opacity. `opacity: .75` over `--muted` on
+     `--raised` computes 4.18:1, under the 4.5:1 floor, on the one string here that has to be
+     read exactly. `--faint` is 4.71:1 and is a decision rather than a side effect.
+     A class, not an inline style, for the reason recorded above `.note`: `hidden` works through
+     a user-agent `display: none` rule that any inline `display` outranks, and this element is
+     hidden by default. */
+  .failwhat {
+    font-family: var(--mono); font-size: 11px; line-height: 1.5; color: var(--faint);
+    overflow-wrap: anywhere; margin: 0;
+  }
+  .failwhat[hidden] { display: none; }
 
   .pager { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
   .pager .grow { margin-left: auto; }
@@ -660,17 +687,36 @@
           progress bar still reading 39%, with nothing anywhere saying the reader had
           failed. This is that state, named, with the one thing worth pressing.
         -->
-        <div class="over" id="reader-failed" hidden style="justify-content:flex-start; gap:10px">
-          <div class="label" id="reader-failed-title" style="color:var(--warn)">Amazon could not open this book</div>
-          <div class="why" id="reader-failed-why" role="status" aria-live="polite"></div>
+        <!--
+          One live region around the whole explanation, not around the middle of it. The title
+          is the part that names the failure and it changes with the failure, so announcing only
+          the paragraph read out an explanation of something that was never named.
+        -->
+        <div class="over failsurface" id="reader-failed" hidden role="status" aria-live="polite">
+          <p class="failtitle" id="reader-failed-title">Amazon could not open this book</p>
+          <div class="why" id="reader-failed-why"></div>
           <!--
-            The file, so the operator can check the claim above rather than take it. It is a URL
-            and it is long, so it wraps and breaks anywhere rather than pushing the overlay wide.
+            The evidence: the file that 404ed, or Amazon's own question. Quoted so the sentence
+            above can be checked rather than believed, which is the whole reason it is here.
           -->
-          <div class="why" id="reader-failed-detail" hidden
-            style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px;
-              overflow-wrap:anywhere; opacity:.75"></div>
+          <p class="failwhat" id="reader-failed-detail" hidden></p>
+          <!--
+            Demoted to a plain control when the failure is Amazon's outage. The button is still
+            offered, because the file may be back, but styling it as the primary action promises
+            that pressing it fixes this, and pressing it cannot fetch a file off Amazon's CDN. On
+            the failure this program CAN clear, it stays primary, because there it is the answer.
+          -->
           <button class="act primary" id="reader-retry" type="button">Try again</button>
+          <!--
+            A separate control for the failures this program cannot clear. `reader-retry` opens a
+            confirmation about discarding the device registration Amazon has stored here, which
+            is the right move when Amazon refused this profile as a device and is both useless
+            and destructive when the failure is a file missing from Amazon's CDN or a question
+            waiting to be answered elsewhere. Asking someone to throw away their registration to
+            fix somebody else's 404 is the interface lying about what the button does. This one
+            just looks again.
+          -->
+          <button class="act" id="reader-recheck" type="button" hidden>Check again</button>
           <!--
             Reopening calls revive({ clearFirst: true }), which deletes the device
             registration Amazon has stored for this profile. That is not undoable and it
@@ -811,6 +857,17 @@ const $ = (id) => document.getElementById(id);
       el.disabled = disabled;
       el.title = disabled ? why : el.dataset.title;
     }
+  };
+
+  /* Which control the failure surface offers. One at a time, because they are not variants of
+     each other: `retry` discards the device registration Amazon stored here and reopens the
+     book, and `recheck` does nothing but look again. Offering both would ask the reader to tell
+     them apart at the moment they are least equipped to. */
+  const setFailAction = (which) => {
+    $('reader-retry').hidden = which !== 'retry';
+    $('reader-recheck').hidden = which !== 'recheck';
+    // A half-answered confirmation must not survive into a failure that does not ask it.
+    $('reader-retry-confirm').hidden = true;
   };
 
   const setFrameHidden = (hidden) => {
@@ -1521,6 +1578,7 @@ function renderReader(d) {
           + 'answer it once there, and it will not be asked again here.';
         $('reader-failed-detail').textContent = d.prompt;
         $('reader-failed-detail').hidden = false;
+        setFailAction('recheck');
         setPagerDisabled(true, 'Amazon is waiting for an answer, so there is no page to turn.');
       } else if (vendorBroken) {
         // Named, with the file, because the operator can check this one themselves in a
@@ -1533,6 +1591,7 @@ function renderReader(d) {
           + 'your book, or this machine. It clears when Amazon puts the file back.';
         $('reader-failed-detail').textContent = d.deadScripts[0];
         $('reader-failed-detail').hidden = false;
+        setFailAction('recheck');
         setPagerDisabled(true, 'Amazon\u2019s reader did not load, so there is no page to turn.');
       } else {
         $('reader-failed-title').textContent = 'Amazon could not open this book';
@@ -1541,6 +1600,8 @@ function renderReader(d) {
           + 'what Amazon turned down was this reader as a device. Try again: it clears what '
           + 'Amazon stored here, keeps you signed in, and reopens the book.';
         $('reader-failed-detail').hidden = true;
+        // Here the destructive one IS the answer: it clears what Amazon stored and reopens.
+        setFailAction('retry');
         // There is no page, so turning one cannot work. Item 1.7 asks for disabled rather than
         // silently doing nothing.
         setPagerDisabled(true, 'Amazon would not open this book. Press Read it again.');
@@ -2286,6 +2347,20 @@ function readerRetryAsk(show) {
   (show ? $('reader-retry-yes') : $('reader-retry')).focus();
 }
 $('reader-retry').addEventListener('click', () => readerRetryAsk(true));
+// Nothing is cleared and nothing is reopened. The next poll asks the daemon again, and if the
+// answer is the same the surface comes straight back, which is the honest outcome and is why
+// this control does not promise otherwise.
+$('reader-recheck').addEventListener('click', async () => {
+  const b = $('reader-recheck');
+  b.disabled = true;
+  b.innerHTML = '<span class="spinner"></span> Checking';
+  try {
+    await tickReader();
+  } finally {
+    b.disabled = false;
+    b.textContent = 'Check again';
+  }
+});
 $('reader-retry-no').addEventListener('click', () => readerRetryAsk(false));
 $('reader-retry-yes').addEventListener('click', async () => {
   const b = $('reader-retry-yes');
