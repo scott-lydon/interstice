@@ -454,3 +454,91 @@ test('a recovery that finds nothing to carry leaves the reader open, not closed'
     'and reopens it on the book it was reading before it gave up'
   );
 });
+
+/**
+ * A reader wired to a fake DevTools connection that counts what it was asked to do.
+ *
+ * `cdp` is the seam because it is the only thing between this class and the browser, so a
+ * screenshot that was ATTEMPTED is visible here whether or not it produced bytes. Counting
+ * attempts is the whole point: the first draft of these tests asserted on the returned frame
+ * instead, and passed against the unfixed code, because a shot with no browser behind it
+ * returns nothing and leaves the previous frame in place exactly as a refusal does.
+ */
+function wiredReader(probe) {
+  const calls = [];
+  const reader = new Reader({ config: { reading: {} } });
+  Object.defineProperty(reader, 'running', { get: () => true, configurable: true });
+  reader.sessionId = 'test-session';
+  reader.clip = { x: 0, y: 0, width: 512, height: 700 };
+  reader.frontier = reader.pos;
+  reader.cdp = {
+    async send(method) {
+      calls.push(method);
+      if (method === 'Runtime.evaluate') return { result: { value: JSON.stringify(probe) } };
+      if (method === 'Page.captureScreenshot') return { data: Buffer.from('shot').toString('base64') };
+      return {};
+    },
+  };
+  return { reader, calls, shots: () => calls.filter((m) => m === 'Page.captureScreenshot').length };
+}
+
+test('a page with no position label is not photographed', async () => {
+  // Item 1.5, and the measurement behind it. Over a real cold start the reader's page sat at
+  // read.amazon.com with zero img, zero canvas, zero svg and no label for tens of seconds, and
+  // nothing in `capture` looked at any of that: it shot whatever was on screen, held it as the
+  // current frame, and the panel set a blank page in the reading type as though it were the book.
+  const { reader, shots } = wiredReader({ label: '', bookError: false, painted: false });
+  reader.frame = { seq: 7, jpeg: Buffer.from('the-last-real-page'), at: Date.now() - 10_000 };
+
+  const out = await reader.capture({ force: true, probe: { label: '', bookError: false } });
+
+  assert.equal(shots(), 0, 'no picture is taken of a page that is not showing the book');
+  assert.equal(out.jpeg.toString(), 'the-last-real-page', 'and the last real page is what the panel keeps');
+});
+
+test("Amazon's failure page IS photographed, because the panel has to show it", async () => {
+  // The failure page carries no position label either, so a refusal keyed on the label alone
+  // would stop the panel from ever showing it and would undo loop 8's repair. It is let through
+  // by name rather than by accident, and this asserts the shot actually happens.
+  const { reader, shots } = wiredReader({ label: '', bookError: true, painted: true });
+  reader.frame = null;
+
+  await reader.capture({ force: true, probe: { label: '', bookError: true } });
+
+  assert.equal(shots(), 1, 'the failure page is photographed so the panel can show it');
+});
+
+test('a labelled page is still photographed', async () => {
+  // The guard must not refuse the ordinary case, which is the mutation most likely to be made
+  // by someone tightening it later.
+  const { reader, shots } = wiredReader({ label: 'Page 80 of 220', bookError: false, painted: true });
+  reader.frame = null;
+
+  await reader.capture({ force: true, probe: { label: 'Page 80 of 220', bookError: false } });
+
+  assert.equal(shots(), 1, 'a page of the book is photographed');
+});
+
+test("a browser showing nothing does not borrow the shelf's page number", async () => {
+  // `state` reports the label of the page YOU are on rather than the browser's, because the
+  // browser runs ahead to fill the shelf. That fallback fired in the one case it was never meant
+  // for: a browser showing nothing has no label of its own, so the shelf's remembered one was
+  // served, and a blank reader reported the page you were on before it went blank. Measured
+  // live: the probe's label was empty for forty seconds while the route answered Page 217 of 220.
+  const { reader } = wiredReader({ label: '', painted: false, signedOut: false, bookError: false });
+  reader.pages.set(reader.pos, { label: 'Page 217 of 220', jpeg: null, text: null });
+
+  const state = await reader.state();
+
+  assert.equal(state.label, '', 'nothing on screen reports nothing');
+});
+
+test('a browser that has run ahead still reports the page you are on', async () => {
+  // The other side of the same line, so the fix cannot be "always report the browser's label".
+  const { reader } = wiredReader({ label: 'Page 219 of 220', painted: true, signedOut: false, bookError: false });
+  reader.pages.set(reader.pos, { label: 'Page 217 of 220', jpeg: null, text: null });
+
+  const state = await reader.state();
+
+  assert.equal(state.label, 'Page 217 of 220', 'the shelf still wins while the browser is ahead');
+});
