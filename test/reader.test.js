@@ -496,7 +496,14 @@ test('a page with no position label is not photographed', async () => {
   const { reader, shots } = wiredReader({ label: '', bookError: false, painted: false });
   reader.frame = { seq: 7, jpeg: Buffer.from('the-last-real-page'), at: Date.now() - 10_000 };
 
-  const out = await reader.capture({ force: true, probe: { label: '', bookError: false } });
+  // The fixture carries a LABEL. Without one it also satisfied the old, rejected rule that keyed
+  // on the label being empty, so the test passed against both implementations and could not tell
+  // them apart. A label plus painted:false is the state only the painted rule refuses, and it is
+  // the state a live reader actually produced: a spinner under a truthful page number.
+  const out = await reader.capture({
+    force: true,
+    probe: { label: 'Page 219 of 220', painted: false, spinner: true, bookError: false },
+  });
 
   assert.equal(shots(), 0, 'no picture is taken of a page that is not showing the book');
   assert.equal(out.jpeg.toString(), 'the-last-real-page', 'and the last real page is what the panel keeps');
@@ -592,18 +599,27 @@ test('every reader failure the panel can show names a move', () => {
   const remedy = html.slice(html.indexOf('function readerRemedy'), html.indexOf('async function loadCards'));
   assert.ok(remedy.length > 200, 'the remedy function is there to read');
 
+  // The pattern is lifted OUT OF THE PANEL and run against the strings the reader really
+  // produced. The first version of this compared a regex literal written in this file against a
+  // string literal written four lines above it, which passes for any state of the product: it
+  // asserted that a test file is internally consistent. The subject has to come from the source.
+  const wedgeSource = (remedy.match(/if \(\/(.+?)\/i\.test\(r\)\)/) || [])[1];
+  assert.ok(wedgeSource, 'the remedy function has a first pattern to extract');
+  const wedgePattern = new RegExp(wedgeSource, 'i');
   for (const observed of [
     'Runtime.evaluate did not answer in 8000ms',
     'Page.navigate did not answer in 20000ms',
     'Emulation.setDeviceMetricsOverride did not answer in 20000ms',
   ]) {
-    assert.match(
-      observed,
-      /did not answer in \d+ms/,
-      `the wedge pattern must match the real string "${observed}"`
+    assert.ok(
+      wedgePattern.test(observed),
+      `the panel's own pattern must match the real string "${observed}"`
     );
   }
-  assert.ok(/did not answer in/.test(remedy), 'and the function matches that shape');
+  // And it must NOT match something that is not the wedge, or it would map every failure onto
+  // the same remedy.
+  assert.ok(!wedgePattern.test('no Chromium-family browser found to render the book'),
+    'the wedge pattern does not swallow unrelated failures');
   assert.ok(/no Chromium-family browser/.test(remedy), 'the throw the reader raises by name is covered');
 
   // The general case must not be a restatement of the failure. It has to end in an instruction.
@@ -722,10 +738,21 @@ test('E3: the vendor failure page is never rendered as the book', () => {
     + 'Please try to open this book from the library again.\n'
     + 'Back to Library';
 
-  // The detector fires on the fixture. Both halves are required, so a page merely containing the
-  // word "Oops" is not a failure.
-  assert.match(AMAZON_FAILURE, /Oops\b|Something Went Wrong/i);
-  assert.match(AMAZON_FAILURE, /open this book from the library/i);
+  // The detector is lifted OUT OF THE PROBE and run against the fixture. Writing the two regexes
+  // here and matching them against a string also written here asserts nothing about the product:
+  // it passes whatever the probe does. Both halves are required, so a page merely containing the
+  // word "Oops" is not a failure, and that is asserted against the real detector too.
+  const probeSrc = fs.readFileSync(path.join(ROOT, 'lib', 'reader.js'), 'utf8');
+  const bookErrorLine = probeSrc.slice(probeSrc.indexOf('const bookError ='), probeSrc.indexOf('// Where the page itself'));
+  const halves = [...bookErrorLine.matchAll(/\/([^/]+)\/i\.test\(text\)/g)].map((m) => m[1]);
+  // literal-ok: two is the specification. The rule under test is that the failure page is
+  // recognised by BOTH halves, so a detector that dropped to one pattern is the regression.
+  assert.equal(halves.length, 2, 'the detector is two patterns, both required');
+  const detects = (text) => halves.every((h) => new RegExp(h.replace(/\\\\/g, '\\'), 'i').test(text));
+  assert.ok(detects(AMAZON_FAILURE), "the probe's own detector fires on the captured fixture");
+  assert.ok(!detects('Kindle Library\nPage 80 of 220 ● 37%'), 'and not on a page of the book');
+  assert.ok(!detects('Oops, I dropped something. Anyway, back to the library of Alexandria.'),
+    'and not on prose that merely contains the word');
 
   const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
 
@@ -838,5 +865,210 @@ test('read-ahead does not shelve a page the probe says has not arrived', async (
   assert.ok(
     !/if \(!probe \|\|/.test(step),
     'a null probe is tolerated rather than treated as a page that failed to arrive'
+  );
+});
+
+
+// ---------------------------------------------------------------------------------------------
+// The adversarial review of this loop's own diff (docs/ADVERSARY_REPORT_READER_2026-08-19.md)
+// found six more surfaces stating an outcome they never obtained. Each test below is the check
+// that report prescribed, and each was confirmed to FAIL against the code as it stood.
+// ---------------------------------------------------------------------------------------------
+
+test('a retry whose probe never answered does not report on the page', async () => {
+  // Finding 4. `after` was null in two different situations, a page that answered and reported
+  // nothing painted, and a page that was never asked because the probe threw, and the refusal
+  // asserted the first in both cases. The second is a claim about a page nobody questioned, and
+  // it also loses the remedy: the panel has a branch for a page that stopped answering that the
+  // flattened sentence could never route to.
+  const reader = new Reader({ config: { reading: {} }, logger: { info() {}, warn() {}, error() {} } });
+  reader.asin = 'B0046LU7H0';
+  Object.defineProperty(reader, 'running', { get: () => true, configurable: true });
+  reader.sessionId = 'test-session';
+  reader.viewport = { width: 900, height: 1200 };
+  reader.revive = async () => true;
+  reader.cdp = {
+    async send(method) {
+      if (method === 'Runtime.evaluate') throw new Error('Runtime.evaluate did not answer in 8000ms');
+      return {};
+    },
+  };
+
+  const out = await reader.retryBook();
+
+  assert.equal(out.ok, false);
+  assert.ok(
+    !/has not painted anything/.test(out.actual),
+    `a page that was never asked is not described as blank: ${out.actual}`
+  );
+  assert.match(out.actual, /did not answer in \d+ms/, 'the thrown message survives to the panel');
+  // And the panel's own wedge remedy can now reach it, which is the point of keeping the message.
+  const panel = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const wedgeSource = (panel.slice(panel.indexOf('function readerRemedy')).match(/if \(\/(.+?)\/i\.test\(r\)\)/) || [])[1];
+  assert.ok(new RegExp(wedgeSource, 'i').test(out.actual), 'and the panel routes it to the wedge remedy');
+});
+
+test('ensure does not answer ok over a settle that found nothing', async () => {
+  // Finding 5. A liveness answer that says ok over a dead page is worse than an error, because
+  // the caller stops looking. `settled` was consulted for exactly one thing, whether the session
+  // had signed out, so a settle that burned its whole budget seeing nothing still returned ok.
+  const reader = new Reader({ config: { reading: {} }, logger: { info() {}, warn() {}, error() {} } });
+  Object.defineProperty(reader, 'running', { get: () => true, configurable: true });
+  reader.sessionId = 'test-session';
+  reader.settle = async () => null;
+  reader.cdp = { async send() { return {}; } };
+
+  const out = await reader.ensure({ asin: 'B0046LU7H0', width: 900, height: 1200 });
+
+  assert.equal(out.ok, false, 'a settle that observed nothing is not an open book');
+  assert.ok(out.reason, 'and the refusal names a move');
+});
+
+test('settle does not hand back a reading it took forty seconds ago', async () => {
+  // Finding 7. `last` is assigned only on a SUCCESSFUL probe and was returned at the deadline
+  // however old it was, so a page that answered once with a painted shell and then stopped
+  // answering entirely returned that first reading as settle's answer. `revive` read `.painted`
+  // off it and reported the book was back: the same false claim, moved from "my steps ran" to
+  // "here is a reading from forty seconds ago".
+  const reader = new Reader({ config: { reading: {} }, logger: { info() {}, warn() {}, error() {} } });
+  Object.defineProperty(reader, 'running', { get: () => true, configurable: true });
+  reader.sessionId = 'test-session';
+  let asked = 0;
+  reader.cdp = {
+    async send(method) {
+      if (method !== 'Runtime.evaluate') return {};
+      asked += 1;
+      if (asked === 1) return { result: { value: JSON.stringify({ painted: true, label: '', bookError: false, signedOut: false }) } };
+      await new Promise((r) => setTimeout(r, 400));
+      throw new Error('Runtime.evaluate did not answer in 8000ms');
+    },
+  };
+
+  const settled = await reader.settle({ timeoutMs: 3000, graceMs: 60_000 });
+
+  assert.ok(asked > 1, 'the fixture actually got past its one good answer');
+  assert.equal(settled, null, 'a settle that timed out has not observed anything');
+});
+
+test('a page that never answers is reported once, whatever budget the caller gave', async () => {
+  // Finding 8. The old rule was five consecutive exceptions. `#evaluate` waits 8000ms before it
+  // gives up, so five misses need about 42 seconds, and two of settle's four callers hand it
+  // 12000ms and 15000ms: the line could never print for them. This asserts the invariant the
+  // line exists for, rather than the constant, and it runs at the smaller budget.
+  const said = [];
+  const reader = new Reader({
+    config: { reading: {} },
+    logger: { info: (m) => said.push(m), warn() {}, error() {} },
+  });
+  Object.defineProperty(reader, 'running', { get: () => true, configurable: true });
+  reader.sessionId = 'test-session';
+  reader.cdp = {
+    async send(method) {
+      if (method !== 'Runtime.evaluate') return {};
+      throw new Error('Runtime.evaluate did not answer in 8000ms');
+    },
+  };
+
+  await reader.settle({ timeoutMs: 3000 });
+
+  const quiet = said.filter((m) => /has not answered a probe/.test(m));
+  assert.equal(quiet.length, 1, `a page that never answers says so exactly once: ${JSON.stringify(said)}`);
+  assert.match(quiet[0], /Remedy:/, 'and it names the move');
+});
+
+test('a prompt that is still on screen is not reported as answered', async () => {
+  // Finding 9, which is E1's stated root cause. The returned list was the prompts that were
+  // CLICKED, and both callers read it as the prompts that were GONE: one of them takes a
+  // non-empty list as its signal to settle for another fifteen seconds. Clicking an element
+  // whose label matched is not a dismissal.
+  const said = [];
+  const reader = new Reader({
+    config: { reading: {} },
+    logger: { info: (m) => said.push(m), warn() {}, error() {} },
+  });
+  Object.defineProperty(reader, 'running', { get: () => true, configurable: true });
+  reader.sessionId = 'test-session';
+  const scripts = [];
+  reader.cdp = {
+    async send(method, params) {
+      if (method !== 'Runtime.evaluate') return {};
+      scripts.push(params.expression);
+      // Both calls report the prompt present: the click landed on nothing.
+      return { result: { value: JSON.stringify(['Go to the most recent page read?']) } };
+    },
+  };
+
+  const gone = await reader.dismissOverlays('Yes');
+
+  // literal-ok: two is the specification. One evaluate is a click nobody checked, which is the
+  // finding; two is the click and the re-read that confirms the prompt actually went.
+  assert.equal(scripts.length, 2, 'the document is read again after the click, not assumed');
+  assert.deepEqual(gone, [], 'a prompt still on screen is not in the answered list');
+  assert.ok(
+    said.some((m) => /still on screen/.test(m)),
+    `and the log says the press did not land: ${JSON.stringify(said)}`
+  );
+});
+
+test('a prompt that really went away is reported answered', async () => {
+  // The other half, so the fix above cannot be "return nothing and always be right".
+  const reader = new Reader({ config: { reading: {} }, logger: { info() {}, warn() {}, error() {} } });
+  Object.defineProperty(reader, 'running', { get: () => true, configurable: true });
+  reader.sessionId = 'test-session';
+  let call = 0;
+  reader.cdp = {
+    async send(method) {
+      if (method !== 'Runtime.evaluate') return {};
+      call += 1;
+      return { result: { value: JSON.stringify(call === 1 ? ['Go to the most recent page read?'] : []) } };
+    },
+  };
+
+  const gone = await reader.dismissOverlays('Yes');
+
+  assert.deepEqual(gone, ['Go to the most recent page read?'], 'the dismissal that worked is reported');
+});
+
+test('the shelf label is not printed over a spinner', async () => {
+  // Finding 6. The gate asked whether the BROWSER had a label, which repaired the empty half and
+  // left the wrong half standing: the measured wedge is a spinner under a truthful label, so the
+  // gate passed and the shelf's remembered page was printed over a loading spinner.
+  const reader = new Reader({ config: { reading: {} } });
+  Object.defineProperty(reader, 'running', { get: () => true, configurable: true });
+  reader.sessionId = 'test-session';
+  reader.asin = 'B0046LU7H0';
+  reader.pos = 217;
+  reader.pages.set(217, { label: 'Page 217 of 220', at: Date.now() });
+  // The live wedge, verbatim from the evidence file: a spinner under a truthful page number.
+  reader.cdp = {
+    async send(method) {
+      if (method !== 'Runtime.evaluate') return {};
+      return {
+        result: {
+          value: JSON.stringify({
+            label: 'Page 219 of 220 ● 95%', painted: false, spinner: true, bookError: false, signedOut: false,
+          }),
+        },
+      };
+    },
+  };
+
+  const out = await reader.state();
+
+  assert.equal(out.label, '', 'nothing is claimed about a page that has not arrived');
+});
+
+test('the panel does not promise turns over a page that is not there', async () => {
+  // Finding 6, second half. `readerShelf` is only ever assigned, never cleared while the reader
+  // is wedged, so the count survives the failure that made it false. With the label gated on
+  // arrival, an ungated count still printed "  ·  2 pages ready to turn instantly" on its own
+  // over a spinner, which is the same promise with the page number removed.
+  const panel = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const line = panel.split('\n').find((l) => /const ahead = /.test(l));
+  assert.ok(line, 'the panel computes an ahead count');
+  assert.match(
+    line,
+    /d\.label\s*&&/,
+    `the count is gated on the page having arrived: ${line.trim()}`
   );
 });

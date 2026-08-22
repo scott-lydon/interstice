@@ -1521,7 +1521,12 @@ function renderReader(d) {
   // is the thing that makes the speed checkable: the next N turns cost nothing, and its
   // absence is why one of them did not. It used to read "· 2 ready", a count with no
   // noun, which left the reader to guess what was ready and whether it mattered.
-  const ahead = readerShelf?.ahead > 0 ? readerShelf.ahead : 0;
+  //
+  // Gated on the label, which is now gated on the page having arrived. The shelf is only ever
+  // assigned, never cleared, so the count outlives the failure that made it false: with a wedged
+  // reader the panel printed a page number over a spinner and promised two more turns behind it.
+  // The count is a claim about a page that is on screen, so it goes when the page does.
+  const ahead = d.label && readerShelf?.ahead > 0 ? readerShelf.ahead : 0;
   $('reader-page').textContent = d.signedOut
     ? 'sign in'
     : (d.label || '') + (ahead
