@@ -704,7 +704,12 @@
           is the part that names the failure and it changes with the failure, so announcing only
           the paragraph read out an explanation of something that was never named.
         -->
-        <div class="over failsurface" id="reader-failed" hidden role="status" aria-live="polite">
+        <!--
+          Focusable, because this surface appears by hiding whichever element held focus, which
+          drops focus to <body>: the next Tab then started from the skip link at the top of the
+          document rather than at the control this surface is offering.
+        -->
+        <div class="over failsurface" id="reader-failed" hidden tabindex="-1" role="status" aria-live="polite">
           <h2 class="failtitle" id="reader-failed-title">Amazon could not open this book</h2>
           <div class="why" id="reader-failed-why"></div>
           <!--
@@ -719,7 +724,14 @@
             that pressing it fixes this, and pressing it cannot fetch a file off Amazon's CDN. On
             the failure this program CAN clear, it stays primary, because there it is the answer.
           -->
-          <button class="act primary" id="reader-retry" type="button">Try again</button>
+          <!--
+            "Read it again", which is what this action is called everywhere else: on the per-page
+            note's own button, in three of the daemon's remedy sentences, and in five of the
+            panel's. This one control said "Try again" instead, so every one of those sentences
+            told the reader to press something that was not on screen, while the thing that was
+            on screen had a different name. One action, one name, through the whole flow.
+          -->
+          <button class="act primary" id="reader-retry" type="button">Read it again</button>
           <!--
             A separate control for the failures this program cannot clear. `reader-retry` opens a
             confirmation about discarding the device registration Amazon has stored here, which
@@ -1396,6 +1408,15 @@ function openingLine() {
   return `still opening after ${secs}s. This is longer than usual.`;
 }
 
+/** A sentence shortened where a sentence can be shortened: at a space, and marked as cut. */
+function shorten(text, max) {
+  const t = String(text ?? '').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max - 1);
+  const space = cut.lastIndexOf(' ');
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[,;:.\s]+$/, '')}\u2026`;
+}
+
 function readerSay(text, spin) {
   const el = $('reader-status');
   if (el) el.innerHTML = (spin ? '<span class="spinner"></span> ' : '') + esc(text);
@@ -1629,6 +1650,8 @@ function renderReader(d) {
     readerFailed = failing;
     $('reader-failed').hidden = !readerFailed;
     if (readerFailed) {
+      // Focus follows the surface, for the reason recorded on the element itself.
+      $('reader-failed').focus?.();
       $('reader-over').hidden = true;
       setFrameHidden(true);
       $('reader-text').hidden = true;
@@ -1682,10 +1705,11 @@ function renderReader(d) {
         $('reader-failed-title').textContent = 'Amazon could not open this book';
         $('reader-failed-why').textContent =
           'Amazon would not open this book here. Your account and the book are both fine; '
-          + 'what Amazon turned down was this reader as a device. Try again: it clears what '
+          + 'what Amazon turned down was this reader as a device. Read it again: it clears what '
           + 'Amazon stored here, keeps you signed in, and reopens the book.';
         $('reader-failed-detail').hidden = true;
         $('reader-failed-detail-label').hidden = true;
+        $('reader-retry').textContent = 'Read it again';
         // Here the destructive one IS the answer: it clears what Amazon stored and reopens.
         setFailAction('retry');
         // There is no page, so turning one cannot work. Item 1.7 asks for disabled rather than
@@ -2445,7 +2469,12 @@ $('advance').addEventListener('click', async () => {
 function readerRetryAsk(show) {
   $('reader-retry').hidden = show;
   $('reader-retry-confirm').hidden = !show;
-  (show ? $('reader-retry-yes') : $('reader-retry')).focus();
+  // "Keep it", not "Discard it and reopen". The confirmation existed because the discard is
+  // irreversible and was one click away; focusing the destructive answer put it one KEY away
+  // instead, so an operator who pressed Enter on Read it again and, mid-thought, pressed Enter
+  // destroyed the registration without reading a word. A confirmation whose default answer is
+  // the destructive one is not a confirmation.
+  (show ? $('reader-retry-no') : $('reader-retry')).focus();
 }
 $('reader-retry').addEventListener('click', () => readerRetryAsk(true));
 // Nothing is cleared and nothing is reopened. The next poll asks the daemon again, and if the
@@ -2511,7 +2540,9 @@ $('reader-retry-yes').addEventListener('click', async () => {
     $('reader-failed').hidden = false;
     readerFailed = true;
     setPagerDisabled(true, 'Amazon would not open this book. Press Read it again.');
-    say(why.slice(0, 80));
+    // Trimmed at a word, with an ellipsis, because a sentence cut at exactly 80 characters ends
+  // mid-word and reads as something broken rather than as something shortened.
+  say(shorten(why, 80));
   } else {
     say('');
   }

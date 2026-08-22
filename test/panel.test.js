@@ -613,3 +613,92 @@ test('turning is unavailable until there is something to turn', () => {
   assert.match(arrival, /setPagerDisabled\(false/, 'and becomes available when a page arrives');
   assert.match(arrival, /!readerFailed && !readerSignedOut/, 'but not over a failure or a sign-in');
 });
+
+
+test('a remedy names the control that is actually on screen', () => {
+  // Pass 10 finding 13. Two controls did one job under two names: the per-page note's button said
+  // "Read it again" and the failure surface's said "Try again". Three of the daemon's remedy
+  // sentences and five of the panel's tell the reader to press "Read it again", and the note that
+  // holds that button is hidden by the same branch that shows the failure. So the reader was told
+  // to press a control that was not there while a differently named one sat in front of them.
+  //
+  // Scoped to that collision rather than to all prose. The first version of this test parsed
+  // every "press X" in both files and demanded a button for each, which swallowed the word again
+  // out of "press Cards again" and failed on a control named Cards that exists and is fine. A
+  // test that tries to parse English produces false failures forever.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const daemon = fs.readFileSync(path.join(ROOT, 'lib', 'reader.js'), 'utf8');
+  const flat = html.replace(/\s+/g, ' ');
+
+  // Scoped to the READER's remedies. The calendar has a retry of its own, labelled "Try again",
+  // and its remedy correctly names it; sweeping the whole file caught that and would have forced
+  // an unrelated surface to rename a button that was never wrong.
+  const readerCopy = html.slice(html.indexOf('function readerRemedy'), html.indexOf('// Back to a real page'));
+  const remedies = [...readerCopy.matchAll(/press (Read it again|Try again)/g)].map((m) => m[1])
+    .concat([...daemon.matchAll(/press (Read it again|Try again)/g)].map((m) => m[1]));
+  assert.ok(remedies.length >= 5, `the remedies do name this control: ${remedies.length} sites`);
+
+  // Every one of them names the SAME control, and it is the one the failure surface shows.
+  const distinct = [...new Set(remedies)];
+  assert.deepEqual(distinct, ['Read it again'], `one action, one name: found ${distinct.join(' and ')}`);
+  assert.match(flat, /id="reader-retry"[^>]*>Read it again</, 'and that is what the button says');
+
+  // The control the remedies name must not be one the same branch has just hidden. `#read-again`
+  // lives in `#reader-note`, which readerNote('') hides when the failure surface appears, so the
+  // surface has to carry a control by that name itself, which is the assertion above.
+  assert.match(html, /id="read-again"[^>]*>Read it again</, 'the note button keeps the same name too');
+});
+
+
+test('a confirmation does not default to the irreversible answer', () => {
+  // Pass 10 finding 10. The confirmation exists because discarding the device registration is
+  // irreversible and was one click away. Focusing "Discard it and reopen" put it one KEY away
+  // instead: an operator who pressed Enter on the failure surface's button and, mid-thought,
+  // pressed Enter again destroyed the registration without reading a word. A confirmation whose
+  // default answer is the destructive one is not a confirmation.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  // Both ends anchored to this function. The end was computed from a global search for the focus
+  // call, which found an earlier one elsewhere in the file and sliced a window that did not
+  // contain this function at all.
+  const askAt = html.indexOf('function readerRetryAsk(show)');
+  const ask = html.slice(askAt, html.indexOf('\n}', askAt));
+  assert.match(ask, /reader-retry-no'\)/, 'the keeping answer takes focus');
+  assert.ok(!/show \? \$\('reader-retry-yes'\)/.test(ask), 'the discarding answer does not');
+
+  // And the one that is focused really is the non-destructive one, by its label.
+  const flat = html.replace(/\s+/g, ' ');
+  assert.match(flat, /id="reader-retry-no"[^>]*>Keep it</, 'reader-retry-no is the keeping one');
+  assert.match(flat, /id="reader-retry-yes"[^>]*>Discard it and reopen</, 'and yes is the destroying one');
+});
+
+test('the failure surface takes focus when it appears', () => {
+  // Pass 10 finding 9. This surface appears by hiding whichever element held focus, which drops
+  // focus to <body>, so the operator's next Tab started from the skip link at the top of the
+  // document instead of at the control this surface is offering.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  assert.match(html.replace(/\s+/g, ' '), /id="reader-failed"[^>]*tabindex="-1"/, 'it can hold focus');
+  const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  const arm = html.slice(start, html.indexOf('setFailAction', start));
+  assert.match(arm, /reader-failed'\)\.focus/, 'and it takes focus when it is shown');
+});
+
+test('a shortened sentence reads as shortened, not as broken', () => {
+  // Pass 10 finding 26. The daemon's sentence was cut at exactly 80 characters with no ellipsis,
+  // so the footer ended mid-word and read as a rendering fault rather than as a truncation.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const src = html.slice(html.indexOf('function shorten(text, max)'), html.indexOf('function readerSay'));
+  // eslint-disable-next-line no-new-func
+  const shorten = new Function(`${src}; return shorten;`)();
+
+  const long = 'The book was reloaded and has not come back. Remedy: press Read it again once more, and if it stays like this, sign in.';
+  const out = shorten(long, 80);
+  assert.ok(out.length <= 80, `it fits: ${out.length}`);
+  assert.ok(out.endsWith('…'), 'it is marked as cut');
+  assert.ok(!/ …$/.test(out), 'with no space before the mark');
+  assert.ok(long.startsWith(out.slice(0, -1)), 'and it is a prefix of what it shortened');
+  // The cut lands at a word boundary, so the last word is a whole word.
+  const lastWord = out.slice(0, -1).split(' ').pop();
+  assert.ok(long.split(/\s+/).includes(lastWord), `"${lastWord}" is a whole word`);
+  // Something that already fits is returned untouched, mark and all.
+  assert.equal(shorten('short one', 80), 'short one', 'a sentence that fits is not marked');
+});
