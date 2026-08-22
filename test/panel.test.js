@@ -751,3 +751,59 @@ test('a control does not present itself as the only way forward when a loop is a
   assert.match(outage, /keeps checking/, 'the copy says the panel is already rechecking');
   assert.match(outage, /by itself/, 'and that it will clear without being pressed');
 });
+
+
+test('the control that repairs an expired session is on screen, not behind a menu', () => {
+  // Pass 10 finding 2. The sign-in box was rendered into #book-actions, which is on
+  // READER_MENU_DISPLACED, so in immersive mode it is moved into the unlabelled ellipsis menu.
+  // The one control that repairs an expired session went with it, and the reader was left with
+  // the words "sign in" in 10px mono and no way to act on them without finding a menu nobody had
+  // told them about. It lives in the reader now, beside the failure and loading overlays.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+
+  assert.match(html, /id="reader-signin"/, 'the sign-in has a surface of its own');
+  const render = html.slice(html.indexOf('function renderSignIn(d)'), html.indexOf('host.prepend(box)'));
+  assert.match(render, /\$\('reader-signin'\)/, 'and renderSignIn puts it there');
+  assert.ok(!/\$\('book-actions'\)/.test(render), 'not into the container immersive mode displaces');
+
+  // The premise: book-actions really is displaced, so if that ever stops being true this move
+  // becomes unnecessary rather than wrong.
+  const displaced = html.slice(html.indexOf('const READER_MENU_DISPLACED'), html.indexOf('];', html.indexOf('const READER_MENU_DISPLACED')));
+  assert.match(displaced, /'book-actions'/, 'book-actions is displaced into the menu');
+  assert.ok(!/'reader-signin'/.test(displaced), 'and the new surface is not');
+
+  // It is inside the reader, where the overlays that survive immersive live.
+  const readerAt = html.indexOf('<div class="reader" id="reader">');
+  const signinAt = html.indexOf('id="reader-signin"');
+  const failedAt = html.indexOf('id="reader-failed"');
+  assert.ok(readerAt > 0 && signinAt > readerAt, 'the surface is inside the reader');
+  assert.ok(Math.abs(signinAt - failedAt) < 4000, 'beside the other overlays');
+});
+
+
+test('a refused turn points at the surface that explains it', () => {
+  // Pass 10 finding 8. The reason a control is unavailable existed only as `el.title`, which a
+  // disabled button never announces, never focuses and never fires on touch. Two halves fix it:
+  // every state that disables the pager now has a visible surface saying why (the failure surface,
+  // the sign-in surface, and the loading overlay's ageing line), and a refused turn moves focus to
+  // whichever of those is showing.
+  //
+  // The narration alone could not have worked: readerSay writes into #reader-status, which lives
+  // inside #reader-over, and that overlay is hidden whenever a failure or sign-in surface is up.
+  // The sentence was going into a hidden element in exactly the state the guard exists for.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const fn = html.slice(html.indexOf('async function turnPage(direction)'), html.indexOf('const held ='));
+  assert.match(fn, /reader-failed'\)\.hidden/, 'it looks for the failure surface');
+  assert.match(fn, /reader-signin'\)\.hidden/, 'and for the sign-in surface');
+  // Matched on the CONDITIONAL, not merely on the call. Asserting that the source mentions
+  // shown.focus passed happily when the branch was changed to if (false), which is the same
+  // vacuous shape this loop keeps producing: the text is present and unreachable.
+  assert.match(fn, /if \(shown\) shown\.focus/, 'and sends the reader to whichever is showing');
+  assert.match(fn, /else readerSay/, 'falling back to narration only when neither is up');
+
+  // The premise: #reader-status really is inside #reader-over, so hiding one hides the other.
+  const overAt = html.indexOf('id="reader-over"');
+  const statusAt = html.indexOf('id="reader-status"');
+  const overEnd = html.indexOf('</div>', html.indexOf('id="reader-status"'));
+  assert.ok(overAt > 0 && statusAt > overAt && overEnd > statusAt, 'the status line is inside the loading overlay');
+});

@@ -710,6 +710,15 @@
           the paragraph read out an explanation of something that was never named.
         -->
         <!--
+          The sign-in lives INSIDE the reader, beside the other two overlays, rather than in
+          #book-actions. `book-actions` is on READER_MENU_DISPLACED, so in immersive mode it is
+          moved into the unlabelled ellipsis menu, and the one control that repairs an expired
+          session went with it: the reader saw the words "sign in" in 10px mono and no way to act
+          on them without finding a menu nobody told them about. This surface is a sibling of the
+          failure and loading overlays, so it is on screen wherever they are.
+        -->
+        <div class="over failsurface" id="reader-signin" hidden tabindex="-1"></div>
+        <!--
           Focusable, because this surface appears by hiding whichever element held focus, which
           drops focus to <body>: the next Tab then started from the skip link at the top of the
           document rather than at the control this surface is offering.
@@ -1820,7 +1829,7 @@ function renderReader(d) {
 let signinPoll = null;
 
 function signinBox() {
-  return $('book-actions').querySelector('.signin');
+  return $('reader-signin').querySelector('.signin');
 }
 
 function signinSay(text, spin) {
@@ -1830,11 +1839,17 @@ function signinSay(text, spin) {
 }
 
 function renderSignIn(d) {
-  const host = $('book-actions');
+  const host = $('reader-signin');
   if (!readerSignedOut) {
     signinBox()?.remove();
+    host.hidden = true;
+    document.body.classList.remove('reader-failing');
     return;
   }
+  host.hidden = false;
+  // Same reason the failure surface hides them: the hint band and the pager pill paint over this
+  // one's lower edge, and neither can do anything while Amazon is asking for a sign-in.
+  document.body.classList.add('reader-failing');
   if (signinBox()) return;
   const box = document.createElement('div');
   box.className = 'signin';
@@ -1853,6 +1868,9 @@ function renderSignIn(d) {
     + 'still signed in to Amazon: the amazon.com cookies it holds are copied across, sealed, on this '
     + 'machine.</div>';
   host.prepend(box);
+  // Focus follows the surface, for the same reason it does on the failure surface: this appears
+  // by covering whatever held focus, which would otherwise drop it to the document body.
+  host.focus?.();
 
   // A sign-in already in flight when this was drawn: the window is open and the
   // person is in it, and a panel that re-rendered in the meantime must pick the
@@ -1974,7 +1992,16 @@ async function turnPage(direction) {
   // reader could arrow past a book that had failed to open and watch nothing happen, which is
   // the silent no-op item 1.7 replaced for the buttons and left standing for the keyboard.
   if (readerFailed || readerSignedOut) {
-    readerSay(pagerWhy || 'There is no page to turn yet.');
+    // Said where it can be SEEN. `readerSay` writes into #reader-status, which lives inside
+    // #reader-over, and that overlay is hidden whenever one of these surfaces is up: the sentence
+    // was being written into a hidden element, so pressing an arrow key during a failure was
+    // silent in exactly the state this guard exists for. The surface that IS on screen already
+    // explains the situation, so the press moves focus to it rather than narrating over it.
+    const shown = !$('reader-failed').hidden
+      ? $('reader-failed')
+      : (!$('reader-signin').hidden ? $('reader-signin') : null);
+    if (shown) shown.focus?.();
+    else readerSay(pagerWhy || 'There is no page to turn yet.');
     return;
   }
   const held = readerShelf && (direction === 'next'
