@@ -10,7 +10,11 @@ export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@17}"
 export ANDROID_HOME="${ANDROID_HOME:-/opt/homebrew/share/android-commandlinetools}"
 export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:/opt/homebrew/bin:$PATH"
 
-AND="/Users/scottlydon/Developer/akin-android"
+# Overridable, because a script that hardcodes another project's absolute path only works on
+# the machine it was written on, and this repository has already been moved once. The default
+# is derived from this script's own location rather than from a home directory.
+AND="${AKIN_ANDROID_ROOT:-$(cd "$(dirname "$0")/../../akin-android" 2>/dev/null && pwd)}"
+AND="${AND:-/Users/scottlydon/Developer/akin-android}"
 missing=0
 printf '%-22s %-58s %s\n' TOOL PATH VERSION
 printf '%-22s %-58s %s\n' ---- ---- -------

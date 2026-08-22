@@ -13,7 +13,7 @@ import { openUrl } from '../lib/state/system.js';
 import { buildHotkeyApps, instructions } from '../lib/hotkeys.js';
 
 const [, , cmd, ...args] = process.argv;
-const has = (flag) => args.includes(flag);
+function has(flag) { return args.includes(flag); }
 
 const USAGE = `interstice - fills the dead moment after you dispatch an AI agent
 

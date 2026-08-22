@@ -19,9 +19,13 @@ function serve() {
   return http.createServer((req, res) => {
     const url = new URL(req.url, 'http://x');
     let r;
-    if (url.pathname === '/api/stars/day') r = starsHandler(store, 'day', url.searchParams.get('day'));
-    else if (url.pathname === '/api/stars/month') r = starsHandler(store, 'month', url.searchParams.get('month'));
-    else r = { status: 404, body: { error: 'not_found' } };
+    if (url.pathname === '/api/stars/day') {
+      r = starsHandler(store, 'day', url.searchParams.get('day'));
+    } else if (url.pathname === '/api/stars/month') {
+      r = starsHandler(store, 'month', url.searchParams.get('month'));
+    } else {
+      r = { status: 404, body: { error: 'not_found' } };
+    }
     res.writeHead(r.status, { 'content-type': 'application/json' });
     res.end(JSON.stringify(r.body));
   });

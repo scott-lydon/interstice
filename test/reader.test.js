@@ -496,7 +496,7 @@ test('a page with no position label is not photographed', async () => {
   assert.equal(out.jpeg.toString(), 'the-last-real-page', 'and the last real page is what the panel keeps');
 });
 
-test("Amazon's failure page IS photographed, because the panel has to show it", async () => {
+test('Amazon\'s failure page IS photographed, because the panel has to show it', async () => {
   // The failure page carries no position label either, so a refusal keyed on the label alone
   // would stop the panel from ever showing it and would undo loop 8's repair. It is let through
   // by name rather than by accident, and this asserts the shot actually happens.
@@ -519,7 +519,7 @@ test('a labelled page is still photographed', async () => {
   assert.equal(shots(), 1, 'a page of the book is photographed');
 });
 
-test("a browser showing nothing does not borrow the shelf's page number", async () => {
+test('a browser showing nothing does not borrow the shelf\'s page number', async () => {
   // `state` reports the label of the page YOU are on rather than the browser's, because the
   // browser runs ahead to fill the shelf. That fallback fired in the one case it was never meant
   // for: a browser showing nothing has no label of its own, so the shelf's remembered one was

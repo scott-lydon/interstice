@@ -163,7 +163,7 @@ test('every headline figure is the number it claims to be', () => {
   assert.equal(s.quality.standDowns, 1);
   assert.equal(s.quality.standDownRate, 0.25);
 
-  assert.deepEqual(s.bySurface, { 'claude-code': 3, cowork: 1 });
+  assert.deepEqual(s.bySurface, { 'claude-code': 3, 'cowork': 1 });
 });
 
 test('a false positive is a delivery you rejected, and the window is what decides it', () => {
