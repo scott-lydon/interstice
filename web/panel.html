@@ -378,6 +378,7 @@
   }
   .cardframe iframe { display: block; width: 100%; border: 0; background: var(--raised); }
 
+  .ease[hidden] { display: none; }
   .ease { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   button.act, a.act {
     font: 600 11px/1.1 var(--display);
@@ -422,6 +423,15 @@
      actually clears the state was the one that did not look like a control. Anchors need the
      text-decoration and colour reset too, since the `a` rule sets both. */
   a.act { text-decoration: none; color: var(--ink); display: inline-block; text-align: center; }
+  /* Declared, and this is the third time this file has needed the rule. `hidden` works through the
+     user-agent rule `[hidden] { display: none }`, which ANY author `display` on the same element
+     outranks. The note above `.note` records this costing a bare button under every page of the
+     book; the same mistake here put "Open it on read.amazon.com" on the outage arm, where going to
+     Amazon's reader lands on the same broken application. Measured, not reasoned: the element
+     reported hidden true, computed display block, and a 608x34 box on screen. Every author
+     `display` in this file needs its own `[hidden]` companion, and adding one without the other
+     is the bug. */
+  a.act[hidden] { display: none; }
 
   .bar { height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; }
   /* scaleX rather than width. Width is a layout property, so animating it relaid the bar on
@@ -474,8 +484,21 @@
   }
   .reader .over[hidden] { display: none; }
   /* Top aligned and a little looser than the centred overlays, because this one is a title, a
-     paragraph, an evidence line and a control: a stack to read in order, not a centred message. */
-  .reader .over.failsurface { justify-content: flex-start; gap: 10px; }
+     paragraph, an evidence line and a control: a stack to read in order, not a centred message.
+
+     The extra top padding reserves the strip that page furniture already owns, and it was found
+     by LOOKING at the rendered surface rather than by reading this file. Two elements live in
+     that strip and both outrank this one: `.latency-row` at top 8px, z-index 25, which carries
+     the "your agent" timer, and the immersive `.reader-menu` at top 8px, right 8px, z-index 30.
+     This surface has no z-index at all, so the agent timer painted straight across the failure
+     title: the rendered panel read "...iled to load" and the reader could not see what had
+     failed. Hiding them was the wrong fix, because the agent timer is about the agent and stays
+     true while the reader is broken.
+
+     36px is derived, not guessed: 8px offset plus the chip's own 5px padding, 10px line, 5px
+     padding and 2px border is 30px, and the menu button is 8 + 30 = 38px, so the strip is 38px
+     and this clears it with the surface's own 16px padding already counted. */
+  .reader .over.failsurface { justify-content: flex-start; gap: 10px; padding-top: 38px; }
   /* The hint band and the immersive pager pill are siblings of #reader with a higher z-index, so
      in a short window they paint over this surface's lower edge and the one control that CAN help
      ends up underneath two that cannot. They are hidden while a failure is showing. */
@@ -592,6 +615,13 @@
     background-size: 400% 100%; animation: shim 1.3s ease infinite; }
   @keyframes shim { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
   .skeleton { display: flex; flex-direction: column; gap: 8px; }
+  /* Without this the shimmer could not be hidden at all. `readerSay` sets `hidden` on this
+     element when the caller says nothing is in progress, and `display: flex` above outranks the
+     user-agent `[hidden] { display: none }`, so the repair that stopped a live loading animation
+     running underneath a hard, named failure did nothing whatsoever. Measured in the running
+     panel: hidden true, computed display flex. The test that guarded it read the source and was
+     satisfied by the assignment existing. */
+  .skeleton[hidden] { display: none; }
   .skeleton > i { display: block; height: 12px; }
   .spinner {
     width: 13px; height: 13px; border-radius: 50%; display: inline-block; vertical-align: -2px;

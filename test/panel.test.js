@@ -902,3 +902,43 @@ test('pass 11: the sign-in surface names its state like its sibling does', () =>
   assert.ok(!/carry-session'\)\.textContent = 'That session/.test(html), 'the label is not used as a status line');
   assert.match(handler, /carry-session'\)\.disabled = false/, 'and the control comes back');
 });
+
+
+test('nothing this panel hides can outrank the attribute that hides it', () => {
+  // Three times now. `hidden` works through the user-agent rule `[hidden] { display: none }`, and
+  // ANY author `display` on the same element outranks it, so an element the code hides stays on
+  // screen and nothing anywhere reports a problem. It cost a bare "Read it again" button under
+  // every page of the book, which is recorded above `.note`; it put the read.amazon.com link on
+  // the outage arm, where going to Amazon lands on the same broken application; and it meant the
+  // repair that stops a loading shimmer animating underneath a hard, named failure did nothing at
+  // all, while a test that read the source was satisfied the assignment existed.
+  //
+  // So the invariant is asserted rather than the instances: every element this file toggles with
+  // `hidden` must either take no author `display`, or carry its own `[hidden]` companion.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+
+  const toggled = new Set();
+  for (const m of html.matchAll(/\$\('([\w-]+)'\)\.hidden\s*=/g)) toggled.add(m[1]);
+  for (const m of html.matchAll(/getElementById\('([\w-]+)'\)\.hidden\s*=/g)) toggled.add(m[1]);
+  assert.ok(toggled.size > 5, `the scan found the toggles: ${toggled.size}`);
+
+  const guarded = (selector) => new RegExp(`${selector.replace('.', '\\.')}\\[hidden\\]`).test(html);
+  const setsDisplay = (selector) =>
+    new RegExp(`(^|[,\\s])${selector.replace('.', '\\.')}\\s*\\{[^}]*display:`, 'm').test(html);
+
+  const unguarded = [];
+  for (const id of toggled) {
+    const tag = html.match(new RegExp(`<[^>]*id="${id}"[^>]*>`));
+    const classes = tag ? (tag[0].match(/class="([^"]+)"/) || [])[1] : null;
+    for (const sel of [`#${id}`, ...(classes ? classes.split(/\s+/).map((c) => `.${c}`) : [])]) {
+      if (setsDisplay(sel) && !guarded(sel)) unguarded.push(`#${id} through ${sel}`);
+    }
+  }
+  // The shimmer is reached through a querySelector rather than an id, so it is named explicitly.
+  if (setsDisplay('.skeleton') && !guarded('.skeleton')) unguarded.push('.skeleton');
+
+  assert.deepEqual(
+    unguarded, [],
+    `these are hidden by the code and cannot be: ${unguarded.join(', ')}`
+  );
+});
