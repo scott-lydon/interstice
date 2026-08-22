@@ -368,8 +368,11 @@ test('a book that failed to open disables the pager instead of ignoring it', () 
   // Sliced FORWARD from the failure block. The first version searched for the next `} else {`
   // from the start of the file, which is hundreds of lines earlier, so the window never contained
   // the code under test and the assertion failed for a reason that had nothing to do with it.
-  const failStart = html.indexOf("$('reader-failed-why').textContent");
-  const failed = html.slice(failStart, html.indexOf('} else {', failStart));
+  // Anchored on the branch that raises the surface, not on the first line that writes into it:
+  // the daemon-refusal branch now writes the same element earlier in the file, so a search for
+  // that write lands in a different arm. Third re-anchoring of this one slice.
+  const failStart = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  const failed = html.slice(failStart, html.indexOf('// Back to a real page', failStart));
   assert.match(failed, /setPagerDisabled\(true, '[^']+'\)/, 'the failure disables the pager with a reason');
 
   // And recovery gives them back. A guard that only ever disables is a different bug.
@@ -540,9 +543,17 @@ test('a signed-out reader is never told their account is fine', () => {
   const signin = html.indexOf('if (d.signedOut !== readerSignedOut)');
   assert.ok(guard > 0 && signin > guard, 'the failure surface still returns before the sign-in branch');
 
-  // And the sentence that made it expensive is only ever reached when the session is not the
-  // problem, which is the arm it belongs to.
-  assert.match(html, /account and the book are both fine/, 'the sentence is still there for the case it is true of');
+  // The sentence that made it expensive is GONE, not merely gated. It asserted the account and
+  // the book were fine on the strength of one text match against Amazon's generic error page,
+  // which is also what a revoked licence, a content problem or a region block draws, so it was
+  // never true of any arm: the earlier version of this test kept it alive for "the case it is
+  // true of", and there is no such case. That is the same mistake as the vendor arm's copy, and
+  // this test was preserving it.
+  assert.ok(
+    !/account and the book are both fine/.test(html),
+    'the panel does not vouch for the account and the book from an error page'
+  );
+  assert.match(html, /answered with its own error page/, 'it reports what was seen');
 });
 
 
@@ -652,7 +663,16 @@ test('a remedy names the control that is actually on screen', () => {
   // The control the remedies name must not be one the same branch has just hidden. `#read-again`
   // lives in `#reader-note`, which readerNote('') hides when the failure surface appears, so the
   // surface has to carry a control by that name itself, which is the assertion above.
-  assert.match(html, /id="read-again"[^>]*>Read it again</, 'the note button keeps the same name too');
+  // The note's button must NOT share the name. It re-transcribes the current page; the remedies
+  // describe clearing what Amazon stored and reopening the book. Giving both the same label was
+  // the wrong half of "one action, one name": two different actions needed separating, not
+  // merging, and for an hour the note's button carried the name of a promise it could not keep.
+  const flatHtml = html.replace(/\s+/g, ' ');
+  assert.ok(
+    !/id="read-again"[^>]*>Read it again</.test(flatHtml),
+    'the re-transcribe button does not wear the reopen\'s name'
+  );
+  assert.match(flatHtml, /id="read-again"[^>]*>Transcribe again</, 'it says what it does');
 });
 
 
@@ -848,12 +868,18 @@ test('pass 11: the surface that prints a remedy carries the control it names', (
   // button that lives on the failure surface, and the branch that prints them returns before that
   // surface is ever unhidden. The reader was told to do a thing and given no way to do it.
   const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  // Routed to the failure surface, where the controls the remedies name already live, rather
+  // than printed into the loading overlay beside a control invented for it. That invented control
+  // called the note's re-transcribe, so the reader read a promise about clearing Amazon's stored
+  // data, pressed the button carrying its name, and got a page re-transcription behind an overlay.
   const branch = html.slice(html.indexOf('if (!d.ok) {'), html.indexOf('return;', html.indexOf('if (!d.ok) {')));
-  assert.match(branch, /reader-over-act'\)\.hidden = false/, 'the control appears with the sentence');
+  assert.match(branch, /reader-failed'\)\.hidden = false/, 'the failure surface is shown');
+  assert.match(branch, /readerRemedy\(d\.error\)/, "with the daemon's remedy on it");
+  assert.match(branch, /setFailAction\('retry'\)/, 'and the control that remedy names');
   assert.match(branch, /setPagerDisabled\(true/, 'and the pager goes with the page');
-  assert.match(html, /id="reader-over-act"/, 'the control exists');
-  // One action, one name, still.
-  assert.match(html.replace(/\s+/g, ' '), /id="reader-over-act"[^>]*>Read it again</, 'under the name every remedy uses');
+  assert.ok(!/reader-over-act/.test(html), 'the invented control is gone rather than left unused');
+  // The one remedy the reopen cannot stand in for gets the control it actually names.
+  assert.match(branch, /wantsSignIn/, 'a signed-out remedy routes to the sign-in instead');
 });
 
 test('pass 11: a failure that changes kind redraws', () => {
@@ -896,11 +922,26 @@ test('pass 11: the sign-in surface names its state like its sibling does', () =>
   const box = html.slice(html.indexOf("box.innerHTML ="), html.indexOf('host.prepend(box)'));
   assert.match(box, /h2 class="failtitle"/, 'the sign-in names its state as a heading');
 
-  const handler = html.slice(html.indexOf("$('carry-session').textContent") >= 0
-    ? html.indexOf("$('carry-session').textContent")
-    : html.indexOf('signinSay(\'That session has expired'), html.indexOf('function watchSignIn'));
+  // Anchored on the handler's own end, not on a sentence inside it: the sentence changed when the
+  // daemon's six distinct reasons stopped being overwritten with one of them.
+  // The handler is assigned with .onclick, not addEventListener. The first anchor searched for
+  // addEventListener, found nothing, and silently fell back to the first signinSay in the file,
+  // which sits in a different handler that happens to satisfy the assertion: the mutation that
+  // threw the daemon's reason away again went unnoticed. A fallback that quietly widens the window
+  // is how a test stops testing what it names.
+  const carryAt = html.indexOf("$('carry-session').onclick");
+  assert.ok(carryAt > 0, 'the carry-session handler is found, not fallen back from');
+  const handler = html.slice(carryAt, html.indexOf('function watchSignIn'));
   assert.ok(!/carry-session'\)\.textContent = 'That session/.test(html), 'the label is not used as a status line');
   assert.match(handler, /carry-session'\)\.disabled = false/, 'and the control comes back');
+  // The daemon distinguishes six cases and words each one; the panel keeps whichever it was given.
+  // Pinned to the sentence that USED to overwrite it, not to any mention of r.reason in the
+  // handler: there is a second, unrelated r.reason a few lines above, so a looser match was
+  // satisfied by a line that never had the bug and slept through the mutation that restored it.
+  const expired = handler.slice(handler.indexOf('Once that is sorted'), handler.indexOf('Once that is sorted') + 60);
+  assert.ok(expired, 'the instruction is on screen');
+  const line = handler.split('\n').find((l) => l.includes('Once that is sorted'));
+  assert.match(line, /r\.reason \|\|/, "and the daemon's own reason is what it is appended to");
 });
 
 

@@ -740,15 +740,7 @@
             <i class="shimmer" style="width:88%"></i>
           </div>
           <div class="mono" id="reader-status" role="status" aria-live="polite">opening your book</div>
-          <!--
-            The control the remedies on this surface name. Every readerRemedy sentence ends by
-            telling the reader to press something, and until now every one of them named a button
-            that lives on the failure surface, which the branch that prints those sentences
-            returns before unhiding. Same id and same handler as the note's button, so this is one
-            action with one name in a third place rather than a fourth label for the same thing.
-          -->
-          <button class="act primary" id="reader-over-act" type="button" hidden
-            style="margin-top:10px">Read it again</button>
+
         </div>
         <!--
           Amazon's own failure, said rather than photographed.
@@ -866,7 +858,16 @@
       -->
       <div class="why note" id="reader-note" hidden>
         <span id="reader-note-text"></span>
-        <button class="act" id="read-again" type="button" style="padding:2px 8px">Read it again</button>
+        <!--
+          "Transcribe again", because that is what it does: it asks the daemon to look at the page
+          again and re-read it, and the usual reason a page reads badly is a picture taken while
+          one of Amazon's dialogs was still on top of it. It used to be called "Read it again",
+          which is the name every remedy sentence uses for a completely different action, clearing
+          what Amazon stored here and reopening the book. Unifying the LABEL across two different
+          actions was the wrong half of "one action, one name": the two needed separating, not
+          merging, and for an hour this button carried the name of a promise it could not keep.
+        -->
+        <button class="act" id="read-again" type="button" style="padding:2px 8px">Transcribe again</button>
       </div>
       <div id="book-actions"></div>
       <!-- Immersive affordances: shown only while body.immersive. -->
@@ -1706,25 +1707,39 @@ function renderReader(d) {
   if (d.shelf) readerShelf = d.shelf;
 
   if (!d.ok) {
+    // Routed to the FAILURE surface, which is where the controls the remedies name already live,
+    // rather than printed into the loading overlay with a control invented for it. That invented
+    // control called the note's re-transcribe, so the reader read a specific promise about
+    // clearing Amazon's stored data, pressed the button carrying its name, and got a page
+    // re-transcription whose only visible surface was painted over. One label had come to mean
+    // three different actions.
     setFrameHidden(true);
-    $('reader-over').hidden = false;
-    // The pager goes with the page. This branch set neither `readerFailed` nor `readerSignedOut`,
-    // and those are the only two things `turnPage` guards on, so when the daemon stopped
-    // answering AFTER a page had painted the controls stayed lit under an overlay explaining a
-    // failure. Pressing one overwrote the remedy sentence with "turning" and a spinner in the
-    // same status line, and the remedy only came back on the next poll: the one instruction on
-    // screen was erased by a control that could not work.
+    $('reader-text').hidden = true;
+    $('reader-over').hidden = true;
+    readerFailed = true;
+    readerFailKind = 'daemon';
+    document.body.classList.add('reader-failing');
+    $('reader-failed').hidden = false;
+    $('reader-failed').focus?.();
+    $('reader-failed-title').textContent = 'The reader is not answering';
+    // The daemon's own sentence, mapped to one that names a move. Its remedies name the control
+    // that is now on screen beside them.
+    $('reader-failed-why').textContent = readerRemedy(d.error);
+    $('reader-failed-detail').hidden = true;
+    $('reader-failed-detail-label').hidden = true;
+    // A signed-out daemon needs the sign-in box, not the reopen: its remedy is the one of the five
+    // that names a control the reopen cannot stand in for.
+    const wantsSignIn = /sign in to amazon in chrome/i.test($('reader-failed-why').textContent);
+    if (wantsSignIn) {
+      readerSignedOut = true;
+      renderSignIn(d);
+      $('reader-failed').hidden = true;
+    } else {
+      setFailAction('retry');
+    }
     setPagerDisabled(true, 'The reader is not answering, so there is no page to turn.');
-    // The daemon's own sentence goes to the log, and the reader gets one that names a move.
-    // The remedy names a control, and this surface has none, so the control comes with it: four
-    // of the five remedy sentences end by naming a button that lives on the failure surface,
-    // which this branch returns before ever unhiding. The reader was told to do a thing and given
-    // no way to do it.
-    readerSay(readerRemedy(d.error));
-    $('reader-over-act').hidden = false;
     return;
   }
-  $('reader-over-act').hidden = true;
 
   // Amazon opened something that is not the book. Said here, once, rather than left
   // to arrive as a transcription of its error page in the middle of your reading.
@@ -1830,10 +1845,19 @@ function renderReader(d) {
         setPagerDisabled(true, 'Amazon\u2019s reader did not load, so there is no page to turn.');
       } else {
         $('reader-failed-title').textContent = 'Amazon could not open this book';
+        // Says what was SEEN, and offers the reopen as the thing worth trying rather than as the
+        // known cure. Everything behind the previous sentence was one text match on Amazon's
+        // generic error page, which is also what a revoked licence, a content problem or a region
+        // block draws. The device-registration diagnosis was established once, by hand, on
+        // 2026-08-17, by reading four 403s off the network panel; none of that is available here.
+        // So the arm asserted two exculpations and a diagnosis from a string carrying none of the
+        // three, and attached them to the one irreversible control on the surface. This is the
+        // pattern struck from the vendor arm above, and it stood ten lines below it: fixing the
+        // instance that was reported instead of the pattern is how it survived.
         $('reader-failed-why').textContent =
-          'Amazon would not open this book here. Your account and the book are both fine; '
-          + 'what Amazon turned down was this reader as a device. Read it again: it clears what '
-          + 'Amazon stored here, keeps you signed in, and reopens the book.';
+          'Amazon answered with its own error page instead of the book. That often means Amazon '
+          + 'has stopped recognising this reader as a device, which Read it again can clear: it '
+          + 'throws away what Amazon stored here, keeps you signed in, and reopens the book.';
         $('reader-failed-detail').hidden = true;
         $('reader-failed-detail-label').hidden = true;
         $('reader-retry').textContent = 'Read it again';
@@ -2020,7 +2044,13 @@ function renderSignIn(d) {
       // while the box exists, so it never came back: a reader who signed into Amazon in their
       // ordinary browser to fix exactly this could not retry the cheap path without reloading the
       // panel. A label says what the control does; it is not a status line.
-      signinSay('That session has expired. Sign in to Amazon in your ordinary Chrome, then press '
+      // The daemon's own reason is KEPT. It distinguishes six cases and words each one, and this
+      // overwrote all six with the sentence for the last of them, so a reader whose ordinary
+      // Chrome the daemon could not find, or whose cookie store has a different shape, was told
+      // their session had expired and sent to sign in somewhere that would not change the
+      // outcome. The one honest sentence available was fetched, assigned, and thrown away a line
+      // later. The instruction is appended to it rather than substituted for it.
+      signinSay(`${r.reason || 'That session could not be carried.'} Once that is sorted, press `
         + 'Use the session from your own Chrome instead again.');
     } catch {
       signinSay('Interstice is not running in the background. Open a terminal and run interstice start.');
@@ -2633,9 +2663,6 @@ $('reader-retry').addEventListener('click', () => readerRetryAsk(true));
 // Nothing is cleared and nothing is reopened. The next poll asks the daemon again, and if the
 // answer is the same the surface comes straight back, which is the honest outcome and is why
 // this control does not promise otherwise.
-// The same action as the note's "Read it again", reached from the loading surface, where the
-// remedy sentences that name it are printed.
-$('reader-over-act').addEventListener('click', () => $('read-again')?.click());
 $('reader-recheck').addEventListener('click', async () => {
   const b = $('reader-recheck');
   b.disabled = true;
