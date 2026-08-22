@@ -1956,6 +1956,22 @@ async function loadQueued() {
  * changed, and nothing anywhere said why. The footer line is the wrong place for it,
  * being a banner's distance from the control the person is looking at.
  */
+// UX-FORM-011. What you have typed and not saved is the only thing in this panel that cannot be
+// recovered: everything else is read from Anki, Amazon or Notes and comes back on reload. The box
+// is a handoff note written between two other tasks, which is exactly the moment a window gets
+// closed by reflex. The browser decides whether to show its own prompt; all this does is say the
+// page has something worth keeping.
+//
+// Cleared rather than compared against a snapshot: savePrompt empties the box on success, so an
+// empty box is a saved box, and a dirty check that tracked the last saved TEXT would also fire
+// after someone typed a note and then deleted it themselves.
+window.addEventListener('beforeunload', (e) => {
+  const box = document.getElementById('box');
+  if (!box || !box.value.trim()) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
 function boxError(text) {
   const el = $('box-err');
   el.textContent = text || '';
