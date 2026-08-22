@@ -85,3 +85,31 @@ it pushes a new position up, which is a person's afternoon rather than a command
 **The general point survives, and is the part worth keeping.** A recovery that returns to the exact
 conditions of the failure is not a recovery. That was true before this correction and is still true;
 what changed is that the obvious way to vary the destination turns out not to be available.
+
+## What is NOT broken, established rather than assumed
+
+Before anyone spends time on the browser or the session, both were tested directly and both are
+fine. A NEW tab was created on the same reader profile, pointed at the library rather than the book,
+using the debugging port rather than the daemon:
+
+```
+{"href":"https://read.amazon.com/kindle-library","title":"Kindle","bodyLen":8325,
+ "first":"\"Skip to the library content\" | Filter | Sort by: | Recent | View | Library | All Titles
+ | Books | Comics | Samples | Notes & Highlights | Ear","spinner":false,"signedOut":false}
+```
+
+Eight thousand characters of real library content, no spinner, not signed out. So:
+
+- **The browser works.** It creates targets, attaches, evaluates, and renders.
+- **The Amazon session is live and valid.** The library is behind the sign-in and it drew.
+- **The reader profile is fine.** This is the same profile the wedged tab is using.
+
+That narrows the failure to one thing: opening THIS book at THIS position. Everything else in the
+chain has now been shown working, which is worth having done, because "the session must have
+expired" and "the browser is broken" are the two explanations that fit a spinner and both are wrong
+here.
+
+A second book would be the last variable to eliminate, and the library holds none: the shelf reports
+no other unfinished book and no second ASIN could be found on the library page. So the position
+cannot be varied and a second title cannot be tried, which is the honest end of what this machine
+can establish tonight.
