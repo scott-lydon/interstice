@@ -853,3 +853,47 @@ is not, by three separate routes that the guard does not sit on. E2 is reachable
 through a tap on a loading page; E4's honest refusal is computed and discarded before anyone
 sees it. E1 has no code change in this diff at all, and the mechanism its own prevention
 entry prescribes was not built.
+
+---
+
+# DISPOSITION (added 2026-08-21 by the author of the code, not by the reviewer)
+
+Every finding above is closed. Nothing was closed by argument: each fix carries a test, and
+each test was confirmed to fail against the code as it stood by reverting that one fix and
+watching exactly that test go red, and nothing else. The reverts are recorded in the session
+transcript; the tests are in the tree.
+
+| # | Severity | Fixed in | The test that fails without the fix |
+| --- | --- | --- | --- |
+| 1 | BLOCKING | `cdd8a9e` | capture refuses for every caller, not only the one that passes a probe |
+| 2 | BLOCKING | `2e250e5` | the seed path does not publish a page that has not arrived |
+| 3 | BLOCKING | `c464707` | the panel shows what the retry actually answered |
+| 4 | MAJOR | `f9fb530` | a retry whose probe never answered does not report on the page |
+| 5 | MAJOR | `f9fb530` | ensure does not answer ok over a settle that found nothing |
+| 6 | MAJOR | `f9fb530` | the shelf label is not printed over a spinner; the panel does not promise turns over a page that is not there |
+| 7 | MAJOR | `f9fb530` | settle does not hand back a reading it took forty seconds ago |
+| 8 | MAJOR | `f9fb530` | a page that never answers is reported once, whatever budget the caller gave |
+| 9 | MAJOR | `f9fb530` | a prompt that is still on screen is not reported as answered; a prompt that really went away is reported answered |
+| 10 | MAJOR | `f9fb530` | every reader failure the panel can show names a move; E3: the vendor failure page is never rendered as the book |
+| 11 | MINOR | `f9fb530` | a page with no position label is not photographed |
+| 12 | MINOR | `7edfa1d` | a failed revive keeps the error that explains it; a revive that works does clear the error |
+| 13 | MINOR | `7edfa1d` | arrival means the same thing to everything that asks |
+| 14 | MINOR | `7edfa1d` | documentation fix, with its own prevention entry |
+| 15 | MINOR | `7edfa1d` | a retry that could not reopen the tab says so |
+| 16 | MINOR | `7edfa1d` | a text load started before the failure does not un-hide over it |
+| 17 | MINOR | `7edfa1d` | a spinner that is mounted but hidden does not blind the reader |
+
+**Open blocking findings: 0.**
+
+Two things the reviewer asked for were NOT delivered, and neither is a code change:
+
+- Finding 17 asked for one live sample of an arrived page with the loading element absent.
+  That needs a reader that reaches a page of the book, which is what PB-9 blocks. The weaker
+  remedy the finding offered was taken instead, and the gap is recorded in
+  `docs/evidence/2026-08-19/E2-spinner-with-label.md` rather than left implied.
+- Findings 10 and 11 were about tests that could not fail. Fixing them found nothing else of
+  the kind, but that is a search, not a proof, and the search was mine.
+
+Three of the seventeen (1, 2, 3) were inside the methods this loop had just rewritten to
+remove exactly this defect, which is the finding under the findings: a repair that states its
+own success is the same class of error as the bug it repairs.
