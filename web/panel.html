@@ -25,7 +25,10 @@
     --rule: #CFD6DD; --edge: #6D8298;
     /* accent. --on-accent is the label that sits on a filled accent button; #fff
        measured 2.71:1 on the dark accent, which is why it is a token and not a literal. */
-    --accent: #2440E8; --accent-soft: rgba(36,64,232,.10); --on-accent: #FFFFFF;
+    /* --on-accent-muted is the sub-label under a filled accent button's title. It used to be
+       --on-accent at .7 opacity, which blends toward the fill and lands under 4.5:1. A flat
+       colour instead, so the ratio is a property of two named values and can be checked. */
+    --accent: #2440E8; --accent-soft: rgba(36,64,232,.10); --on-accent: #FFFFFF; --on-accent-muted: #E8ECFF;
     /* status */
     --ok: #1B7A4B; --warn: #96580D; --crit: #A82B22;
     /* the loading shimmer */
@@ -40,7 +43,7 @@
       --ground: #0E1116; --raised: #161A21; --sunk: #11151B;
       --ink: #E4E8EE; --muted: #939EAC; --faint: #7B8693;
       --rule: #262D37; --edge: #5A6B82;
-      --accent: #8296FF; --accent-soft: rgba(130,150,255,.13); --on-accent: #0E1116;
+      --accent: #8296FF; --accent-soft: rgba(130,150,255,.13); --on-accent: #0E1116; --on-accent-muted: #232A33;
       --ok: #4FBF8B; --warn: #D9A05B; --crit: #E0736A;
       --shim-a: rgba(255,255,255,.04); --shim-b: rgba(255,255,255,.09);
     }
@@ -359,9 +362,33 @@
     background: var(--raised); color: var(--ink); border: 1px solid var(--edge);
   }
   button.act:hover { border-color: var(--accent); }
+  /* Off screen until focused, then placed over the header rather than displacing it, so the
+     page does not jump for people who never use it. */
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
+  .skip-link {
+    position: absolute; left: 8px; top: -40px; z-index: 100;
+    background: var(--accent); color: var(--on-accent);
+    padding: 6px 10px; border-radius: 6px; font-size: 12px; text-decoration: none;
+    transition: top .12s ease;
+  }
+  .skip-link:focus { top: 8px; }
   button.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  /* Every other thing you can reach with a keyboard. Without these the focus ring existed on
+     one class of button and nowhere else, so tabbing through the panel lost the cursor the
+     moment it left that class. */
+  #companions .top button:focus-visible,
+  #companions button.do:focus-visible,
+  .forfeit-note .fn-dismiss:focus-visible,
+  .skip-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   button.act.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-  button.act small { display: block; font-size: 9px; opacity: .7; letter-spacing: .04em; margin-top: 2px; }
+  /* No opacity here. This sub-label sits on the accent fill, and .7 blended the foreground
+     toward the background until the pair no longer cleared 4.5:1. A token that is a colour
+     rather than a transparency keeps the contrast checkable: you can read it off the two
+     values, which you cannot do once a blend is in the middle. */
+  button.act small { display: block; font-size: 9px; color: var(--on-accent-muted); letter-spacing: .04em; margin-top: 2px; }
   button.act[disabled] { opacity: .45; cursor: default; }
 
   .bar { height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; }
@@ -482,8 +509,15 @@
 </style>
 </head>
 <body>
+  <!-- Skip link and h1, for the reason the heading order gave away: the panel jumped straight
+       to <h2> for the deck name and the book title, so a screen reader met a level two heading
+       with no level one above it and no way past the rung buttons to the content. The h1 is
+       visually hidden rather than drawn, because the brand wordmark beside it already says this
+       out loud to everyone who can see it, and drawing both would be saying it twice. -->
+  <a class="skip-link" href="#main-content">Skip to the rung</a>
   <header>
-    <span class="brand">Interstice</span>
+    <h1 class="visually-hidden">Interstice</h1>
+    <span class="brand" aria-hidden="true">Interstice</span>
     <!--
       One noun for a step on the ladder, and it is "rung", the word the rest of the
       project already uses. This label used to say "Activities" while the footer said
@@ -519,7 +553,7 @@
     <ul id="companions-list"></ul>
   </aside>
 
-  <main>
+  <main id="main-content" tabindex="-1">
     <!-- ---------------------------------------------------------------- cards -->
     <section class="view" id="view-flashcards">
       <div>
