@@ -383,3 +383,26 @@ test('a book that failed to open disables the pager instead of ignoring it', () 
     'the sign-in state uses the same helper rather than its own copy'
   );
 });
+
+test('a refused retry says why, instead of clearing the line', () => {
+  // Adversary finding 3, BLOCKING. The daemon computes ok, stage, expected, actual and a reason
+  // ending in a remedy; the route serialises all five; the panel threw them away and then called
+  // say('') to clear the line they would have gone on. The explanations were true of the daemon
+  // and invisible in the product, and what a person saw after a refused retry was the panel
+  // returning to "opening your book" over a spinner, which reads as the retry having worked.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const handler = html.slice(
+    html.indexOf("$('reader-retry-yes').addEventListener"),
+    html.indexOf("$('page-next').addEventListener")
+  );
+  assert.ok(handler.length > 0, 'the retry handler is found');
+
+  assert.match(handler, /await r\.json\(\)/, "the response body is read rather than discarded");
+  assert.match(handler, /outcome\.ok === false/, 'a refusal is distinguished from a success');
+  assert.match(handler, /reader-failed-why'\)\.textContent = why/, 'and the reason is rendered');
+  assert.match(handler, /setPagerDisabled\(true/, 'the pager stays disabled on a refusal');
+
+  // The success path may clear the line. The refusal path must not, which is the regression.
+  const refusal = handler.slice(handler.indexOf('outcome.ok === false'), handler.indexOf('} else {'));
+  assert.ok(!/say\(''\)/.test(refusal), "a refusal does not clear the status line");
+});

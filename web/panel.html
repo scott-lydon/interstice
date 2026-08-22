@@ -2235,17 +2235,37 @@ $('reader-retry-yes').addEventListener('click', async () => {
   // round trip drives a headless browser through a fresh registration.
   b.innerHTML = '<span class="spinner"></span> Reopening';
   say('discarding the old registration and reopening the book', true);
+  // The answer is read. It used to be thrown away: the daemon computes ok, stage, expected,
+  // actual and a reason ending in a remedy, the route serialises all five, and this dropped them
+  // on the floor and then called say('') to clear the line they would have gone on. So the
+  // explanations were true of the daemon and invisible in the product, which is the same defect
+  // as the reader reporting a page it never had, one layer further out.
+  let outcome = null;
   try {
-    await fetch('/api/reading/retry', { method: 'POST' });
+    const r = await fetch('/api/reading/retry', { method: 'POST' });
+    outcome = await r.json().catch(() => null);
   } catch {
-    /* the next tick reports whatever actually happened */
+    outcome = { ok: false, reason: 'Interstice is not running in the background. '
+      + 'Open a terminal and run interstice start.' };
   }
   readerSeq = -1;
   readerTextSeq = -1;
   b.disabled = false;
   b.textContent = 'Discard it and reopen';
   readerRetryAsk(false);
-  say('');
+  if (outcome && outcome.ok === false) {
+    // A refused retry leaves the failure surface up and says why, rather than clearing the line
+    // and returning to "opening your book" over a spinner, which is what it did before and which
+    // reads as the retry having worked.
+    const why = String(outcome.reason || 'The book did not come back.');
+    $('reader-failed-why').textContent = why;
+    $('reader-failed').hidden = false;
+    readerFailed = true;
+    setPagerDisabled(true, 'Amazon would not open this book. Press Read it again.');
+    say(why.slice(0, 80));
+  } else {
+    say('');
+  }
   if (readerTimer) tickReader();
 });
 $('page-next').addEventListener('click', () => turnPage('next'));
