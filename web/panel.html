@@ -1778,8 +1778,17 @@ async function loadBook() {
     }
     $('read-app').onclick = async () => {
       say('opening Kindle', true);
-      await fetch('/api/reading/open', { method: 'POST' });
-      say('opened in Kindle');
+      // It said "opened in Kindle" whether or not it opened: the request was fired and the
+      // sentence followed, with nothing between them establishing that the first had worked.
+      try {
+        const r = await fetch('/api/reading/open', { method: 'POST' });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok || d.ok === false) throw new Error(d.detail || d.reason || 'refused');
+        say('opened in Kindle');
+      } catch (err) {
+        say('Kindle did not open: ' + String(err.message || err).slice(0, 60)
+          + '. The book is still open here.');
+      }
     };
 
     // A book named in the URL wins over the daemon's default, so a reload lands where
@@ -1900,16 +1909,28 @@ async function loadTodos() {
         // The point of ticking a box is to stop having to look at it.
         moveTodoItem(li, section, box.checked);
         retallyTodos(section);
-        await fetch('/api/todos/toggle', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            key: box.dataset.key,
-            done: box.checked,
-            noteId: box.dataset.note,
-            text: li.querySelector('label').textContent,
-          }),
-        });
+        // The row moves first, which is right: a tick should feel instant. But the write was
+        // then fired and forgotten, so a refusal left the panel showing an item as done that
+        // Notes never recorded, and the next reload silently put it back. Say so instead, and
+        // put the row back where it was, so what is on screen is what was actually stored.
+        try {
+          const r = await fetch('/api/todos/toggle', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              key: box.dataset.key,
+              done: box.checked,
+              noteId: box.dataset.note,
+              text: li.querySelector('label').textContent,
+            }),
+          });
+          if (!r.ok) throw new Error('refused');
+        } catch {
+          box.checked = !box.checked;
+          moveTodoItem(li, section, box.checked);
+          retallyTodos(section);
+          say('That did not save to Notes, so the item is back where it was.');
+        }
         say(box.checked ? 'marked done' : 'reopened');
       });
     }

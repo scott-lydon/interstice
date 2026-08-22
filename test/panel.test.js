@@ -268,3 +268,23 @@ test('the rung is in the URL, and a router-chosen rung is not', () => {
   assert.match(html, /new URLSearchParams\(window\.location\.search\)\.get\('view'\)/, 'read back at boot');
   assert.match(html, /hasOwnProperty\.call\(LOADERS, wanted\)/, 'an unknown view falls back rather than rendering nothing');
 });
+
+test('a user action never announces a success it did not establish', () => {
+  // UX-SL-003. Two actions fired a request and then said it had worked. The Kindle button printed
+  // "opened in Kindle" whether or not it opened, and the to-do toggle moved the row optimistically
+  // and forgot the write, so a refusal left the panel showing an item as done that Notes never
+  // recorded and the next reload silently put back.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+
+  const kindle = html.slice(html.indexOf("$('read-app').onclick"), html.indexOf("// A book named in the URL wins"));
+  assert.match(kindle, /try \{/, 'the Kindle open is guarded');
+  assert.ok(
+    kindle.indexOf('try {') < kindle.indexOf("say('opened in Kindle')"),
+    'and the guard opens before the sentence that claims success'
+  );
+  assert.match(kindle, /Kindle did not open/, 'a refusal says so');
+
+  const toggle = html.slice(html.indexOf("await fetch('/api/todos/toggle'") - 600, html.indexOf("await fetch('/api/todos/toggle'") + 1200);
+  assert.match(toggle, /box\.checked = !box\.checked/, 'a refused toggle puts the checkbox back');
+  assert.match(toggle, /did not save to Notes/, 'and says the write did not land');
+});
