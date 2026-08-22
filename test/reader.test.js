@@ -804,3 +804,39 @@ test('capture refuses when the page cannot be asked at all', async () => {
   assert.equal(shots, 0, 'a page that cannot answer is not photographed');
   assert.equal(out.jpeg.toString(), 'held');
 });
+
+test('the seed path does not publish a page that has not arrived', async () => {
+  // Adversary finding 2, BLOCKING. `#seed` shot first, probed second, and showed the picture
+  // regardless of the answer, going around `capture` entirely. It runs on the path after a revive,
+  // which is exactly when the page is least likely to be there. `#show` advances `seq` whenever
+  // the bytes differ and a spinner is animated, so its bytes always differ: the panel refetched
+  // and drew the spinner as the current page every time.
+  const src = fs.readFileSync(path.join(ROOT, 'lib', 'reader.js'), 'utf8');
+  const seed = src.slice(src.indexOf('async #seed()'), src.indexOf('async #trim('));
+  assert.ok(seed.length > 0, 'the seed path is found');
+
+  // The order is the fix: ask, then shoot. Asserted by position because the order IS the property.
+  const asked = seed.indexOf('await this.#probe()');
+  const shot = seed.indexOf('await this.#shoot()');
+  assert.ok(asked > 0 && shot > 0, 'it both asks and shoots');
+  assert.ok(asked < shot, 'and it asks BEFORE it shoots');
+  assert.match(seed, /!probe\.painted && !probe\.bookError/, 'refusing a page that has not arrived');
+});
+
+test('read-ahead does not shelve a page the probe says has not arrived', async () => {
+  // The other half of finding 2. `#step` fills the shelf rather than the panel, but the shelf is
+  // served straight to the panel when you turn to that page, so shelving a spinner defeats
+  // capture's refusal one move later.
+  const src = fs.readFileSync(path.join(ROOT, 'lib', 'reader.js'), 'utf8');
+  const step = src.slice(src.indexOf('async #step('), src.indexOf('async #seed()'));
+
+  assert.match(step, /if \(probe && !probe\.painted && !probe\.bookError\)/, 'an affirmative no is refused');
+  // And unknown is NOT treated as bad: the short-budget probe legitimately returns null on a busy
+  // renderer, and this method is built around that. Refusing on null would break read-ahead
+  // precisely when the machine is loaded, which is the opposite of the intent.
+  assert.match(step, /#probeSoon\(\)/, 'it still uses the short budget probe');
+  assert.ok(
+    !/if \(!probe \|\|/.test(step),
+    'a null probe is tolerated rather than treated as a page that failed to arrive'
+  );
+});
