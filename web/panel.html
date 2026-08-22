@@ -434,6 +434,14 @@
     overflow: hidden;
   }
   .reader img { display: block; width: 100%; height: 100%; object-fit: contain; cursor: pointer; }
+  /* The button is a frame around the page, not a control with its own look: no padding, no
+     border, no background, and the same box the image had. The focus ring is the one thing it
+     does draw, because it is now the focusable element. */
+  .reader-tap {
+    display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none;
+    cursor: pointer; appearance: none;
+  }
+  .reader-tap:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
   /* The page, set in our own type rather than shown as a photograph of itself.
      Amazon draws each page as one image, so these words were read back off that
@@ -625,8 +633,14 @@
       </div>
       <div class="bar" id="book-bar-wrap"><i id="book-bar" style="transform:scaleX(0)"></i></div>
       <div class="reader" id="reader">
-        <img id="reader-frame" role="button" tabindex="0"
-             alt="Your book, at the page you were on. Press Enter to tap the middle of the page." hidden>
+        <!-- A real button rather than an image wearing role="button". The ARIA version needed a
+             hand-written keydown handler to make Enter and Space work, which a button does for
+             free, and a screen reader met an image claiming to be a control. The image inside is
+             decorative because the button carries the name: announcing both would say it twice. -->
+        <button id="reader-tap" type="button" class="reader-tap" hidden
+                aria-label="Your book, at the page you were on. Press Enter to tap the middle of the page.">
+          <img id="reader-frame" alt="" hidden>
+        </button>
         <div class="text" id="reader-text" hidden></div>
         <div class="over" id="reader-over">
           <div class="skeleton">
@@ -773,6 +787,16 @@ const $ = (id) => document.getElementById(id);
      The property is named generically on purpose: a check that this file no longer sets that
      style inline is a grep, and a comment quoting the thing it removed sits inside the grep's
      reach and fails it. */
+  /* The page picture and the button around it are hidden together, always. They were one element
+     before the button existed, and leaving the button visible over a hidden image gives a screen
+     reader and a keyboard a control with nothing behind it, which is worse than either state. */
+  const setFrameHidden = (hidden) => {
+    const img = $('reader-frame');
+    const tap = $('reader-tap');
+    if (img) img.hidden = hidden;
+    if (tap) tap.hidden = hidden;
+  };
+
   const setBar = (id, percent) => {
     const el = $(id);
     if (!el) return;
@@ -1203,9 +1227,9 @@ function setReaderMode(mode) {
     // "This page did not read cleanly" is about the text view, and you have just
     // left it. Saying it over a picture you asked for is noise.
     readerNote('');
-    if ($('reader-frame').src) $('reader-frame').hidden = false;
+    if ($('reader-frame').src) setFrameHidden(false);
   } else {
-    $('reader-frame').hidden = true;
+    setFrameHidden(true);
     readerTextSeq = -1;
     loadReaderText();
   }
@@ -1336,7 +1360,7 @@ async function loadReaderText({ force = false, fresh = false } = {}) {
     // is the whole complaint this view exists to answer.
     if (d.confidence !== null && (d.confidence < 0.6 || (d.weak ?? 0) > 0.5)) {
       host.hidden = true;
-      $('reader-frame').hidden = false;
+      setFrameHidden(false);
       // Said with a way out of it. This is a per-page decision, and it used to look
       // exactly like the view having given up and gone back to the old one: the page
       // came forward, nothing said why in a way you could act on, and the only route
@@ -1360,7 +1384,7 @@ async function loadReaderText({ force = false, fresh = false } = {}) {
       // was vagueness chosen over a number sitting in the same object.
       + weakLinesPhrase(d)
       + '.</p>';
-    $('reader-frame').hidden = true;
+    setFrameHidden(true);
     host.scrollTop = 0;
     readerTextSeq = readerSeq;
   } catch {
@@ -1384,7 +1408,7 @@ function startReader(asin) {
   readerShelf = null;
   readerNote('');
   $('reader-failed').hidden = true;
-  $('reader-frame').hidden = true;
+  setFrameHidden(true);
   $('reader-text').hidden = readerMode() !== 'text';
   $('reader-text').innerHTML = '';
   $('reader-over').hidden = false;
@@ -1419,7 +1443,7 @@ function renderReader(d) {
   if (d.shelf) readerShelf = d.shelf;
 
   if (!d.ok) {
-    $('reader-frame').hidden = true;
+    setFrameHidden(true);
     $('reader-over').hidden = false;
     // The daemon's own sentence goes to the log, and the reader gets one that names a move.
     readerSay(readerRemedy(d.error));
@@ -1434,7 +1458,7 @@ function renderReader(d) {
     $('reader-failed').hidden = !readerFailed;
     if (readerFailed) {
       $('reader-over').hidden = true;
-      $('reader-frame').hidden = true;
+      setFrameHidden(true);
       $('reader-text').hidden = true;
       readerNote('');
       // A new failure asks the question again rather than arriving mid-answer.
@@ -1733,7 +1757,7 @@ async function loadBook() {
       $('book-why').dataset.reason = String(d.reason || '');
       if (d.reason) console.debug('[interstice] no book, reason:', d.reason);
       setBar('book-bar', 0);
-      $('reader-frame').hidden = true;
+      setFrameHidden(true);
       $('reader-over').hidden = false;
       readerSay('nothing to open');
       $('book-actions').innerHTML = '';
@@ -2216,7 +2240,7 @@ $('read-again').addEventListener('click', () => {
   // back the reading it already has. The usual reason a page reads badly is a
   // picture taken while one of Amazon's dialogs was still on top of it.
   readerNote('');
-  $('reader-frame').hidden = readerMode() === 'text';
+  setFrameHidden(readerMode() === 'text');
   loadReaderText({ fresh: true });
 });
 
@@ -2233,24 +2257,19 @@ function readerPress(fx, fy) {
   readerInput({ kind: 'click', x: fx * readerViewport.width, y: fy * readerViewport.height });
 }
 
-$('reader-frame').addEventListener('click', (e) => {
-  const r = e.currentTarget.getBoundingClientRect();
+$('reader-tap').addEventListener('click', (e) => {
+  // A click synthesised by Enter or Space carries no pointer position: `detail` is 0 and the
+  // coordinates are 0, which would press the top left corner of the page. A keyboard cannot aim,
+  // so it presses the middle, which is what a Kindle's own centre tap does and what the previous
+  // hand-written keydown handler did before a real button made it unnecessary. Turning pages is
+  // not this key's job; the arrows already do that from anywhere in the rung.
+  if (e.detail === 0) {
+    readerPress(0.5, 0.5);
+    return;
+  }
+  const r = $('reader-frame').getBoundingClientRect();
+  if (!r.width || !r.height) return;
   readerPress((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
-});
-
-/**
- * The same press, without a pointer.
- *
- * A mouse can aim anywhere on the page; a keyboard cannot, so Enter and Space press
- * the middle, which is what a Kindle's own centre tap does: it dismisses whatever
- * Amazon has put on top of the page. Turning pages is not this key's job. Arrows
- * already do that from anywhere in the reading rung, so they are left to bubble.
- */
-$('reader-frame').addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  e.preventDefault();
-  e.stopPropagation();
-  readerPress(0.5, 0.5);
 });
 
 // The panel resizes with the window, and the page was laid out for the old box.

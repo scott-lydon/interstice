@@ -320,3 +320,32 @@ test('the progress bars are driven by one mechanism, not two', () => {
     );
   }
 });
+
+test('the page is pressed through a real button, not an image wearing a role', () => {
+  // UX-A11Y-008. The page image carried role="button" and tabindex="0", which meant a screen
+  // reader met an image claiming to be a control, and Enter and Space only worked because of a
+  // hand-written keydown handler sitting beside it. A button does both for free.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+
+  const img = (html.match(/<img id="reader-frame"[^>]*>/) || [])[0];
+  assert.ok(img, 'the page image is still there');
+  assert.ok(!/role="button"/.test(img), 'and no longer claims to be a control');
+  assert.ok(!/tabindex/.test(img), 'nor takes focus itself');
+  assert.match(img, /alt=""/, 'it is decorative, because the button carries the name');
+
+  assert.match(html, /<button id="reader-tap"[^>]*aria-label="[^"]+"/, 'the button carries the name');
+
+  // The hand-written key handler is the thing a real button makes unnecessary. Its absence is
+  // the point of the change, so it is asserted rather than assumed.
+  assert.ok(!/reader-frame'\)\.addEventListener\('keydown'/.test(html), 'no hand-written key handler survives');
+
+  // A keyboard activation reports no coordinates. Pressing the top left corner is not what Enter
+  // meant, and this is the branch that stops it.
+  const handler = html.slice(html.indexOf("$('reader-tap').addEventListener('click'"));
+  assert.match(handler.slice(0, 900), /e\.detail === 0/, 'a keyboard click is recognised');
+  assert.match(handler.slice(0, 900), /readerPress\(0\.5, 0\.5\)/, 'and presses the middle');
+
+  // The picture and the control around it are hidden together or the button outlives its content.
+  assert.ok(!/reader-frame'\)\.hidden =/.test(html), 'nothing toggles the image on its own');
+  assert.match(html, /const setFrameHidden/, 'one helper hides both');
+});
