@@ -1,0 +1,65 @@
+{
+  "sheet": "Design__Design_Fidelity",
+  "targets": [
+    "PHASE 8 design output"
+  ],
+  "row_count": 8,
+  "entry_count": 8,
+  "run_dir": "/Users/scottlydon/.claude/projects/-Users-scottlydon/5076d517-09dd-4e8d-8aab-1d115d31b9c3/subagents/workflows/wf_83867183-f88",
+  "counts": {
+    "pass": 2,
+    "finding": 0,
+    "not_applicable": 6,
+    "unreturned": 0
+  },
+  "entries": [
+    {
+      "row_id": "DF-001",
+      "status": "not_applicable",
+      "detail": "Rule DF-001 requires diffing a Claude Design handoff bundle (JSX/HTML export, e.g. drill_verify.jsx) against its live-tree counterpart. The three targets contain no such bundle: /Users/scottlydon/Developer/akin/akin/Flows/Social holds only 13 .swift files (AkinAPI.swift, ProfileSwitcherView.swift, QuestionnaireBrowseView.swift, QuestionnaireDetailView.swift, SocialDebugRoute.swift, SubscriptionsView.swift, etc.) with no JSX/HTML present. I grepped REDESIGN_SPECS.md (935 lines) and UX_FEEDBACK.md (310 lines) for \"design bundle\", \"design_bundle\", \"claude design\", and \"handoff\" and got zero matches; `find ... -iname \"*design_bundle*\"` under the Social directory also returned nothing. Reading the head of both files shows this is a storyboard/design-tokens.json/SCREENSHOTS_V2 redesign workflow (Main.storyboard, Phase 3.1 implementation, Gate B screenshot verification), not a Claude Design bundle-to-live-tree copy scenario the rule addresses. No offense to report and no PASS to claim, since the rule's precondition (a design bundle exists) is absent from this scope.",
+      "rule_title": "Copy the design bundle files into the live tree as-is"
+    },
+    {
+      "row_id": "DF-002",
+      "status": "pass",
+      "detail": "Verified across all three targets using ripgrep searches for \"README\", \"pixel.perfect\", \"recreate\", \"reinterpret\", \"export guidance\", and related language. Full read of REDESIGN_SPECS.md and UX_FEEDBACK.md. Review of session notes file (GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md). Zero references found to Claude Design export README guidance as justification for restructuring in the Social flows, redesign specs, or UX feedback documents.",
+      "rule_title": "The design export's own README guidance is overridden"
+    },
+    {
+      "row_id": "DF-003",
+      "status": "not_applicable",
+      "detail": "DF-003 (applies_to: \"projects with a Claude Design handoff bundle\") audits deviations from a verbatim Claude Design export. I ran `ls` on /Users/scottlydon/Developer/akin/akin/Flows/Social (14 plain .swift files, no _design_bundle or .jsx present), searched for `find ... -iname \"*design_bundle*\" -o -iname \"*claude_design*\"` under /Users/scottlydon/Developer/akin (no hits), grepped REDESIGN_SPECS.md and UX_FEEDBACK.md for \"design bundle|claude design|_design_bundle|handoff\" (no hits), and grepped the session notes file /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md for the same terms plus \"jsx\" (no hits). No Claude Design handoff bundle exists anywhere in the target scope, so there is no verbatim-copy source to compare live files against and no deviation to evaluate.",
+      "rule_title": "Deviate only for a real, demonstrable user-interface bug"
+    },
+    {
+      "row_id": "DF-004",
+      "status": "pass",
+      "detail": "Read rule DF-004 from /Users/scottlydon/Developer/Recurring_goals/Design/Design_Fidelity/rows.csv via python3 csv.DictReader (agent_prompt: forced deviations from a real bug must preserve the exact on-screen experience; no invented rationalizing copy). Constraints forbid building/rendering, so I compared spec text to live source via grep/read instead of Playwright screenshots. Searched REDESIGN_SPECS.md and UX_FEEDBACK.md for 'deviation', 'fallback', 'older format', 'graceful', 'hence', 'legacy' and found exactly one recorded deviation in the whole file, at REDESIGN_SPECS.md:643-646 (AccountSettingsView 'fact' row, outside the Social flow but inside the target file): the design calls for a surface-dim fill on that row, but the page ground is also surface-dim so the fill would vanish; the entry states the live tree keeps 'surface' instead and preserves non-navigability via the design's other four signals (inverted hierarchy, no chevron, no press state, isUserInteractionEnabled=false, .staticText). This is a properly disclosed, reasoned deviation with no added rationalizing banner or 'older format' style text, matching the rule's requirement. I also grepped /Users/scottlydon/Developer/akin/akin/Flows/Social/*.swift for 'fallback|older format|legacy|TODO|FIXME|hence|graceful' with zero hits, and cross-checked the Social-specific spec strings ('Not rated yet', 'Author not shown', 'No questionnaires here yet', 'No answers yet', 'Add answers', '<name> copy') against QuestionnaireBrowseView.swift, QuestionnaireBrowseViewModel.swift, QuestionnaireDetailViewModel.swift, ProfileSwitcherView.swift, and ProfileSwitcherViewModel.swift; all match the spec verbatim. QuestionnaireDetailViewModel.swift:74 adds a third 'Readers see: no name, and your followers are told it was you' string beyond the spec's two quoted examples, but this implements the full three-value AuthorVisibility enum rather than being a bug-forced deviation, and REDESIGN_SPECS.md nowhere marks it as a deviation, so it falls outside this rule's scope (forced deviations preserving on-screen experience, not general spec/code string coverage). This rule addresses code artifacts, not session/transcript behavior, so the session notes file was not needed for DF-004.",
+      "rule_title": "A forced deviation preserves the exact on-screen experience"
+    },
+    {
+      "row_id": "DF-005",
+      "status": "not_applicable",
+      "detail": "Rule DF-005 applies only to \"projects with a Claude Design handoff bundle\" and its detection method requires diffing live-tree strings against that design bundle. I searched the target scope for a bundle: `find /Users/scottlydon/Developer/akin -iname \"*design_bundle*\" -o -iname \"*claude_design*\"` returned nothing, and `grep -ni \"design bundle|claude design|_design_bundle|\\.dc\\.html\" REDESIGN_SPECS.md UX_FEEDBACK.md` found no matches. REDESIGN_SPECS.md and UX_FEEDBACK.md are a hand-authored redesign spec tied to `design-tokens.json`/`BRAND_GUIDELINES.md`, not a Claude Design .dc.html artboard export. With no design bundle present, there is no reference tree to diff Social's user-visible strings against. I did additionally scan /Users/scottlydon/Developer/akin/akin/Flows/Social/*.swift for rationalizing/fallback copy patterns (hence, older format, fallback, graceful fallback, phase completed, unavailable, could not, placeholder) and found only two ordinary error-description strings in AkinAPI.swift lines 37-38 (\"Could not reach the server...\", \"The server's reply could not be read...\") which describe real network/parse failures, not stale-status coping text, so this would not have been a finding even if the rule applied.",
+      "rule_title": "Never add rationalizing copy the design did not have"
+    },
+    {
+      "row_id": "DF-006",
+      "status": "not_applicable",
+      "detail": "Rule applies only to 'projects with a Claude Design handoff bundle' (a _design_bundle/ or similar Claude Design export paired with a live UI tree). Checked: find for *bundle*/*design_bundle*/*Claude Design* under /Users/scottlydon/Developer/akin found nothing but an unrelated Bundle.swift extension and an App Store compliance doc; grepped REDESIGN_SPECS.md and UX_FEEDBACK.md for 'design bundle', '_design_bundle', 'claude design', 'design export', 'design handoff' with zero matches; and akin/akin/Flows/Social contains only plain SwiftUI source files (AkinAPI.swift, ProfileSwitcherView.swift, QuestionnaireBrowseView.swift, SocialService.swift, SocialDTOs.swift, SubscriptionsView.swift, SocialDebugRoute.swift, plus ViewModels) with no sibling design-export directory. There is no design bundle to diff the live tree against, so the rule's subject (design-vs-code drift resolution direction) is absent from these targets.",
+      "rule_title": "The design export is the source of truth; drift re-syncs to it"
+    },
+    {
+      "row_id": "DF-007",
+      "status": "not_applicable",
+      "detail": "The rule applies only after \"a future Claude Design re-export lands.\" The targets (Social flow Swift code, REDESIGN_SPECS.md, and UX_FEEDBACK.md) contain no Claude Design handoff bundle, no .dc.html file, and no _design_bundle directory. Per RG_REPORT_Design_Fidelity.md line 36, the only design file in the project (account-deletion-design.html) is hand-authored, never re-exported, and is not a Claude Design export. Since there is no design export to re-export, the rule cannot be violated.",
+      "rule_title": "A re-export converges the live tree, not the design files"
+    },
+    {
+      "row_id": "DF-008",
+      "status": "not_applicable",
+      "detail": "The rule addresses design artifacts\u2014specifically Claude Design canvas files (.dc.html), design bundles, and design exports. The targets contain Swift source code (Social folder), and markdown specification/feedback documents (REDESIGN_SPECS.md, UX_FEEDBACK.md). No design artifacts exist in these targets. The rule's subject (design slices and handoffs from design tools) is absent.",
+      "rule_title": "Design work uses Claude Design, not a general model imitating it"
+    }
+  ]
+}

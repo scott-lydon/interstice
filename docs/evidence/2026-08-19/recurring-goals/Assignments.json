@@ -1,0 +1,95 @@
+{
+  "sheet": "Assignments",
+  "targets": [
+    "the deliverables of this loop"
+  ],
+  "row_count": 12,
+  "entry_count": 12,
+  "run_dir": "/Users/scottlydon/.claude/projects/-Users-scottlydon/5076d517-09dd-4e8d-8aab-1d115d31b9c3/subagents/workflows/wf_a617def4-d08",
+  "counts": {
+    "pass": 5,
+    "finding": 3,
+    "not_applicable": 4,
+    "unreturned": 0
+  },
+  "entries": [
+    {
+      "row_id": "AS-001",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md",
+      "line": 1,
+      "detail": "The written record shows multiple phases of code-touching work were completed and committed (phases 0, 3, 4, 5, 6, 7, 9 documented in the goal loop and notes), but no submit-gate appears in the goal loop file or notes file. No READY or NOT READY verdict, no verbatim user prompt with $10,000/client framing, and no submit-gate structure are present in the available written record despite code touching and deployment occurring.",
+      "rule_title": "Run the submit-gate before declaring any assignment complete"
+    },
+    {
+      "row_id": "AS-002",
+      "status": "not_applicable",
+      "detail": "Rule AS-002 (submit-gate: nine checks must pass before answering READY) applies to \"assignment responses\" that culminate in a READY/NOT READY verdict on a deployed submission (deployed URL, GitHub vs GitLab HEAD parity, LLM two-turn smoke test, etc). I grepped both GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md and its _NOTES.md sibling (the only written account of this session, per my instructions) for \"READY\", \"NOT READY\", \"gitlab\", \"two-turn\", \"smoke test\", and \"primary route\" and found zero matches anywhere in either file (1181 and 393 lines respectively, read in full via grep -c to confirm coverage). The notes describe a repo-repair goal loop (Interstice reader hangs, Akin social feature) using its own internal verification language (\"Verified by test -f...\", \"Recorded 2026-08-20... verified with git cat-file\", items marked \"done\"/\"shipped\" per its own checklist), never the submit-gate assignment format this rule targets (no deployed-URL curl check, no GitHub/GitLab HEAD comparison, no LLM two-turn smoke test, no READY/NOT READY verdict line). Since no submit-gate READY declaration exists anywhere in the only account of this session available to me, there is no instance of the rule's subject to check for compliance or violation. akin-server-side/ARCHITECTURE.md, acceptance-tests.md, akin/Flows/Social, and interstice/README.md are documentation/source targets, not session transcripts, so they carry no READY verdicts either.",
+      "rule_title": "The nine internal submit-gate checks all pass before READY"
+    },
+    {
+      "row_id": "AS-003",
+      "status": "pass",
+      "detail": "Checked the repo root of /Users/scottlydon/Developer/akin-server-side (the repo two of the six targets, ARCHITECTURE.md and acceptance-tests.md, live in). `ls -la` shows all five CATA artifacts present and populated: coding-practices.md (152 lines), ARCHITECTURE.md (396 lines), acceptance-tests.md (482 lines), tasks.md (present), QA_ADVERSARY.md (169 lines) \u2014 none are stubs. `git log --diff-filter=A --follow` on each shows they were all added in the same commit (95f38c9c, 2026-08-08), so they were introduced together rather than piecemeal, which is what the \"same commit\" clause is protecting against; this repo's actual first commit is from 2021-05-31, i.e. these are a retrofit onto a pre-existing repo rather than a fresh assignment scaffold, so the \"same commit that scaffolds the assignment\" ordering test doesn't have a violation to find here (there was no fresh scaffold commit in scope). DEFENSE_BREAKOUT_SCRIPT.md, AI_INTERVIEW_PREP.md, and website/index.html, the three named potential-conflict documents, do not exist in this repo, so there is nothing downstream to disagree with the CATA docs. I also grepped /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md (lines 798-820, 995-1005) for CATA references: Phase 9 of that loop explicitly re-opens and updates $SRV/ARCHITECTURE.md, $SRV/acceptance-tests.md, and $SRV/QA_ADVERSARY.md as living documents on every architectural change, and Z.4 runs a cross-document consistency sweep between them and both project READMEs, matching the rule's living-document and single-source-of-truth requirement. The other two targets, /Users/scottlydon/Developer/interstice (README.md) and /Users/scottlydon/Developer/akin/akin/Flows/Social (a Swift client subfolder, not a repo root), are not \"assignment repositories\" that scaffold under this convention: interstice's root has no coding-practices.md/ARCHITECTURE.md/acceptance-tests.md/tasks.md/QA_ADVERSARY.md at all and the goal loop notes never request or expect them there (only $SRV is treated as the CATA-doc owner throughout the loop), and Flows/Social is a source directory inside the akin iOS client repo, not a repo root, so the rule's \"repo root\" scope does not reach it. No offenses found in the audited scope.",
+      "rule_title": "The four CATA docs plus QA_ADVERSARY.md exist and lead the code"
+    },
+    {
+      "row_id": "AS-004",
+      "status": "not_applicable",
+      "detail": "Rule AS-004 governs coding-practices.md (checking it for \"you may not build X\" functionality-restriction clauses vs. style-only content, per CLAUDE.md extraction drift). None of the six audit TARGETS is coding-practices.md or a directory containing it: GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md and its _NOTES.md sibling, akin-server-side/ARCHITECTURE.md, akin-server-side/acceptance-tests.md, akin/akin/Flows/Social/ (a directory of Swift flow files), and interstice/README.md. A file named coding-practices.md does exist at /Users/scottlydon/Developer/akin-server-side/coding-practices.md, but that specific path was not included in the TARGETS list I was given (only ARCHITECTURE.md and acceptance-tests.md from that repo were), and the task instructs me to audit ONLY the listed paths. Since the rule's subject artifact is absent from the in-scope target set, the rule does not apply here.</detail>\n</invoke>\n",
+      "rule_title": "coding-practices.md contains style only, never functionality restrictions"
+    },
+    {
+      "row_id": "AS-005",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin-server-side/tasks.md",
+      "line": 14,
+      "detail": "Tasks in tasks.md cite which acceptance test they satisfy and which ARCHITECTURE component they touch, but do not explicitly cite \"the rubric line it advances\" as required by the rule. For example, line 14 reads \"Satisfies AT-A1. Touches `Advert`, `AdvertInstance`, `AdvertScan`.\" but does not name that this task advances the Architecture rubric line. This pattern repeats throughout the file: no task explicitly names its rubric pillar (Architecture/Scalability/Security/Testing), which the AS-005 rule requires in the acceptance-tests.md organization structure.",
+      "rule_title": "tasks.md uses checkbox slices that each cite a test, a component, and a rubric line"
+    },
+    {
+      "row_id": "AS-006",
+      "status": "not_applicable",
+      "detail": "The rule applies to Gauntlet repositories (formal assignment submissions). The target repositories (interstice at /Users/scottlydon/Developer/interstice, akin at /Users/scottlydon/Developer/akin, akin-server-side at /Users/scottlydon/Developer/akin-server-side) are regular GitHub projects without Gauntlet markers or structure. They are managed through a goal loop but are not Gauntlet assignment submissions to a Gauntlet portal.",
+      "rule_title": "Every new repo dual-pushes to GitHub and GitLab from the first commit"
+    },
+    {
+      "row_id": "AS-007",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin-server-side",
+      "line": 1,
+      "detail": "Multiple commits combine separate logical units into single commits, violating \"commit each logical unit of work separately.\" Examples: commit 8b29cf0 \"Swath N2 items 5.2 and 5.3: the two subscription tables\" combines two separate subscription table implementations; commit ee737bd \"Loop 9 items 4.9 and 4.10\" combines two separate algorithm/handling items; commit 41c3f45, 3cfb1e4, 6b470df, a077b94, a0f99b8 follow the same pattern. These are distinct items per the goal loop but were squashed into single commits.",
+      "rule_title": "Commit each logical unit separately with a descriptive message"
+    },
+    {
+      "row_id": "AS-008",
+      "status": "not_applicable",
+      "detail": "This rule is a per-assignment automation requirement from the Gauntlet CLAUDE.md convention (docs/AI_INTERVIEW_PREP.md and docs/DEFENSE_BREAKOUT_SCRIPT.md auto-produced for every \"assignment\" submission). None of the audit targets are an assignment-submission repo in that sense: akin-server-side and interstice are the user's own ongoing engineering projects. I confirmed via `find` that docs/AI_INTERVIEW_PREP.md and docs/DEFENSE_BREAKOUT_SCRIPT.md do not exist under akin-server-side/docs (contents: notes/, s3-audit/) or interstice/docs (contents: audit/, BUG_ISSUE_PREVENTION.md, GOAL_LOOP.md, STARS_NOTES_2026-08-19.md, etc.), and grepped both goal-loop files at /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md and its _NOTES.md sibling for 'interview'/'defense' with no hits. Since the rule's applies_to is 'assignment repositories' and the target paths given are not framed or structured as a CATA-style graded assignment submission (no rubric, no submission-form context anywhere in the record), the rule's subject artifact type is absent from these targets rather than merely missing-and-violated.",
+      "rule_title": "The AI interview prep and defense script derive from the CATA docs"
+    },
+    {
+      "row_id": "AS-009",
+      "status": "pass",
+      "detail": "This session is technical work on Interstice reader bugs and Akin social features, not an assignment submission. Zero AI interview questions were raised during the session. Verified by: (1) reading the full session transcript (NOTES file) which documents only technical defects and fixes; (2) searching all targets for \"interview\" mentions\u2014zero results; (3) searching for interview question patterns (Q1:, Q2:, etc.)\u2014zero results. No entries needed in AI_INTERVIEW_QUESTION_LOG.md because no interview questions were encountered.",
+      "rule_title": "Log every AI interview question to the running cross-submission log"
+    },
+    {
+      "row_id": "AS-010",
+      "status": "pass",
+      "detail": "All company and project names written into artifacts this session (\"Interstice\", \"Akin\", \"Map Mates\") are confirmed against the user's own usage. \"Map Mates\" is sourced from the user's handwritten note of 2026-08-08, documented in acceptance-tests.md lines 3-4. Repository names and session notes confirm usage of \"Interstice\" and \"Akin\". No unconfirmed names found.",
+      "rule_title": "Clear the company and project name gate before writing either into an artifact"
+    },
+    {
+      "row_id": "AS-011",
+      "status": "pass",
+      "detail": "Reviewed the entire session record at /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md and /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md. Found zero edits or submissions to the Gauntlet portal profile. All Gauntlet references are file-path storage locations; all profile references are to user profiles within the akin application. No browser automation to the Gauntlet portal occurred.",
+      "rule_title": "Do not populate the Gauntlet portal profile"
+    },
+    {
+      "row_id": "AS-012",
+      "status": "pass",
+      "detail": "Audited the session's written record (/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md and the goal loop file) for any submission links that changed or demo URLs that appeared in outward-facing social posts. Searched target files with grep -n for \"http\", \"demo\", \"social\", \"post\", \"submission\", \"youtube\", \"video\", \"share\", and variations. Found no recorded submission links, no changes to demo URLs, and no evidence of demo URLs appearing in social posts this session. The rule is followed.",
+      "rule_title": "Keep submission links; never replace a working demo URL"
+    }
+  ]
+}

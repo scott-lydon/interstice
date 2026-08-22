@@ -1,0 +1,121 @@
+{
+  "sheet": "Process__Communication",
+  "targets": [
+    "every user facing string added in this loop"
+  ],
+  "row_count": 15,
+  "entry_count": 15,
+  "run_dir": "/Users/scottlydon/.claude/projects/-Users-scottlydon/5076d517-09dd-4e8d-8aab-1d115d31b9c3/subagents/workflows/wf_871435be-fbf",
+  "counts": {
+    "pass": 3,
+    "finding": 7,
+    "not_applicable": 5,
+    "unreturned": 0
+  },
+  "entries": [
+    {
+      "row_id": "CM-001",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 9,
+      "detail": "Lines 9-12: \"That caution was warranted: the same class of stale path had loop 6's entire Android build unable to configure until it was repaired today\" can be shortened to \"as happened to loop 6's Android build\" without losing the essential justification. Also lines 103-112 unnecessarily explain the delegation setup when \"per standing instruction, I read both myself\" suffices. Line 283-294 uses ~210 words to explain a contradiction that could be stated in ~80 words. Line 322-330 uses ~110 words where ~50 would convey the harness finding. These violate the rule to remove all unnecessary words.",
+      "rule_title": "Be as concise and direct as possible"
+    },
+    {
+      "row_id": "CM-002",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 189,
+      "detail": "Section 9.5 heading (line 144) poses the implicit question: how many defects were fixed and how many prevention entries were written? The answer\u2014\"Count of fixed defects recorded: 27\" and \"Prevention entries written: 27\"\u2014appears at line 189 only after 45 lines of preamble (lines 146\u2013150) and two complete tables listing all defects (lines 152\u2013187). The rule requires the answer in the first sentence before background or process narration.",
+      "rule_title": "Give the answer up front before explaining"
+    },
+    {
+      "row_id": "CM-003",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 58,
+      "detail": "N1 used at line 58 without expansion. Also found unexpanded acronyms: HTTP (line 119), N2 (line 155), N3 (line 164), UUID (line 165), N4 (line 168), and CSV (line 209). Each should spell out its expansion at first use per the rule.",
+      "rule_title": "Always spell out acronyms"
+    },
+    {
+      "row_id": "CM-004",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 115,
+      "detail": "Rule CM-004's subject is the response/transcript under review; per the routing instruction I audited it against the only written record of this loop, /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md (read in full, 356 lines). It makes many explicit behavioral claims about project code, each with a file path and line number cited inline, but none is backed by a fenced code block reproducing the actual source text as the rule requires. Examples: lines 115-118 assert \"idleCloseMs 900000 matches the fifteen minutes sentence\", \"MIN_WIDTH = 480 in lib/reader.js:133 matches the at least 480 points wide paragraph\", and \"recoverIfPossible({ everyMs = 10 * 60 * 1000 }) at lib/reader.js:1104 matches at most once every ten minutes\" -- three behavioral/value claims about source code, cited by file:line, with zero fenced code blocks nearby reproducing the quoted source. Line 127 similarly asserts behavior \"asserted by test/reader.test.js:388\" with no code block. Line 276 asserts constant values \"minimum 1, maximum 9, populationMean 5, raterCountPrior 5 in Sources/App/Matching/DerivedImportance.swift\" with a file path but no line number and no code block. The only fenced blocks in the document (lines 5-7, 30-33, 62-66, 204-207, 314-318) are shell commands/tool output, not source-reproducing citations, so they do not satisfy the rule for these claims. This is a repeated pattern, not a single borderline case: the document is dense with code-behavior assertions and contains not one fenced block quoting actual source lines from the codebase.",
+      "rule_title": "One code block minimum in any response mentioning the codebase"
+    },
+    {
+      "row_id": "CM-005",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 189,
+      "detail": "File $SRV/BUG_ISSUE_PREVENTION.md is mentioned as newly created but uses backticks only, with no inline markdown hyperlink like `[text](path)` that users can click to peek at it. Same applies to $R/docs/BUG_ISSUE_PREVENTION.md mentioned on line 190.",
+      "rule_title": "Every created file gets an inline clickable link"
+    },
+    {
+      "row_id": "CM-006",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 69,
+      "detail": "Rule CM-006 (Communication sheet) requires disambiguated wording with exactly one correct reading and full sentences over fragments; its SUBJECT is 'the response or transcript under review', which per the task instructions maps to the goal loop's written record, so I read GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md in full (356 lines) rather than the code targets. Two violations found. (1) Lines 68-69: 'the suite is 1,321 passed, 2 failed, 86.88% line coverage, and neither failure is in swath N1 or caused by it' uses 'neither X or Y' instead of the correct 'neither X nor Y'; a careful reader can parse this as a disjunction rather than the intended joint negation. Rewrite: '...and neither failure is in swath N1 nor caused by it:'. (2) Line 135: 'The reading rung also needs a Chromium-family browser that opens a debugging port, it tries every installed browser rather than the first that exists' is a comma splice with an ambiguous pronoun: 'it' could bind to the nearer noun phrase 'a Chromium-family browser' (nonsensical, since one browser cannot try other browsers) or, as intended, to 'the reading rung'. This is exactly the fragment/run-on pattern the rule flags. Rewrite: 'The reading rung also needs a Chromium-family browser that opens a debugging port. The rung tries every installed browser rather than the first that exists (test/reader.test.js:349), and doctor fails the rung with a specific remedy for each of browser, port and session (test/doctor-reading-rung.test.js).' I read the document end to end for this check; other explanatory passages (0.4, 0.3, 4.13, 9.4 points 1-3, RG.0, Z.4, 3.2, 3.3) were unambiguous full sentences and are not reported.",
+      "rule_title": "Unambiguous wording, full sentences, exactly one correct reading"
+    },
+    {
+      "row_id": "CM-007",
+      "status": "not_applicable",
+      "detail": "The rule addresses user confusion signals or re-asking within a conversation. The written record of this session (GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md) is a technical progress document with no recorded user interaction, confusion signals, or follow-up explanations triggered by user misunderstanding.",
+      "rule_title": "Surface code blocks when the first explanation did not land"
+    },
+    {
+      "row_id": "CM-008",
+      "status": "pass",
+      "detail": "Rule CM-008 (\"anticipate and address follow-up queries preemptively\") names its subject as \"the response or transcript under review,\" which per the task routing means auditing it against /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md (356 lines), the only written account of this session available to me; I read the file in full rather than any of the target repos (this rule has no code-artifact subject, so the six listed target paths were not applicable to it). I went section by section (0.4, 0.6, 0.3, 0.7, \"What blocks Phase 1\", \"Swath N1 complete\", 9.4, 9.5, RG.0, RG.18, Z.4, 4.13, 3.2, 3.3) checking, for each, what a reader's most likely next question would be and whether the answer was already sitting in the file rather than left dangling. The pattern holds throughout: e.g. line 56 (\"Recorded because it is the same wall loop 8 hit... it will not clear itself\") preempts \"why record this instead of just fixing it\"; lines 265-266 and elsewhere in Z.4 preempt \"why weren't the titles renamed too\" with \"renaming them would break every inbound reference... for a cosmetic gain\"; lines 322-330 (the 4.13 harness finding) preempt \"is this a new class of bug\" by tying it explicitly to the existing fatalError-truncation prevention entry; RG.18 (lines 237-246) preempts \"what about the other 17 sheets\" by stating they each have a named item above. Several section headers are themselves built to answer the obvious next question (\"4.13 closed, and why it was open\"; \"3.3 not ticked, and what happened instead\"). I did not find a section where an obvious next question had an already-available answer left unstated; the closest candidate (3.3, lines 345-356, not stating whether item 3.1's downstream items need updating for the renamed branch) is itself flagged as an open decision rather than a completed claim, so there is no already-available answer being withheld. No violation found.",
+      "rule_title": "Anticipate and preempt follow-up questions"
+    },
+    {
+      "row_id": "CM-009",
+      "status": "not_applicable",
+      "detail": "CM-009 audits step-by-step, click-by-click guides with literal hyperlinks. The session transcript (/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md) contains no user-facing procedural guides. The document is purely technical verification work: test results, defect lists, cross-document consistency checks, and developer work logs. No guide steps, navigation instructions, or hyperlinked URLs appear.",
+      "rule_title": "Guides are step-by-step, click by click, with literal hyperlinks"
+    },
+    {
+      "row_id": "CM-010",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/interstice/README.md",
+      "line": 65,
+      "detail": "The git clone command assumes the user is in a terminal/shell without an explicit predecessor step establishing this context. The text before the code block lists requirements but does not say \"Open Terminal\" or \"In your shell, run:\"",
+      "rule_title": "Every \"run X\" or \"click Y\" step names its predecessor open-the-app step"
+    },
+    {
+      "row_id": "CM-011",
+      "status": "pass",
+      "detail": "Read complete goal loop transcript (356 lines) and searched for time-of-day planning language (\"this afternoon\", \"today's plan\", \"by end of day\", \"tonight you\", etc.). Found zero instances of time-of-day plans or daily agendas appended to technical answers. Document is purely technical working notes from loop 9, containing commit hashes, test results, defect tracking, and verification steps, with no temporal scheduling appended.",
+      "rule_title": "No time-of-day plans appended to technical answers"
+    },
+    {
+      "row_id": "CM-012",
+      "status": "not_applicable",
+      "detail": "All six targets are technical code files and documentation (Swift source, server documentation, HTML UI markup) with no nutritional or health advice content. Rule CM-012 audits health recommendations for ingredient breakdown and whole-food sourcing, which does not apply to these targets.",
+      "rule_title": "Health advice breaks down ingredients and prefers whole foods"
+    },
+    {
+      "row_id": "CM-013",
+      "status": "not_applicable",
+      "detail": "The rule addresses App Store rejection handling in the Resolution Center, requiring verbatim quotes of reviewer questions with one-sentence answers. The targets are source code files (Swift, HTML) and documentation. The goal loop notes (which document all session work per the constraints) record no App Store rejection handling; work focused on bug fixes, prevention entries, and code documentation. This rule is not applicable to artifacts that do not contain App Store responses.",
+      "rule_title": "Apple Resolution Center replies quote each question verbatim, in order"
+    },
+    {
+      "row_id": "CM-014",
+      "status": "not_applicable",
+      "detail": "The rule addresses spoken deliverables (interview prep, defense breakouts) which do not exist in the targets. All targets contain only source code (Swift, JavaScript, HTML) and technical reference documentation (README, bug prevention checklist).",
+      "rule_title": "Spoken deliverables read as spoken prose"
+    },
+    {
+      "row_id": "CM-015",
+      "status": "pass",
+      "detail": "Audited /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md against rule CM-015. Regex search for elapsed time patterns (in [0-9]+ (min|hour)|a few minutes ago|shortly) yielded zero matches. Document consistently uses absolute dates (2026-08-20, 2026-08-21) when specifying when events happened, such as \"Recorded 2026-08-20\" (line 16), \"confirmed 2026-08-21\" (lines 103, 200, 332), and \"left open on 2026-08-20\" (line 302). The rule is properly followed throughout.",
+      "rule_title": "Report absolute times, not elapsed times"
+    }
+  ]
+}

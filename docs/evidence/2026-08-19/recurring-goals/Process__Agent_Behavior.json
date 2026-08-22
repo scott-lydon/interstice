@@ -1,0 +1,191 @@
+{
+  "sheet": "Process__Agent_Behavior",
+  "targets": [
+    "this loop's own execution record"
+  ],
+  "row_count": 26,
+  "entry_count": 26,
+  "run_dir": "/Users/scottlydon/.claude/projects/-Users-scottlydon/5076d517-09dd-4e8d-8aab-1d115d31b9c3/subagents/workflows/wf_179bea6c-6cf",
+  "counts": {
+    "pass": 11,
+    "finding": 9,
+    "not_applicable": 6,
+    "unreturned": 0
+  },
+  "entries": [
+    {
+      "row_id": "AB-001",
+      "status": "pass",
+      "detail": "Rule's subject is \"the response or transcript under review,\" so per instructions I audited it against the only available written account of this session: /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md (393 lines) and its companion /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md (1181 lines). Ran `rg -n -i \"you need to|you'll have to|I can't|please run|you should (open|run|click)|requires you|you must ...\"` against both files; zero matches in either, meaning no punt phrasing (\"you need to\", \"you'll have to\", \"I can't\", \"please run\", \"this requires you\", \"you should open\") appears anywhere in the recorded transcript/notes for this loop to check against covering tools. No violations found in the only account available.",
+      "rule_title": "Scan skills and tools before punting anything to the user"
+    },
+    {
+      "row_id": "AB-002",
+      "status": "pass",
+      "detail": "Rule subject is \"the response or transcript under review,\" so per the task's routing instruction I audited the only available written record of this loop: /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md (393 lines) and its companion /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md (1181 lines). Ran targeted greps for delegation phrasing (\"you should/can/need\", \"please run/check/verify/open\", \"user needs to/must\", \"ask the user\", \"manually check/verify\") across both files and read the surrounding context of every hit. The only instance where work was left to the operator is documented at NOTES.md lines 46-54 and 360-393: item 0.2, the Amazon reader session, which required the account holder to complete Amazon's own sign-in (password/emailed code/passkey). That is identity-gated authentication, one of the four valid exceptions to the DIY rule (matches AB-003's exception #2, \"requires their identity in a way I cannot proxy\"), not a punted non-destructive lookup. Notably the agent did NOT punt the surrounding verification work: it self-diagnosed and documented (NOTES.md lines 375-391) that it wrote its own probe/cookie-store checks and a hand-built sign-in URL rather than delegating those to the operator, then corrected them itself. No instance was found in either file of the agent telling the user to run a command, open a file, check a path, or click a link when a tool in the session could have done it directly. All other \"you\"/\"user\" hits (lines 271, 360 in the goal loop, and the loop's own meta-instructions at lines 11 and 15) are rule text or persona-framing, not delegation of a lookup task.",
+      "rule_title": "Do non-destructive lookups yourself, never delegate them to the user"
+    },
+    {
+      "row_id": "AB-003",
+      "status": "pass",
+      "detail": "The rule's SUBJECT is \"the response or transcript under review,\" so per task instructions I audited it against /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md, the only written account of this session available to me. I grepped it for ask-directed-at-user patterns (you need to/should/must/can, please, ask the user, manually, by hand, \"operator\" mentions) and read every match in context. The only genuine ask-the-user-to-act instance found is the Amazon reader sign-in: lines 40-45 state \"Item 0.2 requires a live Amazon reader session... The remedy is the product's own sign-in window, which takes a password, an emailed code, or a passkey, and needs the account holder,\" and lines 358-393 record it as \"Resolved by the operator signing in.\" This maps cleanly to reason (2) in the rule (identity that cannot be proxied: a 2FA/emailed code, passkey, or login only the account holder can supply) and is therefore justified, not a violation. All other \"operator\"/\"by hand\" hits (lines 107, 251, 271, 377) are either disclosures of method substitution (reading docs oneself instead of delegating to a subagent) or descriptions of a deployment process (\"migrations are run by hand from the service shell\"), not asks directed at the user to act. No unjustified user-asks were found in the transcript record; zero violations to report.",
+      "rule_title": "Only four reasons justify asking the user to act"
+    },
+    {
+      "row_id": "AB-004",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 307,
+      "detail": "NOTES.md:307 (\"4.13 closed\") - the loop declares `testTriggerGreetForMultipleThrowsWhenNoVenuesAvailable` \"subsequently fixed in the tree, by `b179aa8`\" and closes item 4.13, but that commit's own message says the opposite: \"The remaining trigger-greet test is left red on purpose... Either the radius is a placeholder nobody revisited, which is a product defect that lets a greet target a venue on another continent, or it is deliberate and the test's premise is wrong... both fixes are wrong if I guess\" (git show b179aa8; the same two readings are written up at akin-server-side/docs/notes/S3_TRACE_REMOVAL_NOTES.md:1449-1495 under \"the last one needs a decision I should not make alone\"). `git log -S\"testTriggerGreetForMultipleThrowsWhenNoVenuesAvailable\" --all` and `git log -S\"5_000_000\" -- Sources` show no commit after b179aa8 touching either the test or the 5,000 km radius, so nothing was fixed; the test only goes green because the 1438-test run used \"a database created empty for it\" (NOTES.md:312), which is precisely the pre-saved-venue population the red depended on. The code/doc contradiction that was correctly surfaced on 2026-08-20 was then implemented over: the item was ticked and the still-open product question (is `radiusMeters: 5_000_000` at Sources/App/Controllers/Handler.swift:881 and :3782 a placeholder or a deliberate fallback) never resurfaces in the goal loop, the NOTES, or akin-server-side/BUG_ISSUE_PREVENTION.md (grepped for \"radius\"/\"5_000_000\" across all three: one hit, the stale 2026-08-20 line 72). Rule required instead: leave 4.13 open, or close it while stating in the same place that the greet-radius contradiction is unresolved, needs the operator, and that the green is an artifact of an empty test database rather than a repair.",
+      "rule_title": "Surface contradictions between user, docs, and code before implementing"
+    },
+    {
+      "row_id": "AB-005",
+      "status": "pass",
+      "detail": "Subject is the session's own work product, so per the task framing I audited it against the only account available: /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md, cross-checked against /Users/scottlydon/Developer/akin-server-side/docs/notes/S3_TRACE_REMOVAL_NOTES.md and the actual commits it cites. I ran grep -niE \"assum\" over all five targets and traced multiple implementation decisions to their source.\n\nConcrete evidence of compliance, not just absence of the word \"assume\": (1) NOTES.md line 3 heading \"Interstice root, resolved rather than assumed\" and the item's own text explaining why (stale paths from a prior repo move). (2) The venue-radius ambiguity in S3_TRACE_REMOVAL_NOTES.md:1478-1483 and commit b179aa8 (\"Either the radius is a placeholder nobody revisited... or it is deliberate... Neither call site says which, and both fixes are wrong if I guess\") is stopped rather than silently resolved. (3) When it was later implemented in commit 004c240 (`git show 004c240 -- Tests/AppTests/Coverage/Cov3HandlerGreetVoipResidualTests.swift`), the code adds an explicit in-line comment stating the assumption the fix depends on: \"Point Nemo has no venues in any fixture, so the precondition this test names is actually the precondition it gets.\" (4) The app-clip referral redirect-vs-refuse ambiguity, also flagged as a stated open decision in S3_TRACE_REMOVAL_NOTES.md, was implemented in the same commit (`Sources/App/Controllers/ApiController.swift`) with an inline comment stating the reasoning before the code: \"Nothing is attributed here, so nothing is distorted by being generous... which is the case the rejection was actually written for.\" (5) NOTES.md's \"9.4\" and \"Z.4\" sections explicitly disclose a method substitution (self-check instead of subagent) rather than silently doing it a different way than the item specified.\n\nOne accuracy issue surfaced during this check that is out of AB-005's scope: NOTES.md line 307 attributes the app-clip-referral fix to commit c0e3a91, but that commit (Aug 1, unrelated content) does not contain it; the actual fix is in 004c240 per `git show`. That is a citation/data-integrity defect, not a case of an unstated assumption, so I am not reporting it under this rule.\n\nI did not find any implementation in the session's record that depended on a silently-assumed data shape, ordering, nullability, environment, or intent. Emit: PASS.",
+      "rule_title": "State assumptions explicitly before implementing"
+    },
+    {
+      "row_id": "AB-006",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 307,
+      "detail": "Per the routing instruction, subject is the session's own behavior, so I audited the written record: GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md plus the akin-server-side source it cites (S3_TRACE_REMOVAL_NOTES.md and the three commits it names), since NOTES.md is the only account of this session I can read.\n\nViolation found. NOTES.md lines 58-81 and S3_TRACE_REMOVAL_NOTES.md lines 1490-1521 go out of their way to record two test failures explicitly as ambiguous, each with two probable, conflicting readings that were deliberately presented rather than picked: (1) the 5,000km pre-saved venue radius in Handler.swift, either \"a placeholder nobody revisited\" (product defect) or \"a deliberate find-anything-at-all fallback\" (test premise wrong) - S3 line 1519: \"recorded as decisions, with evidence, because both have two defensible answers and picking one silently would be worse than leaving them red\"; and (2) whether a parameterless app-clip referral URL should redirect (extending the route's own stated reasoning) or refuse (avoid changing a public route's behavior) - S3 lines 1342-1346.\n\nNOTES.md lines 300-320 (\"4.13 closed, and why it was open\") later reports both as simply \"fixed\" by commits b179aa8, 004c240, and c0e3a91, with no mention of which of the two previously-documented interpretations was adopted. I read commit 004c240's message directly (`git show -s --format=... 004c240` in akin-server-side): it states \"Also fixes the two failures this suite has carried all along, neither of which was a product bug... The app clip route answered 400 to a bare URL, which its own comment condemned, because the recovery only caught links carrying a correlation identifier\" (implying the redirect was extended to bare URLs, i.e. interpretation A was adopted) and \"a greet test asserted 'no venues available' against a database that other suites now seed... made a real network call to Google's routing API. It sits at Point Nemo now\" (implying the radius was left unchanged and the test was adjusted, i.e. interpretation 2/\"deliberate fallback\" was adopted by leaving the potential-defect radius in place). Neither the commit message nor NOTES.md's closing section states that a choice between the two previously-flagged readings was made, or why one was chosen over the other, even though the earlier record explicitly said picking one silently would be worse than leaving the test red. NOTES.md's own closure (\"4.13 closed... both pass in the run below\") treats this as a mechanical repair rather than the interpretive decision the loop itself said it was.",
+      "rule_title": "Present multiple probable interpretations rather than picking silently"
+    },
+    {
+      "row_id": "AB-007",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md",
+      "line": 840,
+      "detail": "PHASE RG commits to \"one worker per selected row\" for all 643 recurring-goal rows, but a CSV read of every Recurring_goals/**/rows.csv shows 576 of those 643 rows name a concrete deterministic tool in their own `deterministic_tools` column (only 67 are judgment rows); running each named tool once per sheet and spawning model agents only for the judgment remainder is materially simpler and satisfies the identical verify (\"one entry per row id\"), yet the word \"deterministic\" never appears in the goal loop's RG phase or anywhere in the NOTES file (its single hit, line 453, is unrelated), so the delta was never raised with the operator even while the loop cites `routed-audit-team`, whose stated purpose is that recall-versus-cost dial. This is scoped to the written record of the session (the goal loop and its NOTES file) since I cannot read the transcript; the notes do disclose other simpler-approach deltas well (3.3's cosmetic branch, Z.4's title rename, 9.5's merged-versus-split prevention sections, and the reused `readerUrl(asin)` in 0.2), which is why this one omission is reported rather than a general failure.",
+      "rule_title": "Say so when a simpler approach exists"
+    },
+    {
+      "row_id": "AB-008",
+      "status": "not_applicable",
+      "detail": "Rule AB-008 audits code (added files/functions) for unused parameters, single-implementation interfaces, factories with one product, unrequested config/flexibility. I read all five target files: the two GOAL_LOOP files (1181 + 393 lines, the latter being the session's own working notes at /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md), S3_TRACE_REMOVAL_NOTES.md, and both BUG_ISSUE_PREVENTION.md files. None contain code: I grepped for function/class/interface/struct/protocol definitions and fenced code blocks across the two BUG_ISSUE_PREVENTION.md files and found only prose sentences using the word 'function' in running text (e.g. akin-server-side/BUG_ISSUE_PREVENTION.md:144-145, describing routing a payload 'through one disclosure function'), no actual code. Per the NOTES.md file (the session's own account, per the task instructions the only record of this session available), this session's work product was 27 written bug-prevention prose entries (22 new in a new akin-server-side/BUG_ISSUE_PREVENTION.md file, 5 appended to interstice's), a README edit, and goal-loop bookkeeping - no new source files, functions, or abstractions were authored this session per that record. Since the targets are markdown documentation with zero source-code constructs, there is nothing for a code-simplicity rule (unused params, single-implementation interfaces, one-product factories) to evaluate against.",
+      "rule_title": "Minimum code that solves the problem, nothing speculative"
+    },
+    {
+      "row_id": "AB-009",
+      "status": "pass",
+      "detail": "Read AB-009's agent_prompt from rows.csv (SURGICAL CHANGES: no unrelated reformatting/renames/comment rewrites/import reordering/dead-code deletion). Since AB-009's subject is \"the diff produced this session,\" I traced actual session work via git history in the two real repos underlying the target docs (interstice and akin-server-side; the two GOAL_LOOP_*.md files sit outside any git repo, so I cross-checked against GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md per the fallback instruction, which is the only written account of the session). Baseline hashes recorded in that notes file (1e4f99e for interstice, 24a296b for akin-server-side) let me isolate this session's commits with `git log main..HEAD` / `git log <baseline>..HEAD`. I inspected `git show --stat` and full `git show` diffs for every commit touching the audited target files: interstice's 89c303d (docs/BUG_ISSUE_PREVENTION.md, +42/-0), akin-server-side's ac41525 (+131, new file) and be0f9c1 (+62/-0) on BUG_ISSUE_PREVENTION.md, and b501bb4 (+48/-0) on docs/notes/S3_TRACE_REMOVAL_NOTES.md. Every hunk is a pure, on-topic append (`+`only, no `-` lines, no reordering, no renames) directly tracing to a checklist item named in the commit message (9.5 prevention entries, monitor-tick log). I did not find any hunk that reformatted unrelated text, renamed anything, rewrote an unrelated comment, reordered imports, or deleted pre-existing dead code. One adjacent quality issue was noted (be0f9c1's commit message claims to be \"splitting the merged sections\" from ac41525 but the diff only adds new split entries without deleting the original merged paragraphs, so the same defect now reads twice, once merged and once split) but that is a completeness/redundancy defect within the requested task, not scope creep onto unrelated adjacent material, so it does not fall under AB-009's rule and is not reported as a finding here.",
+      "rule_title": "Touch only what you must; do not improve adjacent code"
+    },
+    {
+      "row_id": "AB-010",
+      "status": "pass",
+      "detail": "Session found pre-existing dead code (5 unreferenced exported symbols in Interstice identified in BUG_ISSUE_PREVENTION.md lines 101-119) and correctly did not delete it. Explicit statement in prevention file: \"They predate the audits that found them, no change here orphaned them\". Session notes document various code removals (debug branches removed from Models/User.swift, Extensions/Database.swift, etc.) with no indication of orphaned symbols left behind. Rule followed: pre-existing dead code preserved, no newly-orphaned symbols documented.",
+      "rule_title": "Remove only the orphans your own change created"
+    },
+    {
+      "row_id": "AB-011",
+      "status": "pass",
+      "detail": "Per the task instructions, since the rule's subject is \"the response or transcript under review,\" I audited the only written account of this session: /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md (393 lines, read in full) alongside the checklist it documents, /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md (1181 lines; read lines 1-80 and grepped structure). The checklist already encodes \"state a plan, each step carrying its own verify check\" as its base format: every `- [ ]`/`- [x]` item carries an explicit `Verify:` line (confirmed at e.g. lines 145, 155, 162, 167, 172, 403, 426, 431...), and line 128-135 states the rule that a machine-checkable Verify line is mandatory. Cross-checking checked items against the notes file for evidence of actually-executed verification (not just claimed): 9.4 shows `node --test` output \"347 tests, 347 pass, 0 fail\" run both before and after the README edit; 4.13 was deliberately left UNCHECKED on 2026-08-20 because `swift test --package-path $SRV` exited non-zero (2 failures), then only checked after a fresh run showed \"Executed 1438 tests, with 0 failures... EXIT=0\" with the two specific test names confirmed passing by name in the log (not inferred from absence of failures); RG.0 shows `rows.py validate` output plus an independent manual re-count as a second check; Z.4 shows a 21-pair cross-document comparison table with a contradiction found and fixed, re-verified after the fix; item 3.3 is explicitly left UNCHECKED with a stated reason (a same-named branch would satisfy the grep verify cosmetically without satisfying what the verify was meant to protect) rather than gamed to pass. This is the opposite of the violation pattern the rule targets (steps marked done with no executed verification): the notes file repeatedly shows verifies actually run with captured output, and shows items deliberately held open when the verify did not yet pass rather than ticked prematurely. I found no instance in either file of a checked box lacking a corresponding executed-verify trail in the notes.",
+      "rule_title": "Every multi-step task defines success criteria and loops until verified"
+    },
+    {
+      "row_id": "AB-012",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md",
+      "line": 1039,
+      "detail": "The clause \"Do not reinstate any of these; the owner is authoritative\" creates an invented jurisdiction boundary. The user's documented action was to remove items (line 1035: \"at the operator's explicit instruction\"), but the user did not explicitly ask for a \"do not reinstate\" clause. This is a \"do NOT touch\" style statement added without explicit user authorization.",
+      "rule_title": "Never invent jurisdiction in goal-loop files or checklists"
+    },
+    {
+      "row_id": "AB-013",
+      "status": "pass",
+      "detail": "Searched all target files (goal loop, goal loop notes, S3 trace removal notes, and BUG_ISSUE_PREVENTION files) for sleep commands over 3 seconds and for patterns of 3+ consecutive identical command retries. Found no sleep commands anywhere. Found narrative descriptions of test run failures (182 and 291 case stops) in S3_TRACE_REMOVAL_NOTES.md, but these were documented as separate coverage measurement attempts with a diagnosed Redis configuration deficiency, not consecutive retries of the same command without alerts. The session record shows problem discovery and fixing, not retry loops without user alerts.",
+      "rule_title": "Alert after repeating a script or sleeping more than twice"
+    },
+    {
+      "row_id": "AB-014",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 189,
+      "detail": "The written session record documents BUG_ISSUE_PREVENTION.md file writes at line 189 and ARCHITECTURE.md/acceptance-tests.md edits at line 292, but does not show the required one-line bash verification checks (test -s <path> && wc -c <path>) confirming files exist at absolute paths with non-zero size after saves. AB-014 requires this explicit verification before claiming saves succeeded.",
+      "rule_title": "Verify every write landed at the expected absolute path"
+    },
+    {
+      "row_id": "AB-015",
+      "status": "finding",
+      "file": "/Users/scottlydon/Documents/Claude/Projects/Gauntlet/AGGREGATE_HANDOFF_2026-08-20.md",
+      "line": 3,
+      "detail": "The session exceeded 30 turns but no handoff document was written at the threshold. Per AGGREGATE_HANDOFF_2026-08-20.md line 3-4, this violation was discovered by an AB-015 audit that found \"this session long past thirty turns with no handoff document,\" and the handoff was only created afterward. Rule AB-015 requires the handoff to be written AT the threshold without waiting to be asked.",
+      "rule_title": "Write a handoff document at roughly 30 turns"
+    },
+    {
+      "row_id": "AB-016",
+      "status": "not_applicable",
+      "detail": "Read the full row AB-016 agent_prompt from rows.csv, then searched the only account of this session (GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md, 393 lines, read in full/grepped) and the goal loop file itself for any evidence of background work started in this session: grep -niE 'background|nohup|run_in_background|scheduled|poll|sleep|ffmpeg|transcri|wait|minute|download' on the NOTES file and grep -niE 'background|nohup|run_in_background|scheduled_task|xcodebuild|npm run build|swift build|gradle' on the goal loop file. No hits show any process kicked off with nohup/run_in_background, no PID or log path is recorded anywhere, and no scheduled task (or absence of one) is mentioned. The swift build/xcodebuild/gradlew references that do appear (goal loop lines 422-967) are verify-step commands described as exiting 0/non-zero synchronously, not backgrounded work outliving a turn. Since the notes/goal-loop files are the only record of this session available to me, and they contain no instance of background work being started, the rule (which only fires when background work is kicked off) did not apply this session.",
+      "rule_title": "Schedule a follow-up for background work that outlives the turn"
+    },
+    {
+      "row_id": "AB-017",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/interstice/scripts/loop9_toolcheck.sh",
+      "line": 13,
+      "detail": "This script is a work product of the session (referenced at NOTES.md line 28: \"scripts/loop9_toolcheck.sh in the Interstice repository\") and it interacts with a sibling project (akin-android) by hardcoding its path: `AND=\"/Users/scottlydon/Developer/akin-android\"` (line 13), then using it at line 37 to check for `$AND/gradlew`. Per AB-017 this cross-project interaction should be target-agnostic, e.g. `AND=\"${AKIN_ANDROID_ROOT:-$(cd \"$(dirname \"$0\")/../../akin-android\" 2>/dev/null && pwd)}\"` or an env-var-driven root, not a literal absolute path to one machine/user's checkout of another repo. I verified this by reading the full script (55 lines) directly and cross-checking the notes file's reference to it; the rest of the script (JAVA_HOME/ANDROID_HOME/PATH defaults, tool lookups via `command -v`) are machine-local tool locations, not project-to-project hardcoding, so they are not flagged. No other new tool/script/pipeline with a hardcoded cross-project path was found in the other four targets (checked via grep for script/tool/pipeline references in GOAL_LOOP..., GOAL_LOOP..._NOTES, S3_TRACE_REMOVAL_NOTES.md, and both BUG_ISSUE_PREVENTION.md files).",
+      "rule_title": "Default to target agnostic for anything that touches another project"
+    },
+    {
+      "row_id": "AB-018",
+      "status": "not_applicable",
+      "detail": "Rule AB-018 targets recommendations made to the user that demand self-control (\"remember to\", \"make sure you\", \"try to\") versus automated/definitive alternatives, in a response or transcript. I ran the deterministic tool (rg -i 'remember to|make sure you|try to|be sure to|don't forget|should remember|keep in mind') plus a second pass for 'you should/you'll want/you need to/consider .../we recommend/you can try' across all five targets. The only hits were two instances of quoted Amazon web-reader error-page UI text (\"Please try to open this book...\") in GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md line 84 and interstice/docs/BUG_ISSUE_PREVENTION.md line 5, both direct quotations of a third-party product's on-screen wording, not recommendations made by the agent to the user. I also read the full GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md (393 lines, per instructions this is the only written account of the session available to me) and the full interstice/docs/BUG_ISSUE_PREVENTION.md (198 lines): both are technical engineering artifacts (a goal-loop execution log and a bug-prevention checklist) containing self-directed engineering lessons for future agent runs (\"A dependency probe answers 'does it work', not 'is it there'\", \"I should have run the probe first\"), not advice or suggestions addressed to the user about the user's own behavior or self-control. No content in any target constitutes a recommendation to the user, discipline-dependent or otherwise, so the rule's subject matter (user-facing suggestions) is absent from these targets.",
+      "rule_title": "Prefer automated or definitive solutions over self-control"
+    },
+    {
+      "row_id": "AB-019",
+      "status": "pass",
+      "detail": "Rule subject is the session/transcript, so per instructions I audited /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md (393 lines, the only written record of this loop) rather than guessing at unrecorded behavior. Ran targeted greps for punt language: \"i can't|i cannot|you need to|you'll need to|manually|please run|can you run|requires you to|open finder|on your end\" and separately \"blocked|not possible|unable to|user must|would require\" \u2014 zero matches of the \"I can't / do X yourself\" pattern anywhere in the file. The one genuine block found (lines 44-54, 360-393: Amazon reader sign-in) was deferred to the operator because it required a password, emailed code, or passkey belonging to the account holder \u2014 an identity-gated action, not an automation-rung skip, matching exception #2 in the user's own DIY rule. The notes even show the agent's own subsequent self-correction of related mistakes (hand-built sign-in URL, misreading cookie store, false-positive daemon probe) rather than any silent punt. No violation found; PASS confirmed by direct grep/read of the full notes file, not inference.",
+      "rule_title": "Walk the automation ladder before saying \"I can't\""
+    },
+    {
+      "row_id": "AB-020",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin-server-side/docs/notes/S3_TRACE_REMOVAL_NOTES.md",
+      "line": 918,
+      "detail": "S3_TRACE_REMOVAL_NOTES.md:918-935 - the notes assert a hard trade-off (\"N.1 and G.4 contradict each other, and no amount of tidying resolves it... The two items cannot both be satisfied while both exist\") and hand the operator a two-branch cop-out (\"either add N.3's carve-out to N.1 or accept that it closes only when G.4 is deleted\"), without recording any attempt at a solution that satisfies both -> the rule required trying to optimize both variables, e.g. a guard that still fails on AWS reintroduction while containing no readable AWS token for a fresh reader (tokens assembled at runtime, hashed, or held in a data file excluded from the reader's scope). I grepped the targets for obfuscat|base64|rot13|concatenat|hash of the|assembled at runtime and found no such attempt anywhere in the notes, so the impossibility claim was asserted, not tested. Other either/or statements in the same file (PB-2 at :471, the deploy branch split at :644, I.2 at :880) are NOT violations: each documents a concrete attempt first (the broker's eight-tool enumeration, the 35-migration inspection, the Render branch wiring) before escalating, so only the N.1/G.4 one is reported.",
+      "rule_title": "Optimize all variables; no canned or cop-out trade-off answers"
+    },
+    {
+      "row_id": "AB-021",
+      "status": "pass",
+      "detail": "I enumerated every possibility claim across the five targets with ripgrep for \"not possible|impossible|cannot|can't|no way to|unsupported|not feasible|there is no\", plus a second pass for convention markers (\"usual|convention|standard/best practice|typically|normally|by design|precedent\"), then read each hit in context. Every impossibility claim I read is derived from a stated mechanism, not from convention or precedent: S3_TRACE_REMOVAL_NOTES.md:941 closes PB-2 by enumerating the broker's eight tools and showing none writes an arbitrary secret (\"Answered from the tool surface\"); :472 grounds \"cannot be proxied\" in the synchronizable-keychain entitlement requiring an Apple Developer agreement click; :880 grounds \"I.2 cannot be satisfied as written\" in which branch each Render service deploys from plus autoDeploy=yes; :488 explicitly overturns an earlier \"no path exists\" verdict for PB-3 after finding the key set on both Render services, and :213 records a whole sub-phase (A.3) re-checking eleven prior \"impossible\" rulings, five of which were re-classified as imagined. The goal loop's 8.11 note (line 1108) says the Android surfaces \"cannot\" reach the server but derives it from AkinTransport being endpoint-agnostic over StrongContract while the 32 new routes are not StrongContract, and still lists the hand-written REST client as a real second option rather than ruling it out as unconventional; 8.1/8.3 (line 1148) derive non-convergence from the literal grep expressions and 42 pre-existing items. interstice/docs/BUG_ISSUE_PREVENTION.md:10 is the clearest positive case: \"Amazon's own advice cannot work\" is derived from the four getDeviceToken 403s and the fact that reopening the book never touches device registration. Note on scope: the written record (the goal loop and its NOTES file) is the only account of the session I can read, so this judges the reasoning as recorded there, not un-transcribed reasoning.",
+      "rule_title": "Prefer first principles reasoning when asked what is possible"
+    },
+    {
+      "row_id": "AB-022",
+      "status": "not_applicable",
+      "detail": "The session record (GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19.md, GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md, and supporting notes/BUG_ISSUE_PREVENTION files) contains no network failures. References to \"timeout\" are test runner configuration issues and iCloud file system timeouts, not network failures. Rule AB-022 addresses network failures (timeouts, DNS failures, connection refused, TLS errors, 5xx from normally-healthy hosts); none occurred in this session.",
+      "rule_title": "Check the VPN first on any network issue"
+    },
+    {
+      "row_id": "AB-023",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 103,
+      "detail": "Section 9.4 describes the verification methodology (checking README against tests) but does not document that the BUG_PREVENTION checklist was read before building new features. The rule requires \"Any time you add a new feature or create a new product, go through the checklist in anticipation of all issues.\" The notes show 27 defects were fixed and 27 prevention entries were written (passing the first part of the rule), but section 9.4's description of what was checked mentions only README and test assertions, with no mention of consulting BUG_PREVENTION before building the questionnaire system (items 4.1-4.12, \"What swath N1 shipped\").",
+      "rule_title": "Log the fix into the bug/issue prevention checklist, then read it before new work"
+    },
+    {
+      "row_id": "AB-024",
+      "status": "not_applicable",
+      "detail": "The agent did not use Chrome automation (no Chrome MCP, WebFetch, or factory_driver tool calls). The session record at GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md shows operator manually signed in and vouch test framework running, but no agent-initiated browser automation. Chrome was only mentioned in tool preflight and test code behavior.",
+      "rule_title": "Close Chrome tabs after browser automation"
+    },
+    {
+      "row_id": "AB-025",
+      "status": "pass",
+      "detail": "Reviewed all target files (goal loop, notes, S3 trace removal notes, both BUG_ISSUE_PREVENTION files). The notes file is the written record of the session. Found no paste blocks given to the user. All shell commands documented in the notes were executed by the agent itself and results reported back. The agent did not request folder approval before running shell commands. Searched for patterns: \"paste block\", \"copy command\", \"run this\", \"Terminal.app\", \"you.*run\", \"you.*execute\" \u2014 zero matches indicating user-directed paste blocks.",
+      "rule_title": "Prefer the terminal MCP, then the bridge, then a paste block"
+    },
+    {
+      "row_id": "AB-026",
+      "status": "not_applicable",
+      "detail": "Rule AB-026 addresses skill creation with .skill file delivery. This session (GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19) authors no new skills. The NOTES.md file documents 27 defects fixed and prevention entries written, reader repair work, server swath development, and cross-document consistency checks, with no skill creation. A prior audit of S3_TRACE_REMOVAL_NOTES.md explicitly records \"AB-026 | not-applicable | This loop authors no new skill\" for an earlier session.",
+      "rule_title": "New skills are delivered as an installable .skill file, never manual steps"
+    }
+  ]
+}
