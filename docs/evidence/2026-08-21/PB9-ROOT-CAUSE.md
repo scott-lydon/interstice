@@ -99,3 +99,21 @@ from `POST /api/reading/view` against the restarted daemon, with `painted: false
 Disclosure: that retry call cleared Amazon's stored device registration for the reader profile,
 which the panel guards behind a two-step confirmation. Cookies and the sign-in are excluded from
 that clear by design, and the session survived it.
+
+## Re-checked 2026-08-22 01:0x local
+
+Both chunks still answer 404 from Amazon's CDN, and the live reader still reports
+`painted: false, spinner: true, label: '', deadScripts: 2`. The outage is ongoing, so items whose
+verify needs a rendered page stay blocked: loop 9's `1.5`, `1.0`, `1.11` and `Z.1`, and loop 8's
+`1.7` and `9.1`. Their fixes are shipped and live-verified; only the verification waits.
+
+The cheapest re-check, for whoever picks this up:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" \
+  https://m.media-amazon.com/images/G/01/kindle/kindlefortheweb/js/725-ca73bf4e63259892d294.chunk.js
+```
+
+200 means the outage is over and those six items can be run. Note that Amazon may ship new chunk
+hashes rather than restoring these two, in which case the URL above 404s forever and the real test
+is whether the live reader reports an empty `deadScripts` with `painted: true`.
