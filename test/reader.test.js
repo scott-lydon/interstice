@@ -542,3 +542,18 @@ test('a browser that has run ahead still reports the page you are on', async () 
 
   assert.equal(state.label, 'Page 217 of 220', 'the shelf still wins while the browser is ahead');
 });
+
+test('a spinner is not a painted page', () => {
+  // Item 1.5, and the element is named rather than guessed: measured off a wedged live reader,
+  // a page showing nothing but the loading element reported one svg, a fourteen character body,
+  // and no label. Under the old rule that page was one shell element short of counting as
+  // painted, and the shell grows. The probe now reports the spinner separately, so a caller can
+  // tell "still loading" from "loaded something that is not the book".
+  assert.ok(PROBE.includes('kg-spinner'), 'the probe knows the reader own loading element by name');
+  assert.ok(PROBE.includes('spinner:'), 'and reports it as a field of its own');
+  const paintedClause = PROBE.slice(PROBE.indexOf('painted:'));
+  assert.ok(
+    paintedClause.startsWith('painted: !document.querySelector'),
+    'painted requires the absence of the spinner before it considers anything else'
+  );
+});
