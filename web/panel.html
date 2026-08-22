@@ -255,7 +255,13 @@
   .reader-menu-overlay { display: none; }
   body.immersive .reader-menu-overlay.open {
     display: flex; flex-direction: column; gap: 12px; position: absolute; inset: 0; z-index: 29;
-    padding: 0 16px 16px; overflow-y: auto; overscroll-behavior: contain;
+    /* env() adds the device's own reserved edges to the padding. This overlay is inset: 0, so it
+       covers the whole panel including whatever the hardware keeps for a notch or a home
+       indicator, and its own padding is the only thing holding content clear of them. The values
+       are zero everywhere those insets do not exist, so this costs nothing on a desktop. */
+    padding: env(safe-area-inset-top) calc(16px + env(safe-area-inset-right))
+             calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    overflow-y: auto; overscroll-behavior: contain;
     background: color-mix(in srgb, var(--ground) 92%, transparent);
     backdrop-filter: blur(8px);
   }
@@ -964,7 +970,8 @@ async function loadCards() {
     renderCard(false);
     say('');
   } catch (err) {
-    say('Cards did not load. The daemon did not answer: start it with interstice start, then press Cards again.');
+    say('Cards did not load, because Interstice is not running in the background. '
+      + 'Open a terminal, run interstice start, then press Cards again.');
   }
 }
 
@@ -1037,7 +1044,7 @@ async function reconnectAnki({ automatic = false } = {}) {
     }
     say('Anki did not answer');
   } catch {
-    say('the daemon is not answering');
+    say('Interstice is not running in the background. Open a terminal and run interstice start.');
   } finally {
     if (btn()) {
       btn().disabled = false;
@@ -1310,7 +1317,7 @@ async function loadReaderText({ force = false, fresh = false } = {}) {
     host.scrollTop = 0;
     readerTextSeq = readerSeq;
   } catch {
-    host.innerHTML = '<p class="thin">The daemon stopped answering, so this page could not '
+    host.innerHTML = '<p class="thin">Interstice stopped running in the background, so this page could not '
       + 'be read. Restart it with <b>interstice start</b>, then turn the page.</p>';
   } finally {
     readerTextBusy = false;
@@ -1527,7 +1534,7 @@ function renderSignIn(d) {
       await fetch('/api/reading/signin', { method: 'POST' });
       watchSignIn();
     } catch {
-      signinSay('the daemon is not answering');
+      signinSay('Interstice is not running in the background. Open a terminal and run interstice start.');
       $('signin-chrome').disabled = false;
       $('carry-session').disabled = false;
     }
@@ -1552,7 +1559,7 @@ function renderSignIn(d) {
       // offering itself rather than staying pressable and doing nothing.
       $('carry-session').textContent = 'That session has expired';
     } catch {
-      signinSay('the daemon is not answering');
+      signinSay('Interstice is not running in the background. Open a terminal and run interstice start.');
       $('carry-session').disabled = false;
     } finally {
       $('signin-chrome').disabled = false;
@@ -1889,7 +1896,7 @@ async function loadQueued() {
       : '<li><span class="empty">Nothing queued yet. What you write above waits here '
         + 'until you want it.</span></li>';
   } catch {
-    $('queued').innerHTML = '<li><span class="empty">The daemon is not answering, so what '
+    $('queued').innerHTML = '<li><span class="empty">Interstice is not running in the background, so what '
       + 'you have queued could not be read. Start it with interstice start, then press '
       + 'Queue again. Nothing was lost.</span></li>';
   }
@@ -1916,6 +1923,13 @@ async function savePrompt() {
     return;
   }
   boxError('');
+  // Disabled for the round trip, not before it. The button stayed live while the request was in
+  // flight, so a second press queued the same words twice, and there was nothing on screen saying
+  // the first press had been taken. The label is restored in `finally` so a refusal does not leave
+  // the button dead.
+  const save = $('save');
+  const savedLabel = save ? save.textContent : '';
+  if (save) { save.disabled = true; save.textContent = 'Saving…'; }
   try {
     const r = await fetch('/api/queued', {
       method: 'POST', headers: { 'content-type': 'application/json' },
@@ -1926,6 +1940,8 @@ async function savePrompt() {
     boxError('That did not save. The daemon did not take it, so nothing was lost: your '
       + 'words are still in the box.');
     return;
+  } finally {
+    if (save) { save.disabled = false; save.textContent = savedLabel; }
   }
   $('box').value = '';
   say('saved');
@@ -2033,7 +2049,7 @@ async function runFix(key, button) {
         : String(d.detail || d.reason || 'the daemon refused and gave no reason').slice(0, 80)
     );
   } catch {
-    say('the daemon is not answering');
+    say('Interstice is not running in the background. Open a terminal and run interstice start.');
   } finally {
     button.disabled = false;
     button.textContent = wasLabel;
