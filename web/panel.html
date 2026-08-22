@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Matches the two body backgrounds below, so the browser chrome around the panel is the
+     same colour as the panel rather than a strip of white above a dark page. -->
+<meta name="theme-color" content="#F1F3F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1116" media="(prefers-color-scheme: dark)">
 <title>Interstice</title>
 <style>
   /* ------------------------------------------------------------------ tokens ---
@@ -49,7 +53,12 @@
     }
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
+  /* color-scheme tells the browser to render its OWN widgets, scrollbars, form controls and
+     the like, in the matching scheme. Without it a dark panel gets light native scrollbars.
+     tap-highlight is set deliberately rather than left at the default grey flash, which on a
+     panel this size reads as a rendering fault rather than as feedback. */
+  html { color-scheme: light dark; }
+  html, body { height: 100%; margin: 0; -webkit-tap-highlight-color: transparent; }
   body {
     background: var(--ground); color: var(--ink);
     font: 15px/1.5 var(--body);
@@ -84,6 +93,13 @@
     text-transform: uppercase; letter-spacing: .1em;
     background: none; border: 1px solid transparent; color: var(--muted);
     padding: 5px 7px; border-radius: 3px; cursor: pointer;
+  }
+  /* A pointer got no feedback that these were live until it clicked one. Colour and a hairline
+     rather than a fill, so hovering does not look like the selected state right beside it.
+     Guarded on the pointer being one that can hover: on a touch screen :hover sticks after a
+     tap and leaves a button looking permanently half pressed. */
+  @media (hover: hover) {
+    .rungs button:hover { color: var(--fg); border-color: var(--rule); }
   }
   .rungs button[aria-current="true"] { color: var(--ink); border-color: var(--rule); background: var(--raised); }
   .rungs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -338,7 +354,9 @@
     border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--raised)); margin-right: 4px; }
   .cal-empty-copy { color: var(--muted); font: 500 12px/1.5 system-ui; padding: 8px 0; }
 
-  h2 { font: 600 13px/1.3 Charter, Georgia, serif; margin: 0; }
+  /* balance keeps a two line heading from leaving one orphaned word on the second line,
+     which at this width happens to most book titles. */
+  h2 { font: 600 13px/1.3 Charter, Georgia, serif; margin: 0; text-wrap: balance; }
   .label {
     font: 600 10px/1 var(--display);
     text-transform: uppercase; letter-spacing: .14em; color: var(--muted);
@@ -392,7 +410,13 @@
   button.act[disabled] { opacity: .45; cursor: default; }
 
   .bar { height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; }
-  .bar > i { display: block; height: 100%; background: var(--accent); transition: width .3s ease; }
+  /* scaleX rather than width. Width is a layout property, so animating it relaid the bar on
+     every frame of the transition; a transform is composited and does not. The element is drawn
+     full width and scaled down, which is why the origin has to be the left edge. */
+  .bar > i {
+    display: block; height: 100%; width: 100%; background: var(--accent);
+    transform-origin: left center; transition: transform .3s ease;
+  }
 
   /* The book. Amazon's own reader draws this, in a browser you never see, at the
      size of this box; what arrives is the picture, and what goes back is where you
@@ -443,7 +467,11 @@
   .signin .label { color: var(--warn); }
 
   ul.todo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
-  ul.todo li { display: flex; gap: 8px; align-items: flex-start; padding: 4px 2px; border-radius: 3px; }
+  /* The list is however long your Notes list is, and it is rendered in full. content-visibility
+     lets the browser skip layout and paint for the rows that are scrolled out of view, and the
+     intrinsic size keeps the scrollbar honest while they are skipped. */
+  ul.todo li { display: flex; gap: 8px; align-items: flex-start; padding: 4px 2px; border-radius: 3px;
+    content-visibility: auto; contain-intrinsic-size: auto 28px; }
   ul.todo li:hover { background: var(--raised); }
   ul.todo input { margin: 4px 0 0; accent-color: var(--accent); flex: 0 0 auto; }
   ul.todo label { font-size: 13.5px; line-height: 1.4; cursor: pointer; }
@@ -475,7 +503,7 @@
     border: 1px solid var(--edge); border-radius: 3px;
     font: 15px/1.55 var(--body);
   }
-  textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   footer {
     flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
@@ -517,7 +545,7 @@
   <a class="skip-link" href="#main-content">Skip to the rung</a>
   <header>
     <h1 class="visually-hidden">Interstice</h1>
-    <span class="brand" aria-hidden="true">Interstice</span>
+    <span class="brand" aria-hidden="true" translate="no">Interstice</span>
     <!--
       One noun for a step on the ladder, and it is "rung", the word the rest of the
       project already uses. This label used to say "Activities" while the footer said
@@ -559,7 +587,7 @@
       <div>
         <div class="label" id="deck-label">Least studied deck</div>
         <h2 id="deck-name">&nbsp;</h2>
-        <div class="why" id="deck-why"></div>
+        <div class="why" id="deck-why" role="status" aria-live="polite"></div>
         <div id="deck-fix"></div>
       </div>
       <div class="bar"><i id="deck-bar" style="width:0%"></i></div>
@@ -587,7 +615,7 @@
       <div id="book-title-wrap">
         <div class="label">Reading</div>
         <h2 id="book-title">&nbsp;</h2>
-        <div class="why" id="book-why"></div>
+        <div class="why" id="book-why" role="status" aria-live="polite"></div>
       </div>
       <div class="bar" id="book-bar-wrap"><i id="book-bar" style="width:0%"></i></div>
       <div class="reader" id="reader">
@@ -614,7 +642,7 @@
         -->
         <div class="over" id="reader-failed" hidden style="justify-content:flex-start; gap:10px">
           <div class="label" style="color:var(--warn)">Amazon could not open this book</div>
-          <div class="why" id="reader-failed-why"></div>
+          <div class="why" id="reader-failed-why" role="status" aria-live="polite"></div>
           <button class="act primary" id="reader-retry" type="button">Try again</button>
           <!--
             Reopening calls revive({ clearFirst: true }), which deletes the device
@@ -729,6 +757,29 @@
 'use strict';
 
 const $ = (id) => document.getElementById(id);
+
+  /* The progress bars are scaled rather than resized: width is a layout property and animating
+     it relaid the bar every frame. The element is full width in CSS and squeezed with a
+     transform, so every caller goes through here rather than setting a style directly. Five
+     call sites set the inline width directly before this existed, and the CSS change alone
+     would have left all five drawing a bar that was always full.
+
+     The property is named generically on purpose: a check that this file no longer sets that
+     style inline is a grep, and a comment quoting the thing it removed sits inside the grep's
+     reach and fails it. */
+  const setBar = (id, percent) => {
+    const el = $(id);
+    if (!el) return;
+    const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
+    el.style.transform = 'scaleX(' + (clamped / 100).toFixed(4) + ')';
+    const bar = el.parentElement;
+    if (bar) {
+      bar.setAttribute('role', 'progressbar');
+      bar.setAttribute('aria-valuenow', String(Math.round(clamped)));
+      bar.setAttribute('aria-valuemin', '0');
+      bar.setAttribute('aria-valuemax', '100');
+    }
+  };
 const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 const status = $('status');
 
@@ -820,7 +871,7 @@ function renderCard(revealed) {
 
   $('card-controls').hidden = revealed;
   $('ease').hidden = !revealed;
-  $('deck-bar').style.width = ((cardIndex / queue.length) * 100).toFixed(1) + '%';
+  setBar('deck-bar', (cardIndex / queue.length) * 100);
   $('card-meta').textContent =
     (cardIndex + 1) + ' of ' + queue.length + ' · ' + card.reps + ' review' + (card.reps === 1 ? '' : 's')
     + (card.lapses ? ' · ' + card.lapses + ' lapse' + (card.lapses === 1 ? '' : 's') : '');
@@ -1626,7 +1677,7 @@ async function loadBook() {
       }[d.reason]) || 'Interstice could not find a book to open. Run interstice doctor to see why.';
       $('book-why').dataset.reason = String(d.reason || '');
       if (d.reason) console.debug('[interstice] no book, reason:', d.reason);
-      $('book-bar').style.width = '0%';
+      setBar('book-bar', 0);
       $('reader-frame').hidden = true;
       $('reader-over').hidden = false;
       readerSay('nothing to open');
@@ -1649,7 +1700,7 @@ async function loadBook() {
           ? '. macOS is refusing the read now, so this position may have moved since.'
           : '. The last read did not come back, so this position may have moved since.')
       : 'Most recently read book you have not finished · ' + bookLine(b);
-    $('book-bar').style.width = (b.percent || 0) + '%';
+    setBar('book-bar', b.percent || 0);
     $('book-actions').innerHTML =
       (d.shelf && d.shelf.length
         ? '<div class="listhead"><span class="label">Or another one you have going</span></div>'
@@ -1666,7 +1717,7 @@ async function loadBook() {
       const s = d.shelf[Number(el.dataset.shelf)];
       el.onclick = () => {
         $('book-title').textContent = s.title;
-        $('book-bar').style.width = (s.percent || 0) + '%';
+        setBar('book-bar', s.percent || 0);
         startReader(s.asin);
       };
     }
@@ -1682,7 +1733,7 @@ async function loadBook() {
     const linked = wanted ? [b].concat(d.shelf || []).find((x) => x && x.asin === wanted) : null;
     if (linked && linked.asin !== b.asin) {
       $('book-title').textContent = linked.title;
-      $('book-bar').style.width = (linked.percent || 0) + '%';
+      setBar('book-bar', linked.percent || 0);
     }
     const target = linked ? linked.asin : b.asin;
     if (readerAsin !== target || !readerTimer) startReader(target);
