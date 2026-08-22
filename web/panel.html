@@ -828,6 +828,18 @@ function setView(name, { fromServer = false } = {}) {
   const load = LOADERS[name];
   if (load) load({ fromServer });
   if (name === 'queue_prompt' && fromServer) $('box').focus();
+  // The rung goes in the URL, so a reload comes back where you were and the address names what is
+  // on screen. Guarded on `fromServer`: a view the ROUTER chose is not one you navigated to, and
+  // writing it would let the daemon rewrite your address bar underneath you. replaceState rather
+  // than pushState, because a rung is where you are rather than a place you can go back from, and
+  // a history entry per poll would make the back button useless.
+  if (!fromServer) {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('view') !== name) {
+      url.searchParams.set('view', name);
+      window.history.replaceState(null, '', url);
+    }
+  }
 }
 
 /* ------------------------------------------------------------------ cards --- */
@@ -2689,7 +2701,10 @@ window.addEventListener('load', () => {
     load: _loadStarCal,
   };
 
-  setView('flashcards');
+  // The rung named in the URL, when it is one that exists. An unknown or absent value falls back
+  // to cards, which is what this did unconditionally before.
+  const wanted = new URLSearchParams(window.location.search).get('view');
+  setView(Object.prototype.hasOwnProperty.call(LOADERS, wanted) ? wanted : 'flashcards');
   loadCompanions();
 });
 </script>

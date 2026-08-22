@@ -246,3 +246,25 @@ test('the Done heading stays out of the way until something is done', () => {
   // without the list being rebuilt underneath the cursor.
   assert.ok(nothingDone.includes('data-done>'), 'the section still exists to receive the first tick');
 });
+
+test('the rung is in the URL, and a router-chosen rung is not', () => {
+  // UX-NAV-001. The view was state the panel held and the address bar never knew, so a reload
+  // always landed on cards and no rung could be linked to. Two halves matter equally, and the
+  // second is the one worth a test: a view the ROUTER picked is not one you navigated to, so
+  // writing it would let the daemon rewrite your address bar while you were looking at it.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const setView = html.slice(html.indexOf('function setView'), html.indexOf("/* ------------------------------------------------------------------ cards ---"));
+
+  assert.match(setView, /searchParams\.set\('view', name\)/, 'the rung is written to the URL');
+  assert.match(setView, /if \(!fromServer\) \{/, 'and only when the person chose it');
+  assert.ok(
+    setView.indexOf('if (!fromServer) {') < setView.indexOf("searchParams.set('view', name)"),
+    'the guard comes before the write, not after it'
+  );
+  assert.match(setView, /replaceState/, 'replaceState, so a rung does not become a history entry');
+  assert.ok(!/pushState/.test(setView), 'pushState would make the back button walk through polls');
+
+  // And the boot path reads it back, refusing a value that is not a rung.
+  assert.match(html, /new URLSearchParams\(window\.location\.search\)\.get\('view'\)/, 'read back at boot');
+  assert.match(html, /hasOwnProperty\.call\(LOADERS, wanted\)/, 'an unknown view falls back rather than rendering nothing');
+});
