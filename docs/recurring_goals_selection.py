@@ -30,8 +30,27 @@ import os
 import sys
 from collections import Counter, defaultdict
 
-ROOT = os.environ.get("RECURRING_GOALS_ROOT", "/Users/scottlydon/Developer/Recurring_goals")
-TARGET = os.environ.get("TARGET_REPO", "/Users/scottlydon/Developer/interstice")
+def _required_path(env, what):
+    """A path this pipeline cannot guess, read from the environment.
+
+    Defaulted to one machine's absolute paths until PS-007: a default meant the script ran
+    somewhere it was never pointed at and silently classified the wrong tree, which for a
+    selection manifest is the failure that looks like a result. Required and named instead.
+    """
+    value = os.environ.get(env)
+    if not value:
+        raise SystemExit(
+            f"{env} is not set, and there is no sensible default for it.\n"
+            f"  It must be {what}.\n"
+            f"  Fix: {env}=/path/to/it python3 {os.path.basename(__file__)}"
+        )
+    if not os.path.isdir(value):
+        raise SystemExit(f"{env}={value!r} is not a directory. It must be {what}.")
+    return os.path.abspath(value)
+
+
+ROOT = _required_path("RECURRING_GOALS_ROOT", "the Recurring_goals checkout holding the rule spreadsheets")
+TARGET = _required_path("TARGET_REPO", "the repo the rules are being evaluated against")
 
 # --- Facts about the target, probed rather than assumed -----------------------
 
@@ -40,15 +59,17 @@ TARGET = os.environ.get("TARGET_REPO", "/Users/scottlydon/Developer/interstice")
 # product: this very file is Python, and an unscoped `**/*.py` probe reported
 # "python: True" for a repo that ships no Python. A probe that can see itself is
 # not measuring the thing it claims to measure.
-SOURCE_DIRS = ("lib", "bin", "test", "web", "hooks", "launchd")
+SOURCE_DIRS = ("lib", "bin", "test", "web", "hooks")
 
 
 def probe_target(target):
     """Return the boolean facts the decision table depends on.
 
-    Each fact is a filesystem question, so the table below is falsifiable: if
-    the repo grows a `src/` directory or a Swift file, the fact flips and the
-    affected rules change verdict without anyone editing prose.
+    Every fact but one is a filesystem question, so the table below is falsifiable: if
+    the repo grows a `src/` directory or a Swift file, the fact flips and the affected
+    rules change verdict without anyone editing prose. The exception is
+    `gauntlet_assignment`, which no file on disk answers; it and any future fact like it
+    are listed in STATED_FACTS and emitted as stated rather than passed off as measured.
     """
     def has(pattern):
         """True if `pattern` matches anything inside a source directory."""
@@ -81,10 +102,32 @@ def probe_target(target):
         "migrations": has("**/migrations"),
         "website_index": os.path.exists(os.path.join(target, "website", "index.html")),
         "claude_design_bundle": os.path.isdir(os.path.join(target, "design", "claude-design")),
-        "gauntlet_assignment": False,   # Interstice is a personal tool, not a graded submission
-        "icloud_synced": False,         # lives in ~/Developer, which is not iCloud-synced
+        "gauntlet_assignment": False,   # stated, not probed; see STATED_FACTS below
+        "icloud_synced": _under_icloud(target),
         "graphified": os.path.isdir(os.path.join(target, ".graphify")),
     }
+
+
+# Facts the filesystem cannot answer, asserted by the author instead. The emitted table
+# names them as stated so a reader is never told an assumption was measured.
+STATED_FACTS = {
+    "gauntlet_assignment": "stated: Interstice is a personal tool, not a graded submission",
+}
+
+
+def _under_icloud(target):
+    """True if the target really resolves inside the iCloud Drive container.
+
+    A filesystem question rather than an assertion about one machine's layout. Everything
+    iCloud syncs, including the Desktop and Documents mirror, lives under
+    ~/Library/Mobile Documents, and ~/Desktop and ~/Documents become links into it when that
+    mirror is on, so resolving symlinks and comparing prefixes answers it for any checkout.
+    """
+    container = os.path.realpath(
+        os.path.join(os.path.expanduser("~"), "Library", "Mobile Documents")
+    )
+    resolved = os.path.realpath(target)
+    return resolved == container or resolved.startswith(container + os.sep)
 
 # --- The decision table -------------------------------------------------------
 # Keyed by (sheet, applies_to). Value is (verdict, reason).
@@ -92,10 +135,14 @@ def probe_target(target):
 I, C, X = "include", "conditional", "exclude"
 
 NO_SWIFT = "no Swift source in this repo"
-NO_PY = "no Python source in this repo"
-NO_REACT = ("the glob matches this repo's .js files, but every rule on the "
-            "React/Next sheet presumes a React component tree, which this repo "
-            "does not have")
+NO_PY = ("`git ls-files '*.py'` returns five files, every one of them under docs/: this "
+         "manifest generator and four audit-record scripts. `find lib bin web test scripts "
+         ".githooks -name '*.py'` returns nothing, so the product itself ships no Python and "
+         "these rules have no product source to run against. Scoped out deliberately, not absent")
+NO_REACT = ("the glob matches this repo's .js files, and most rules on the React/Next "
+            "sheet presume a React component tree, Server Actions, RSC nesting, or a "
+            "bundler, none of which this repo has. The plain-JavaScript and plain-web "
+            "subset of the sheet is restored row by row in ROW_OVERRIDES")
 NOT_ASSIGNMENT = "Interstice is a personal tool, not a Gauntlet assignment submission"
 CONVERSATIONAL = ("governs how the agent writes its replies, not anything in the "
                   "codebase; remains in force continuously and is not a code-audit row")
@@ -240,6 +287,66 @@ DECISIONS = {
         (I, "the panel is a user-facing surface and its display strings live in matching files"),
 }
 
+# --- Per-row overrides ---------------------------------------------------------
+# DECISIONS is keyed by (sheet, applies_to), and applies_to is a PATH GLOB. That is the
+# wrong question for a rule whose normative text is about a KIND OF SYSTEM rather than a
+# kind of file. An adversarial review of the exclusions on 2026-08-19 found eight such
+# rules: `server/**` excluded the daemon-restart rule from a project that IS a daemon,
+# `**/*UITests*/**` excluded a UI-test-timeout rule from a project with five Playwright
+# UI specs, and so on. The pair verdict is still the default; this table overrides it for
+# named rows, each with the evidence in THIS repo that forced the change.
+#
+# Rule for adding a row here: quote the rule BODY (not its glob) and name the concrete
+# file or process in this repo that the body has a referent in.
+
+ROW_OVERRIDES = {
+    # Deployment: the glob says server/**, but the rule bodies are about a long-lived
+    # process loaded at startup, which bin/interstice.js start --foreground is.
+    "DEP-005": (I, "the rule body says 'anything loaded at startup'; the Interstice daemon "
+                   "is exactly that, and lib/install.js drives launchctl unload/load"),
+    "DEP-019": (I, "lib/server.js dispatches /api/* routes alongside static HTML from one "
+                   "handler, which is the hazard shape; no test asserts its content-type"),
+
+    # Testing: excluded on a directory name while conceding the subject exists.
+    "TC-005": (I, "five Playwright UI specs live in test/*.pw.mjs with no playwright.config.js "
+                  "and no CI timeout branch, so the rule has a real target here"),
+
+    # Security: the Incorrect shape is literally present in lib/server.js.
+    "SEC-005": (I, "lib/server.js declares module-scope mutable request state "
+                   "(companionOverrides) that later requests read back"),
+
+    # Project structure: the detect clause runs against any project, new or not.
+    "PS-002": (I, "the detect clause asks whether the project appears in the Atlas index, "
+                  "which is answerable for an existing project too"),
+
+    # Design fidelity: docs/design-immersive-reading.html is canonical for work that has
+    # not landed yet, so the drift-direction rules have a live referent during Phase 2C.
+    "DF-005": (C, "applies if docs/design-immersive-reading.html is treated as the canonical "
+                  "design artifact; record whether the panel drifted from it"),
+    "DF-006": (C, "same precondition as DF-005: does a canonical design artifact exist here"),
+}
+
+# React/Next sheet: the blanket reason ('every rule presumes a React component tree') is
+# false for a plain-JavaScript subset whose rule sentence names no React construct and
+# whose SCOPE line reads 'the target codebase'. Those rows are restored. Rows that are
+# genuinely Next-bound (Server Actions, API routes, RSC nesting, JSX conditional
+# rendering) or bundler-bound (this repo has no bundler) stay excluded.
+REACT_FREE_ROWS = [
+    "RN-ASYNC-DEPENDENCIES", "RN-ASYNC-PARALLEL",
+    "RN-CLIENT-LOCALSTORAGE-SCHEMA",
+    "RN-JS-BATCH-DOM-CSS", "RN-JS-CACHE-FUNCTION-RESULTS", "RN-JS-CACHE-PROPERTY-ACCESS",
+    "RN-JS-CACHE-STORAGE", "RN-JS-COMBINE-ITERATIONS", "RN-JS-EARLY-EXIT",
+    "RN-JS-FLATMAP-FILTER", "RN-JS-INDEX-MAPS", "RN-JS-LENGTH-CHECK-FIRST",
+    "RN-JS-MIN-MAX-LOOP", "RN-JS-REQUEST-IDLE-CALLBACK", "RN-JS-SET-MAP-LOOKUPS",
+    "RN-RENDERING-ANIMATE-SVG-WRAPPER", "RN-RENDERING-CONTENT-VISIBILITY",
+    "RN-RENDERING-SCRIPT-DEFER-ASYNC", "RN-RENDERING-SVG-PRECISION",
+    "RN-SERVER-HOIST-STATIC-IO",
+]
+for _rid in REACT_FREE_ROWS:
+    ROW_OVERRIDES[_rid] = (I, "plain-JavaScript or plain-web rule: its rule sentence names no "
+                              "React construct and its applies_to glob matches this repo's .js "
+                              "and .html files")
+
 
 def load_rows(root):
     """Read every rows.csv under root, tagged with its sheet name.
@@ -277,6 +384,10 @@ def classify(rows):
             unknown[key].append(r.get("row_id", "<no row_id>"))
             continue
         verdict, reason = DECISIONS[key]
+        # A named row beats its (sheet, applies_to) pair: see ROW_OVERRIDES.
+        rid = (r.get("row_id") or "").strip()
+        if rid in ROW_OVERRIDES:
+            verdict, reason = ROW_OVERRIDES[rid]
         verdicts.append((r, verdict, reason))
     if unknown:
         lines = [
@@ -309,8 +420,11 @@ def main():
 
     print("# Recurring_goals selection for Interstice")
     print()
-    print(f"Source tree : `{ROOT}`")
-    print(f"Target repo : `{TARGET}`")
+    # Basenames, not absolute paths: the manifest is committed, and one machine's home
+    # directory in a committed document is noise to every other reader of it. Which trees
+    # these were is set by RECURRING_GOALS_ROOT and TARGET_REPO at run time.
+    print(f"Source tree : `{os.path.basename(ROOT)}` (from RECURRING_GOALS_ROOT)")
+    print(f"Target repo : `{os.path.basename(TARGET)}` (from TARGET_REPO)")
     print(f"Total rules : {len(rows)} across {len(by_sheet)} sheets "
           f"(counted with a CSV reader; `wc -l` overcounts because agent_prompt "
           f"contains newlines)")
@@ -320,10 +434,10 @@ def main():
     print()
     print("## Probed facts about the target")
     print()
-    print("| fact | value |")
-    print("|---|---|")
+    print("| fact | value | how |")
+    print("|---|---|---|")
     for k, v in sorted(facts.items()):
-        print(f"| `{k}` | {v} |")
+        print(f"| `{k}` | {v} | {STATED_FACTS.get(k, 'probed from the filesystem')} |")
     print()
     print("## Per sheet")
     print()
@@ -346,7 +460,7 @@ def main():
     print("| sheet | applies_to | rules dropped | reason |")
     print("|---|---|---:|---|")
     for (sheet, applies, reason), n in sorted(seen.items(), key=lambda kv: -kv[1]):
-        print(f"| {sheet} | `{applies[:60]}` | {n} | {reason} |")
+        print(f"| {sheet} | `{applies}` | {n} | {reason} |")
     print()
     print("## Conditional rules (each worker must record how it resolved)")
     print()
@@ -358,9 +472,10 @@ def main():
             k = (r["_sheet"], (r.get("applies_to") or "").strip(), reason)
             cseen[k] = cseen.get(k, 0) + 1
     for (sheet, applies, reason), n in sorted(cseen.items(), key=lambda kv: -kv[1]):
-        print(f"| {sheet} | `{applies[:60]}` | {n} | {reason} |")
+        print(f"| {sheet} | `{applies}` | {n} | {reason} |")
     print()
-    print("## Selected row ids")
+    n_routed = sum(1 for _, v, _ in verdicts if v in ("include", "conditional"))
+    print(f"## Row ids routed to workers ({n_routed}: every included row plus every conditional one)")
     print()
     sel = defaultdict(list)
     for r, v, _ in verdicts:

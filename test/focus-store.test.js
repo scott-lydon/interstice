@@ -18,9 +18,7 @@ test('stars survive a store being killed and reconstructed, byte-exact including
   // "kill" the store: drop it and reopen from the file alone.
   const s2 = open(p);
   const recovered = s2.all();
-  assert.equal(recovered.length, 2);
-  assert.deepEqual(recovered[0], a, 'first star recovered exactly, timestamps and all');
-  assert.deepEqual(recovered[1], b, 'second star recovered exactly');
+  assert.deepEqual(recovered, [a, b], 'both stars recovered exactly, in order, timestamps and all');
   // and the on-disk bytes are exactly two JSON lines, nothing lossy
   const bytes = fs.readFileSync(p, 'utf8');
   assert.equal(bytes, JSON.stringify(a) + '\n' + JSON.stringify(b) + '\n');
@@ -46,12 +44,16 @@ test('a line that parses but lacks a timestamp is also reported', () => {
 test('starsForDay and starsForMonth filter correctly', () => {
   const p = tmp();
   const s = open(p);
-  s.award({ startedAt: '2026-08-19T09:00:00-07:00', endedAt: '2026-08-19T09:25:00-07:00', day: '2026-08-19' });
-  s.award({ startedAt: '2026-08-20T09:00:00-07:00', endedAt: '2026-08-20T09:25:00-07:00', day: '2026-08-20' });
-  s.award({ startedAt: '2026-09-01T09:00:00-07:00', endedAt: '2026-09-01T09:25:00-07:00', day: '2026-09-01' });
-  assert.equal(s.starsForDay('2026-08-19').length, 1);
-  assert.equal(s.starsForMonth('2026-08').length, 2);
-  assert.equal(s.starsForMonth('2026-09').length, 1);
+  const august = [
+    s.award({ startedAt: '2026-08-19T09:00:00-07:00', endedAt: '2026-08-19T09:25:00-07:00', day: '2026-08-19' }),
+    s.award({ startedAt: '2026-08-20T09:00:00-07:00', endedAt: '2026-08-20T09:25:00-07:00', day: '2026-08-20' }),
+  ];
+  const september = [
+    s.award({ startedAt: '2026-09-01T09:00:00-07:00', endedAt: '2026-09-01T09:25:00-07:00', day: '2026-09-01' }),
+  ];
+  assert.deepEqual(s.starsForDay('2026-08-19'), [august[0]]);
+  assert.deepEqual(s.starsForMonth('2026-08'), august);
+  assert.deepEqual(s.starsForMonth('2026-09'), september);
 });
 
 test('a trailing newline is not treated as a malformed line', () => {

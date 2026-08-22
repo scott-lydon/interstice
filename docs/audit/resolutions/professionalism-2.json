@@ -1,0 +1,92 @@
+{
+  "1": {
+    "state": "fixed",
+    "what": "docs/FOCUS_MODULE_CONTRACTS.md claimed to be the contract the implementation must satisfy, then named five surfaces the code does not have: a lock.js breaker, createTicker({onTick,onClear})/Ticker.submitted/Ticker.delivered, probe({cdp,whitelist}), Machine.onTick/Machine.onBreak, and detail: string.",
+    "where": "docs/FOCUS_MODULE_CONTRACTS.md:1-11 (new lead), :16-24 (machine), :38-43 (breakers), :46-51 (video probe), :54-60 (latency), :66-69 (boundary rule).",
+    "how": "Added a lead paragraph in the form docs/immersive-reading-measurements.md uses: written before the implementation on 2026-08-19, kept for the boundary reasoning, and where it and the code disagree the code is right. Then corrected all five names against the source rather than only excusing them. lock.js became display.js (lib/focus/breakers/display.js). createTicker became createLatency() plus latencyEventFromEngine(ev), with onSubmit/onComplete/elapsedMs/isWaiting/active documented as the real surface (lib/latency.js:13-59). probe({cdp,whitelist}) became probeVideo({browsers,connect}) returning VideoRecord rows, with the whitelist noted as applied one level up in lib/focus/breakers/video.js (lib/video/probe.js:56). Machine.onTick/onBreak became send(event), phase, elapsedMs(nowISO), blockMs, and BlockForfeited was added as a second emitted type (lib/focus/blocks.js:43-115). detail is now documented as a string for the app and lock causes and an object { host, url } for video (lib/focus/breakers/video.js:72 against display.js:19 and frontmost.js:36). The latency heading also lost the word 'ticker', which the module is not."
+  },
+  "2": {
+    "state": "fixed",
+    "what": "The Python-sheet exclusion reason claimed 'the only Python in the repo is docs/recurring_goals_selection.py'. git ls-files '*.py' returns five tracked files. Second false version of the same claim.",
+    "where": "docs/recurring_goals_selection.py:138-141 (the NO_PY string), docs/RECURRING_GOALS_SELECTION.md:57 (regenerated), docs/BUG_ISSUE_PREVENTION.md:93-99 (recurrence recorded).",
+    "how": "Ran both commands first. `git ls-files '*.py'` returns docs/audit/extract_selected.py, docs/audit/merge_resolutions.py, docs/audit/reduce.py, docs/audit/route.py and docs/recurring_goals_selection.py, all five under docs/. `find lib bin web test scripts .githooks -name '*.py'` returns nothing. The reason now states exactly that and names both commands so re-checking it is reading it. Regenerated the manifest with RECURRING_GOALS_ROOT=/Users/scottlydon/Developer/Recurring_goals TARGET_REPO=/Users/scottlydon/Developer/interstice; the generator was verified byte-identical to the committed manifest before the change, so the diff is only the intended lines. Also appended a Recurrence note to the existing prevention entry in docs/BUG_ISSUE_PREVENTION.md, since a rule that names a command and is then not run is the same defect wearing the fix's clothes."
+  },
+  "3": {
+    "state": "fixed",
+    "what": "UX_FEEDBACK.md (417 lines at the repository root) had no framing, so its ten unticked boxes read as outstanding product defects rather than items a judge agent ruled out of scope.",
+    "where": "UX_FEEDBACK.md:3-18 (new lead block).",
+    "how": "Added a blockquote lead in the form of docs/GOAL_LOOP.md:3-15 and docs/STARS_NOTES_2026-08-19.md:3-9: what the file is (nine rounds of synthetic UI review from the convergence sub-loop at docs/GOAL_LOOP_STARS_READER_2026-08-17.md:398-408), when it was written (committed 2026-08-20), the reviewer/judge split, and that an unticked box is not outstanding work. The claim is stated precisely rather than loosely: nine of the ten unticked items carry {skip}; the tenth is the last item of pass 8, which pass 9 verified as fixed against the live daemon and which ships (window.__closeStarCal at web/panel.html:2460), and whose box was simply never ticked back. The file was not moved. git diff reports 17 insertions and 0 deletions, so no existing item line changed, and `grep -cE '^- \\[ \\].*\\{worthwhile\\}' UX_FEEDBACK.md` still returns 0."
+  },
+  "4": {
+    "state": "fixed",
+    "what": "Nineteen-plus internal checklist ids remained in shipped code, comments, test names and test failure output, including a visible page headline reading 'Immersive reading (em dash) target design (Phase 2)'.",
+    "where": ".githooks/pre-commit:2, scripts/literal-detector.mjs:2, lib/reading.js:3, lib/daemon.js:37, test/install.test.js:109, test/reader.test.js:333, test/focus-breaker-frontmost.test.js:38, test/reader-shelf.test.js:67, test/focus-tracker.test.js:162, test/immersive-layout.pw.mjs:39, web/panel.html:142, :239, :250, :261, :276, :598, :2013, :2109, :2253, docs/design-immersive-reading.html:6 and :63, plus every fails.push string and test name in test/forfeit-legible.pw.mjs, test/immersive-menu.pw.mjs, test/latency-indicator.pw.mjs, test/star-calendar.pw.mjs, test/latency.test.js and test/video-probe.test.js.",
+    "how": "Stripped the leading id and kept the sentence at every site, capitalising the first word where the id had been the sentence opener. TC-008, UC-MOD-001, UC-PRIN-001, UC-PRIN-002, DEP-003, DEP-010 and the bare section numbers (1.5, 2A.1, 2C.2, 2C.3, 2C.4, 3.8, 4.2, 4.6, 5.1 through 5.7, and 'Phase 2', 'Phase 2C', 'Phase 5') are gone from lib, bin, web, test, scripts, .githooks and docs/design-immersive-reading.html. Test failure output now reads as a sentence ('forfeit banner not visible' rather than '4.6: forfeit banner not visible') and test names carry no trailing id. The visible headline is now 'Immersive reading: target design', which also removes the em dash rather than introducing another; the <title> was changed the same way for consistency. The verification grep now returns only eight false positives, all of them quantile arguments in lib/stats.js:58,59,94,95,96 and test/stats.test.js:201,202,203 matching the \\([0-9]+\\.[0-9]+\\) alternative. docs/audit/** was not touched. npm test still reports 336 passing and scripts/literal-detector.mjs still reports no bare literals in 50 test files."
+  },
+  "5": {
+    "state": "fixed",
+    "what": "lib/reader.js still pinned the Chrome version after README.md:166 dropped the pin.",
+    "where": "lib/reader.js:20 and lib/reader.js:469.",
+    "how": "Both now read 'Chrome ignores `--load-extension` on current releases', matching README.md:166 word for word on the claim. The finding named only :20; :469 carried the same pin ('which Chrome has ignored since 137') and was corrected with it, because leaving one is the failure mode this whole scan exists to catch. `grep -rn 'Chrome 137\\|since 137\\|137 onwards' lib bin web test README.md docs/*.md` now returns nothing."
+  },
+  "6": {
+    "state": "fixed",
+    "what": "lib/state/notes.js carried the author's private library size, '(3,349 notes)', after README.md:377 dropped it.",
+    "where": "lib/state/notes.js:19-23.",
+    "how": "Rewritten to 'timed once against a real library, that took 104 seconds for the first 40 notes alone ... the whole library came back in about 0.3s on that same reading', which is exactly the pair of figures README.md:377 keeps and hedges the same way ('Timed once here, 40 notes took 104 seconds' / 'returned in 0.3 seconds on that same reading'). The collection size is gone. The 'one three-hundredth of the time' ratio went with it rather than being re-derived, because it compared 40 notes against the whole library and is not a figure the readings support; 'a fraction of a second instead of minutes' is what they do support."
+  },
+  "7": {
+    "state": "fixed",
+    "what": "lib/ocr.js said 'It measures 0.6s a page at 1.00 confidence on this book', unhedged and disagreeing with README.md:197-199, which says about half a second and calls it a single reading.",
+    "where": "lib/ocr.js:21-22.",
+    "how": "Now reads 'Timed on one book on one machine it took about half a second a page and returned every line at full confidence, which is a single reading rather than a benchmark', which is README.md:197-199 verbatim in substance and identically hedged. The private 'this book' framing is gone."
+  },
+  "8": {
+    "state": "fixed",
+    "what": "Three more instances of the same class the prior sweep missed: a private collection size in lib/state/anki.js, a private deck ranking and card counts quoted in a web/panel.html comment, and an unhedged per-book measurement in web/panel.html justifying two shipped constants.",
+    "where": "lib/state/anki.js:169-173, web/panel.html:824-828, web/panel.html:1044-1051 (constants at :1053-1054).",
+    "how": "anki.js: '1,598 due cards resolve in 0.21s for 2.7MB, against roughly 160 round trips' became 'Timed once against a real collection, the whole due queue came back in a fifth of a second in these two calls; the per-deck alternative costs one round trip per deck, so its cost grows with the collection while this one does not.' The reasoning (why cardsInfo in two calls beats a query per deck) is kept; the collection size, byte count and deck count are gone. panel.html deck-why comment: the quoted example line was replaced with a shaped placeholder, '<n> reviews per due card, the lowest of <m> decks with anything due (middot) <k> due here of <t> overall', which still demonstrates the run-together sentence and the misread middot without publishing a real ranking or counts. panel.html render-box comment: kept the 39/109/178 words-a-page progression and the confidence observation, because they are the justification for TEXT_RENDER_SCALE and TEXT_RENDER_MAX, but requalified as 'Measured once, on one book on one machine' and 'That is a single reading and not a benchmark, but it is the reason the two constants below are the sizes they are'. No figure was invented; the private possessive framing was removed instead."
+  },
+  "9": {
+    "state": "fixed",
+    "what": "Three exported symbols with zero references still shipped, and their finding UC-DEAD-001 was dropped rather than resolved.",
+    "where": "docs/BUG_ISSUE_PREVENTION.md, new section 'Pre-existing dead code, reported rather than deleted (2026-08-20)'. The symbols are lib/paths.js:33 OFFSETS_FILE, lib/amazon-session.js:36 panelCookies, lib/ocr.js:279 toParagraphs.",
+    "how": "Confirmed zero references independently: `grep -rn '<name>' lib bin web test scripts .githooks docs` for each of the three returns only the definition line plus the two audit evidence records (docs/audit/findings_merged.json:2095 and docs/audit/findings/universal.jsonl:16). Since these are pre-existing dead code and no change here orphaned them, they were reported rather than deleted, which is what the finding itself prescribed. The new section names each with file and line, gives the one-command check, and asks that any symbol deliberately kept for a future caller be annotated, because an export with no reference and no note is indistinguishable from one that was forgotten. toParagraphs is at :279 rather than :278 because the finding-7 rewrite of the file header added a line above it. Nothing was deleted."
+  },
+  "10": {
+    "state": "fixed",
+    "what": "docs/audit/CONDITIONAL_RESOLUTIONS.md asserted in present tense that lib/install.js prints 'loaded' unconditionally (fixed since), had no date or commit framing unlike every sibling record, and its generated table cut every precondition mid-word at 70 characters.",
+    "where": "docs/audit/CONDITIONAL_RESOLUTIONS.md (regenerated, now headed), and the generator added at docs/audit/merge_resolutions.py:18-61 behind a --conditionals flag.",
+    "how": "No script in the tree produced that table, so the generation was added rather than found: `python3 docs/audit/merge_resolutions.py --conditionals` now rebuilds the file from docs/audit/selected_rules.json and docs/audit/findings_merged.json and exits before the merge path, so it reads the findings and writes nothing but the markdown. Verified: git status shows docs/audit/findings_merged.json and docs/audit/findings/ unmodified. The precondition column is printed whole, so CM-009 now ends 'which is a guide; applies to that artifact only' rather than 'which is a', and DEP-001 through DEP-018 carry the whole LaunchAgent condition rather than 'not a serv'. The eighteen evidence bullets are byte-identical to the previous file (diffed). The new header states that the verdicts are as measured on 2026-08-19 and into 2026-08-20 against the tree at commit 7aa8ea1, recorded in commit a72e5f6, that they are not re-checked as the tree moves, and that DEP-003 has already been overtaken: lib/install.js:151 now returns the real result from reloadLaunchAgent and bin/interstice.js:80-83 exits non-zero when the LaunchAgent did not end up running. The identical latent [:60] truncation in docs/recurring_goals_selection.py:463 and :475 was removed too; regenerating showed no output change, because no current applies_to exceeds 60 characters, so it was a defect waiting rather than one landed."
+  },
+  "11": {
+    "state": "partly refuted, rest fixed",
+    "what": "The brittle figures were real and are fixed. The premise that lib/server.js no longer exists is false.",
+    "where": "lib/reading.js:3-5 and lib/daemon.js:37-40.",
+    "how": "REFUTED: lib/server.js exists, 675 lines, and is the second largest file in lib/. What is true is that it no longer names the Reader at all: `grep -c 'daemon\\.reader' lib/server.js` returns 0 and it now goes through the reading surface in 13 places, so the comments' past tense ('used to reach through') is accurate as written. FIXED: the two brittle figures. '33 times' became 'at dozens of call sites' and 'to name 33 members' became 'to name dozens of members', because the exact count was of a state the code is no longer in and nothing re-counts it. 'a 1747-line class' became 'much the largest class in lib/', which stays true across edits and is checkable with `wc -l lib/*.js | sort -rn` (lib/reader.js 1747, next largest lib/server.js 675)."
+  },
+  "12": {
+    "state": "fixed",
+    "what": "The panel labelled a button 'Start 25:00' for an interval length Be Focused owns and this product neither sets nor reads, so a user on 50-minute intervals was shown 25. README.md:268 repeated it.",
+    "where": "web/panel.html:1825 (FIXES.pomodoro), README.md:267-270, and two supporting strings at lib/companions-control.js:282 and :364.",
+    "how": "The label is now 'Start a full interval' and the in-flight text is 'starting a fresh interval'; neither states a number. Verified against the implementation first: lib/companions-control.js:284-340 presses the app's own skip shortcut to put the clock back to a whole interval and then presses start, so what the button promises is a full interval, not a length. README.md now reads '**Start a full interval** begins a whole work interval' and says explicitly that the label names no length because the length is Be Focused's own setting, which this product neither reads nor writes. The two stale supporting strings went with it: the doc comment that read 'the wrong answer for a button that says twenty-five' now says 'a button that offers a whole interval', and the no-skip-shortcut note no longer interpolates '${minutes} minute'. Verified live after restart: the daemon serves 'Start a full interval' and no occurrence of 'Start 25:00' remains."
+  },
+  "13": {
+    "state": "fixed",
+    "what": "lib/reader.js stated 'A capture is 65ms.' as a bare fact from one reading, while its honest twin at :221 names the conditions; lib/panel.js dated an observation by weekday with no date.",
+    "where": "lib/reader.js:1270-1271, lib/panel.js:315-316.",
+    "how": "reader.js now reads 'A capture measured 65ms here while the renderer was at 96% of a core, which is one reading and not a benchmark', which carries the same conditions its twin at :221 already named ('65ms measured while the renderer was at 96% of a core'). panel.js 'Seen on this machine: pid alive since Wednesday' became 'Seen here once: a pid that had been alive for days'. The weekday is gone rather than being replaced with a date, because no date for that observation is recorded anywhere and inventing one would be worse than dropping it."
+  },
+  "14": {
+    "state": "fixed",
+    "what": "CLAUDE.md:3 said 'This repo is under an active goal loop', which goes false the moment the loop closes.",
+    "where": "CLAUDE.md:3-5.",
+    "how": "Reworded to past tense pointing at the same documents: 'This repo was built under a goal loop, and the decisions that loop settled still hold. Before changing anything, read it and them; do not re-derive or re-ask what they already resolve.' The bullet list beneath is unchanged, so docs/GOAL_LOOP_STARS_READER_2026-08-17.md, docs/GOAL_LOOP.md, README.md and config/interstice.config.default.json are still the named references, and that goal loop file itself was not edited."
+  },
+  "15": {
+    "state": "fixed",
+    "what": "docs/recurring_goals_selection.py listed a deleted 'launchd' directory in SOURCE_DIRS, and hardcoded icloud_synced with a machine-specific comment directly under a docstring promising every fact is a probed filesystem question.",
+    "where": "docs/recurring_goals_selection.py:62 (SOURCE_DIRS), :64-71 (docstring), :103-133 (facts, STATED_FACTS and the new _under_icloud probe), :437-439 (emitted table), docs/RECURRING_GOALS_SELECTION.md:11-26 (regenerated).",
+    "how": "Confirmed `ls -d launchd` fails and `ls -d hooks` succeeds, then dropped 'launchd' from SOURCE_DIRS. icloud_synced is now a real filesystem question: _under_icloud(target) resolves symlinks on both sides and tests whether the target lives under ~/Library/Mobile Documents, which is where everything iCloud syncs actually lives, including the Desktop and Documents mirror. It still returns False for this checkout, but now because it was measured rather than asserted. The one remaining fact no file can answer, gauntlet_assignment, is listed in a new STATED_FACTS map and the emitted table gained a 'how' column so every row says either 'probed from the filesystem' or 'stated: ...'. The probe_target docstring no longer claims every fact is a filesystem question; it names the exception and points at STATED_FACTS. Manifest regenerated with the same environment as before, after confirming the pre-change generator reproduced the committed manifest byte for byte."
+  }
+}

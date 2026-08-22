@@ -1,0 +1,145 @@
+{
+  "sheet": "Deployment",
+  "targets": [
+    "akin-server-side and the Interstice launchd jobs"
+  ],
+  "row_count": 19,
+  "entry_count": 19,
+  "run_dir": "/Users/scottlydon/.claude/projects/-Users-scottlydon/5076d517-09dd-4e8d-8aab-1d115d31b9c3/subagents/workflows/wf_21e0b7c6-72d",
+  "counts": {
+    "pass": 1,
+    "finding": 7,
+    "not_applicable": 11,
+    "unreturned": 0
+  },
+  "entries": [
+    {
+      "row_id": "DEP-001",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 87,
+      "detail": "DEP-001's subject is \"the change made this session,\" so per the audit instructions I read the written record at /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md in full (356 lines) rather than guessing, since that file and the goal loop beside it are the only account of the session available to me. I could not find DEP-004..DEP-013 row results anywhere for this session (they are this row's stated input per the CSV's deterministic_tools column), so this row cannot legitimately PASS.\n\nSection \"What swath N1 shipped\" (line 87) declares nine test classes and 22 fixed defects (later itemized as 27 total, section \"9.5 Defects fixed in this loop\", table around line 145) as complete, and section \"4.13 closed, and why it was open\" (line 300) explicitly closes items on the strength of `swift test --package-path $SRV` going from 2 failures to 0 failures locally, with git status clean and commits pushed. Per the B,F2 row of the cross-document sweep (line 271), the deployment target for this repository is Render, with migrations run by hand from the service shell. Nowhere in the notes is there any git push to a Render deploy branch, any build-log confirmation, any service restart, or any curl against a live/staging URL proving the 27 fixed defects are observable in a running deployed instance. Everything reported as \"shipped,\" \"closed,\" or \"fixed\" in this session is backed only by local `swift test` and `git status` evidence, which the deployment matrix (row for external hosts) explicitly says is NOT sufficient (\"auto-deploy is NOT the same as deployed-and-verified\"). I also checked the akin-server-side target files directly (Dockerfile, scripts/, README.md, CLAUDE.md, Sources/App/Configuration) but their mtimes are all a uniform Aug 21 15:49 (a checkout artifact, not evidence of this session's edits), so they add no deployment evidence either way; the notes file remains the only reliable account.\n\nFAIL: no DEP-004..DEP-013 evidence, and no build/deploy/restart/curl step recorded anywhere in the session's own written record for the akin-server-side changes it repeatedly calls \"shipped\" and \"closed.\"",
+      "rule_title": "Code edited is not code shipped"
+    },
+    {
+      "row_id": "DEP-002",
+      "status": "pass",
+      "detail": "Searched the session transcript (GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md) for patterns: \"run this\", \"now restart\", \"hard-refresh\", \"you can verify by\", \"try it now\" at both exact and approximate matches. Found 0 instances of delegation instructions to the user in responses claiming changes are shipped. Target files also contained no delegation patterns. The pre-existing comment in configure.swift about running Docker was not modified during this loop.",
+      "rule_title": "Never delegate a deployment step to the user"
+    },
+    {
+      "row_id": "DEP-003",
+      "status": "not_applicable",
+      "detail": "DEP-003 requires a deployment evidence checklist (six specific lines: layers touched, build command, kill/restart, health check, cache bust, behavior proof) in any response claiming code is shipped to production. This goal loop (08-19 session) is a feature development and bug-fix loop with no production deployment claims. Work was verified through test passes and code review, not through deployment steps. No response in the recorded transcript claims the change is shipped to a production environment.",
+      "rule_title": "Print the deployment evidence checklist before claiming shipped"
+    },
+    {
+      "row_id": "DEP-004",
+      "status": "not_applicable",
+      "detail": "Checked all targets for a pre-built-bundle frontend (Vite/webpack src/ -> dist/): `find` for vite.config*/webpack.config*/package.json under akin-server-side returned nothing (it is a Swift/Vapor server per Package.swift, with Public/ as static asset storage, not bundler output). interstice/package.json scripts are only test/doctor/start, no build script. `grep -rln 'vite|webpack'` and `grep -rn 'express.static|serveStatic|dist/'` across lib/install.js, bin/interstice.js, akin-server-side/Dockerfile, scripts/, README.md, and CLAUDE.md all returned empty. interstice/web/ contains only plain static HTML files (dashboard.html, panel.html, debug.html) served as-is, no bundler. This rule's subject, a Vite/webpack build pipeline, is absent from every audited target.",
+      "rule_title": "Frontend source change: build, confirm dist, restart, hard-refresh, verify"
+    },
+    {
+      "row_id": "DEP-005",
+      "status": "not_applicable",
+      "detail": "Rule DEP-005 governs Node backend source changes deployed via local pkill -9 / nohup restart + curl health check (applies_to: server/**). None of the targets match that shape. /Users/scottlydon/Developer/akin-server-side/Dockerfile confirms the backend is Swift/Vapor (\"FROM swift:6.0-focal\", COPY ./Package.*), and scripts/server-up.sh / server-down.sh show it is managed with a recorded PID file + graceful SIGTERM/SIGKILL fallback, not the pkill -9 -f pattern this rule specifies; the goal-loop notes (the only account of this session, /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md, line 271) further record the deployment target as Render with migrations run by hand from the service shell, i.e. a hosted-platform deploy path, not a local process restart. /Users/scottlydon/Developer/interstice/bin/interstice.js and lib/install.js are a Node CLI/daemon installer (start/stop/status subcommands, LaunchAgent-based), not a \"server/\" backend with a local pkill+curl health-check deploy flow. I grepped the notes file for pkill, nohup, restart, daemon, launchagent, install.js, interstice.js, deploy, npm run, systemctl and found no record of any backend source change being deployed through the kill -9/restart/health-check sequence this rule checks, so there is nothing in scope for this rule to pass or fail against in either the targets or the session record.\"",
+      "rule_title": "Backend source change: kill -9, prove zero leftovers, restart, health, behavior"
+    },
+    {
+      "row_id": "DEP-006",
+      "status": "not_applicable",
+      "detail": "The rule addresses static asset deployment with Vite content-hashing. The specified targets are a Swift backend application (akin-server-side) and a Node.js CLI tool (interstice), neither of which are frontend web applications that serve Vite-hashed static assets. The goal loop notes document only backend server work and CLI development with no static asset deployment.",
+      "rule_title": "Content-hashed assets still need an entry-HTML hard refresh"
+    },
+    {
+      "row_id": "DEP-007",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin-server-side/Sources/App/Controllers/Marketing/MarketingAssets.swift",
+      "line": 28,
+      "detail": "NoCacheMiddleware only covers /assets/marketingFunnel/* paths, but stable-named assets are served from /assets/ without Cache-Control headers. Entry HTML references /assets/tokens.css, /assets/site.css, /assets/site.js with ?v= queries; deployed responses lack Cache-Control: no-cache as required by DEP-007.",
+      "rule_title": "Stable-named assets must not ship long-lived cache headers"
+    },
+    {
+      "row_id": "DEP-008",
+      "status": "not_applicable",
+      "detail": "Ran grep -il \"chrome\" across akin-server-side/Dockerfile, README.md, CLAUDE.md, and interstice/lib/install.js, interstice/bin/interstice.js (no hits), and grep -ril \"chrome|manifest.json|content_script|service_worker\" across akin-server-side/scripts (build-server.sh, migrate.sh, coverage tooling, etc.) and Sources/App/Configuration (no hits). None of the targets is a Chrome extension: akin-server-side is a Swift/Vapor server with Docker/shell deploy scripts, and interstice/lib/install.js + bin/interstice.js are a Node CLI installer. The rule addresses Chrome extension content scripts/service workers, an artifact type absent from every target path.",
+      "rule_title": "Chrome extension change: reload the extension and every injected tab"
+    },
+    {
+      "row_id": "DEP-009",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin-server-side/CLAUDE.md",
+      "line": 39,
+      "detail": "DEP-009 requires (a) running the migration, (b) verifying the schema change with a live query, (c) exercising the app path that reads it, and calls out that Render never auto-runs migrations so this must be done through the Render Web Shell. My audit constraints forbid running builds, migrations, or a test suite, so I could not execute any of (a)-(c) myself; that gap is the finding, not an assumption of pass. I read scripts/migrate.sh, scripts/server-up.sh, CLAUDE.md:19-39, README.md:13-50, and Sources/App/Configuration/configure.swift:303-346, which together show migrations run two ways here: manually via `./Run migrate --yes` (CLAUDE.md:25-26, 39; README.md:50, Render Web Shell per the rule's own note) and automatically at boot via `app.autoMigrate()` when `DEPLOYMENT == debug` (configure.swift:342-346), which per the code's own comment (configure.swift:328-336) is true for BOTH the staging and production Render services. The only live evidence available is in the session record at /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md lines 312-342: a 2026-08-21 run migrated a fresh local/CI database (`AKIN_TEST_DB`), then queried `\\d entitlements` (schema verified: table present with id, user_id, capability, created_at) and confirmed `ContextModerationTests.testCleanNameCreatesContextAndRecordsAssessment` read a row back (app-reads verified). The notes explicitly say this ran against the test suite's fresh database, not `$DATABASE_URL`/the deployed Render service, because no `DATABASE_URL` was exported locally (lines 340-342). So no step in this audit, and no account in the only session record available, shows the migration being run, queried, and exercised against the actual deployed (Render) database that CLAUDE.md:39 and README.md:50 describe, which is the specific scenario the rule calls out by name. I am reporting this as a finding against my own coverage rather than asserting a pass I did not verify.",
+      "rule_title": "Database migration: run it, verify the schema, verify the app reads it"
+    },
+    {
+      "row_id": "DEP-010",
+      "status": "not_applicable",
+      "detail": "DEP-010 addresses scheduled task changes (launchd plist or crontab). The goal loop notes (GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md) document extensive work on reader repairs, test fixes, and documentation updates, but contain no record of running interstice install, reloading launchctl, or creating any scheduled tasks. Code exists in interstice/lib/install.js to manage launchd plist files, but no evidence appears that it was executed this session.",
+      "rule_title": "Scheduled task change: reload the scheduler and prove the next fire runs new code"
+    },
+    {
+      "row_id": "DEP-011",
+      "status": "not_applicable",
+      "detail": "Rule addresses MCP server deployment (kill host, reconnect, verify tools surface). Targets are a Node.js CLI tool (interstice) with LaunchAgent daemon and a Vapor web backend (akin-server-side on port 8080). Neither implements MCP server protocol, tool definitions, or resource schemas. Supporting files (Dockerfile, scripts, install.js, configuration) are infrastructure for standard web/daemon services, not MCP servers.",
+      "rule_title": "MCP server change: kill the host, reconnect, verify the tool surfaces"
+    },
+    {
+      "row_id": "DEP-012",
+      "status": "not_applicable",
+      "detail": "The rule applies to skill and plugin changes under ~/.claude/skills/** and ~/.claude/plugins/**. All audit targets are project repository files (akin-server-side, interstice), not skill or plugin files. The session notes document work exclusively on five repositories (Interstice, akin, AkinFrontBackModels, akin-server-side, akin-android) with no mention of skill or plugin modifications.",
+      "rule_title": "Skill or plugin change: reload the session or reinvoke"
+    },
+    {
+      "row_id": "DEP-013",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin-server-side/CLAUDE.md",
+      "line": 10,
+      "detail": "akin-server-side's CLAUDE.md line 10 and README.md lines 41-48 document the hosted deploy: Render builds from GitHub main and serves https://akin-server-side.onrender.com. Running `git fetch origin` then `git status -sb` and `git log --oneline origin/main..HEAD` in /Users/scottlydon/Developer/akin-server-side showed `## main...origin/main [ahead 1]` with unpushed commit `b501bb4 Stop logging stored password digests` (local HEAD b501bb4b87ab..., origin/main 9af76379ae95...). That commit was never git-pushed to the deploy branch, so no build could have run for it and it cannot be live. `curl -s --max-time 10 https://akin-server-side.onrender.com/` returned `HTTP 200` / `welcome to the api!`, proving only that whatever commit IS currently deployed is up, not that this newest local commit (a password-digest-logging removal, i.e. security-relevant) shipped. Per DEP-013 this is a violation: step (a) git push never happened for this commit, so steps (b) watch the build log and (c) curl-verify-the-new-code could not and did not happen either. This is a live git/host-state finding on the deployed system itself, not a reconstruction from the session notes (DEP-013's SUBJECT is the deployed system, not the transcript, so I audited the repo/host directly rather than deferring to GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md). Also checked: /Users/scottlydon/Developer/interstice/lib/install.js and bin/interstice.js (grep -niE 'render|vercel|firebase|deploy' returned no hits) are a local CLI/LaunchAgent tool with no hosted-deploy surface, and akin-server-side's Dockerfile/scripts/Sources/App/Configuration are the build/local-dev artifacts, not the host config itself (no render.yaml present) so DEP-013 applies only via CLAUDE.md/README's documented Render target, where the finding above holds.",
+      "rule_title": "Hosted deploy: push, watch the build log, curl the deployed URL"
+    },
+    {
+      "row_id": "DEP-014",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 68,
+      "detail": "Session notes state \"Both repositories are clean and pushed\" but contain no evidence that the deployed commit hash was verified to match HEAD within 5 minutes of the push to main (the deploy branch) that occurred on 2026-08-21 at 15:49:29 UTC (commit 9af7637). Git evidence confirms this push reached origin/main; DEP-014 verification is absent from the written record.",
+      "rule_title": "Verify the live commit hash matches HEAD within five minutes of every push"
+    },
+    {
+      "row_id": "DEP-015",
+      "status": "not_applicable",
+      "detail": "The rule applies to \"every server-side error investigation\" \u2014 situations where a deployed server encounters an error requiring debugging. The session record (GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md) documents 27 defects fixed through testing and code review, with 2 test suite failures subsequently corrected, but no deployed-service error that required investigation. Test failures are distinct from server-side runtime errors requiring debugging.",
+      "rule_title": "Check deploy-branch lag before debugging a server-side error"
+    },
+    {
+      "row_id": "DEP-016",
+      "status": "not_applicable",
+      "detail": "Rule DEP-016 (never claim a UI fix is live without deployed-app observation) has its subject in \"the agent's own behavior,\" so per the task instructions I audited it against the only written account of the session, /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md (356 lines, read in full via cat/sed). I grepped it for -iE \"UI|deployed|live|screenshot|localhost|dev server|frontend|social\" and read every hit in context: the loop's content is entirely backend/CLI (Swift/Kotlin server suites, test-pass counts, recurring-goals sheet auditing, cross-document consistency). The only UI-adjacent note is RG.18 (line ~243), which states the Interstice panel is hand-written HTML and that no React/Next.js UI target exists in this loop's five repos, not a claim that a UI fix was observed live. I additionally checked the target files: akin-server-side is a server-only Vapor app (README.md line 43, CLAUDE.md lines 13-37 describe Docker/Render deploy of the API, no frontend), and interstice/bin/interstice.js line 28 only references a \"dashboard (log UI)\" subcommand with no claim in the notes that any fix to it was verified against a deployed URL. Because no UI-fix-claimed-live assertion exists anywhere in the session record or targets, this rule's subject matter (a specific class of claim) never arose, so there is nothing to find it violated against.",
+      "rule_title": "Never claim a UI fix is live without observing it on the deployed app"
+    },
+    {
+      "row_id": "DEP-017",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin-server-side/README.md",
+      "line": 58,
+      "detail": "The old Hostinger VPS service at 5.183.11.8 is documented as \"retired\" in the README's \"Historical note\" section, but it is still responding with HTTP 200. The rule requires superseded services to be both suspended (offline) and noted in the README to prevent users from mistaking stale links for the live product. This service violates DEP-017 because it is not actually suspended, only documented as historical. A user could still access the old service and become confused about which deployment is the canonical one.",
+      "rule_title": "One canonical user-facing URL; superseded services are suspended and noted"
+    },
+    {
+      "row_id": "DEP-018",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin-server-side/CLAUDE.md",
+      "line": 18,
+      "detail": "Render deployment section documents operational procedures but omits how the dual-push remote (GitHub plus GitLab) and Render deploy hook were wired at repo creation. Verified via git remote -v (only GitHub present) and absence of render.yaml. Interstice repo exhibits identical dual-push gap. Neither repo shows deploy hook wiring at creation; GitHub Actions workflows are present but render.yaml is missing.",
+      "rule_title": "New repos wire dual push and the deploy hook at creation"
+    },
+    {
+      "row_id": "DEP-019",
+      "status": "not_applicable",
+      "detail": "The rule requires auditing backend route definitions to verify SPA catch-all registration order and JSON content-type headers. However, the primary route definition files are outside the specified audit targets: akin-server-side/Sources/App/Controllers/ApiController.swift (where routes are actually defined) and interstice/lib/server.js (where the server and routes are created). The targets include only configuration and CLI files that register collections of routes from external files, not the routes themselves. Cannot verify rule compliance without access to the actual route implementation files.",
+      "rule_title": "SPA catch-all is registered after every API route, with a content-type smoke test"
+    }
+  ]
+}

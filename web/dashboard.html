@@ -5,11 +5,32 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Interstice</title>
 <style>
+  /* ------------------------------------------------------------------ tokens ---
+     ONE token set, shared verbatim with web/panel.html and web/debug.html, which is the source of truth.
+     The two pages used to declare palettes of different sizes under the same names
+     (--ground was #EEF0F2 here and #F1F3F5 there, --warn #9A6A12 here and #9E5C0E
+     there), so the same word meant two colours depending on which window you were
+     looking at. There is no build step to share a file through and no route that
+     could serve one without the control token, so the block is copied byte for byte
+     instead; change it in panel.html and paste it into the other two. */
   :root {
-    --ground: #EEF0F2; --raised: #FFFFFF; --sunk: #E4E8EC;
-    --ink: #12161C; --muted: #5A6673; --faint: #8B96A3; --rule: #CFD6DD;
-    --accent: #2440E8; --accent-soft: rgba(36,64,232,.10);
-    --ok: #1B7A4B; --warn: #9A6A12; --crit: #A82B22;
+    /* surfaces */
+    --ground: #F1F3F5; --raised: #FFFFFF; --sunk: #E4E8EC;
+    /* ink */
+    --ink: #12161C; --muted: #5A6673; --faint: #5E6977;
+    /* --rule is a divider, drawn to be barely there: 1.32:1 on the ground. That is under the
+       3:1 WCAG 1.4.11 bar for an interface component, so it cannot be the only boundary of a
+       button or a field. Interactive edges get --edge instead, measured at 3.2:1 or better
+       against every surface in both themes. */
+    --rule: #CFD6DD; --edge: #6D8298;
+    /* accent. --on-accent is the label that sits on a filled accent button; #fff
+       measured 2.71:1 on the dark accent, which is why it is a token and not a literal. */
+    --accent: #2440E8; --accent-soft: rgba(36,64,232,.10); --on-accent: #FFFFFF;
+    /* status */
+    --ok: #1B7A4B; --warn: #96580D; --crit: #A82B22;
+    /* the loading shimmer */
+    --shim-a: rgba(0,0,0,.04); --shim-b: rgba(0,0,0,.09);
+    /* type, so a font stack is named once rather than retyped at every rule */
     --display: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", sans-serif;
     --body: Charter, "Iowan Old Style", Georgia, serif;
     --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
@@ -17,9 +38,11 @@
   @media (prefers-color-scheme: dark) {
     :root {
       --ground: #0E1116; --raised: #161A21; --sunk: #11151B;
-      --ink: #E4E8EE; --muted: #939EAC; --faint: #6C7784; --rule: #262D37;
-      --accent: #8296FF; --accent-soft: rgba(130,150,255,.13);
-      --ok: #4FBF8B; --warn: #D6A44A; --crit: #E0736A;
+      --ink: #E4E8EE; --muted: #939EAC; --faint: #7B8693;
+      --rule: #262D37; --edge: #5A6B82;
+      --accent: #8296FF; --accent-soft: rgba(130,150,255,.13); --on-accent: #0E1116;
+      --ok: #4FBF8B; --warn: #D9A05B; --crit: #E0736A;
+      --shim-a: rgba(255,255,255,.04); --shim-b: rgba(255,255,255,.09);
     }
   }
   * { box-sizing: border-box; }
@@ -54,12 +77,12 @@
   button {
     font: 600 .68rem/1 var(--display); text-transform: uppercase; letter-spacing: .1em;
     padding: 8px 13px; border-radius: 3px; cursor: pointer;
-    background: transparent; color: var(--ink); border: 1px solid var(--rule);
+    background: transparent; color: var(--ink); border: 1px solid var(--edge);
   }
   button:hover { border-color: var(--accent); color: var(--accent); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   button[disabled] { opacity: .4; cursor: not-allowed; }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
   /* tiles */
   .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin-top: 26px; }
@@ -91,12 +114,24 @@
   td.mono, th.mono { font-family: var(--mono); font-size: .76rem; font-variant-numeric: tabular-nums; }
   tr.synthetic td { color: var(--faint); font-style: italic; }
   .pill { font-family: var(--display); text-transform: uppercase; letter-spacing: .08em; font-size: .6rem; font-weight: 600; padding: 2px 6px; border: 1px solid currentColor; border-radius: 2px; }
+  .linkish { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; }
   .p-ok { color: var(--ok); } .p-warn { color: var(--warn); } .p-crit { color: var(--crit); } .p-mute { color: var(--faint); }
+  /* Severity is never carried by hue alone. Every threshold pill states its band in words and
+     wears a mark whose SHAPE differs per band, so the reading survives a grayscale print and
+     deuteranopia, under which --warn and --crit are close. The gap table's pills carry their
+     meaning in their own label ("stood down", "delivered", "quiet", "synthetic") rather than a
+     band word, which is the same redundancy by a different route. */
+  .pill-mark { font-family: var(--mono); margin-right: 4px; }
+  .pill-band { opacity: .85; }
+  .pill.p-crit { border-width: 2px; padding: 1px 5px; }
   tr.expandable { cursor: pointer; }
   tr.expandable:hover td { background: var(--accent-soft); }
   tr.detail td { white-space: pre-wrap; font-family: var(--mono); font-size: .72rem; color: var(--muted); background: var(--sunk); }
 
   .excluded { margin-top: 9px; font-family: var(--mono); font-size: .72rem; color: var(--faint); }
+  /* A parse failure is not a footnote: it means a figure above is wrong, so it is coloured
+     like the other things that are wrong rather than like the synthetic-gap note. */
+  .excluded.crit { color: var(--crit); }
   .empty { border: 1px dashed var(--rule); padding: 30px; text-align: center; color: var(--muted); }
   .empty b { color: var(--ink); font-weight: 600; }
 
@@ -123,11 +158,20 @@
 
   <div class="live">
     <span class="dot" id="dot"></span>
-    <span class="live-text" id="live">reading daemon status…</span>
+    <span class="live-text" id="live"><span class="spinner"></span> reading daemon status</span>
     <span class="live-actions">
       <button id="advance" type="button" disabled>Next rung</button>
-      <button id="standdown" type="button" disabled>Stand down</button>
+      <button id="standdown" type="button" disabled>Stop routing this gap</button>
       <button id="standdownday" type="button">Off for today</button>
+      <!--
+        This sets stoodDownForDay for the rest of the calendar day (lib/engine.js), and
+        it was one click with nothing in the UI or the API that could put it back before
+        midnight. Now it asks first, and Resume today clears it through
+        POST /api/standdown/clear.
+      -->
+      <button id="standdownday-yes" type="button" class="primary" hidden>Yes, stop until tomorrow</button>
+      <button id="standdownday-no" type="button" hidden>Keep going</button>
+      <button id="resumeday" type="button" hidden>Resume today</button>
     </span>
   </div>
 
@@ -139,9 +183,15 @@
     <div class="tile"><span class="v skeleton">000</span><span class="k">False positives</span></div>
   </div>
   <p class="excluded" id="excluded" hidden></p>
+  <!-- A line of logs/gaps.jsonl that will not parse is a gap that is missing from every
+       figure above. It used to be skipped in silence, which made a truncated log
+       indistinguishable from a quiet day. Said out loud here, with the line numbers, so
+       the file can be looked at. -->
+  <p class="excluded crit" id="malformed" hidden></p>
 
   <section id="rungs-sec">
     <div class="sec-head"><h2>Where it sent you</h2><span class="note" id="rung-note"></span></div>
+    <p class="note" id="rung-def">A rung is one activity Interstice can send you to: cards, book, queue, to-do.</p>
     <div class="bars" id="rungs"></div>
   </section>
 
@@ -160,7 +210,7 @@
 
   <footer>
     <span>Local only. Reads timestamps and structure from agent transcripts, never message content.</span>
-    <span><a href="/debug">Debug console</a> · <a href="/api/stats">Raw stats</a></span>
+    <span><a href="/debug">Debug console</a> · <button type="button" id="raw-stats" class="linkish">Raw stats</button></span>
   </footer>
 </div>
 
@@ -171,7 +221,39 @@ const fmtSec = (s) => (s == null ? '·' : s < 60 ? s + 's' : Math.floor(s / 60) 
 const pct = (x) => (x * 100).toFixed(1) + '%';
 const clock = (ts) => new Date(ts).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-let expanded = null;
+// The severity bands, said in three channels at once: a word, a shape, and a colour. The
+// colour is the one a deuteranope cannot use, so it is never the only one present.
+const BAND_WORD = { 'p-ok': 'ok', 'p-warn': 'warn', 'p-crit': 'critical', 'p-mute': 'no data' };
+const BAND_MARK = { 'p-ok': '\u25cf', 'p-warn': '\u25b2', 'p-crit': '\u25a0', 'p-mute': '\u2013' };
+// A plain <a href="/api/stats"> carried no control token, so the link always landed on a 401.
+// Sub-resource and navigation requests do not go through the fetch wrapper the daemon injects,
+// so the JSON is fetched here and handed over as an object URL.
+document.addEventListener('click', async (e) => {
+  if (e.target.id !== 'raw-stats') return;
+  try {
+    const r = await fetch('/api/stats');
+    const url = URL.createObjectURL(new Blob([JSON.stringify(await r.json(), null, 2)],
+      { type: 'application/json' }));
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  } catch { /* the daemon is restarting; the page's own figures still stand */ }
+});
+
+function pillHtml(cls, value) {
+  const word = BAND_WORD[cls] || '';
+  const mark = BAND_MARK[cls] || '';
+  return `<span class="pill ${cls}"><span class="pill-mark" aria-hidden="true">${mark}</span>`
+    + `${esc(value)}${word ? ` \u00b7 <span class="pill-band">${word}</span>` : ''}</span>`;
+}
+
+// The arming threshold, read from the daemon rather than retyped here, so the dashboard
+// cannot claim 25s while the config says something else.
+let armSec = null;
+
+// Which gap is open is view state a person would expect to survive a refresh and to
+// travel in a link, so it is read from and written to the query string rather than held
+// only here. `history.replaceState`, because expanding a row is not a navigation.
+let expanded = new URLSearchParams(location.search).get('gap');
 
 async function get(p) { const r = await fetch(p); if (!r.ok) throw new Error(p + ' -> ' + r.status); return r.json(); }
 async function post(p, body) {
@@ -185,7 +267,8 @@ function renderLive(h) {
   dot.className = 'dot ' + (h.detectionSilent ? 'bad' : hasGap ? 'gap' : 'on');
   const c = h.counters;
   if (h.detectionSilent) {
-    $('live').innerHTML = '<b>No events in 24 hours.</b> Detection may be broken. Run <b>interstice doctor</b>.';
+    $('live').innerHTML = '<b>Interstice has not seen a prompt in 24 hours</b>, so it may be '
+      + 'missing your gaps. Run <b>interstice doctor</b>.';
   } else if (hasGap) {
     $('live').innerHTML =
       `<b>Gap open</b> · ${esc(h.gap.surface)} · ${fmtSec(h.gap.elapsed)} elapsed · rung ` +
@@ -197,6 +280,22 @@ function renderLive(h) {
   }
   $('advance').disabled = !hasGap;
   $('standdown').disabled = !hasGap;
+  // The way back out of a day-long stand down, on screen exactly while there is one.
+  const off = Boolean(h.stoodDownForDay);
+  $('resumeday').hidden = !off;
+  // standdownAsk(false) un-hides "Off for today", so it runs first: while the day is
+  // already stood down, the only control on offer is the one that takes it back.
+  if (off) { standdownAsk(false); $('standdownday').hidden = true; }
+  else if (!askingStandDown) $('standdownday').hidden = false;
+}
+
+let askingStandDown = false;
+function standdownAsk(show) {
+  askingStandDown = show;
+  $('standdownday').hidden = show;
+  $('standdownday-yes').hidden = !show;
+  $('standdownday-no').hidden = !show;
+  if (show) $('standdownday-yes').focus();
 }
 
 function renderTiles(s) {
@@ -208,7 +307,14 @@ function renderTiles(s) {
     ['Minutes reclaimed', s.totals.minutesReclaimed, ''],
     ['Median turn', fmtSec(s.duration.medianSec), ''],
     ['False positives', s.totals.delivered ? pct(fp) : '·', fpClass],
-  ].map(([k, v, cls]) => `<div class="tile"><span class="v ${cls}">${esc(v)}</span><span class="k">${esc(k)}</span></div>`).join('');
+    // Same rule as the pills: the tile's colour is a second reading of the band, never the
+    // only one. Only the tiles that carry a severity get the word; "Gaps" is accent-coloured
+    // because it is the headline number, not because anything is wrong.
+  ].map(([k, v, cls]) => {
+    const word = BAND_WORD['p-' + cls];
+    return `<div class="tile"><span class="v ${cls}">${esc(v)}</span>`
+      + `<span class="k">${esc(k)}${word ? ` \u00b7 ${word}` : ''}</span></div>`;
+  }).join('');
 
   // Say it out loud when the tiles read zero because everything logged was
   // synthetic. Numbers that disagree with the table below them, without a stated
@@ -222,6 +328,22 @@ function renderTiles(s) {
       (s.totals.gaps === 0 ? ', which is why they read zero while the table below has rows' : '');
   } else {
     ex.hidden = true;
+  }
+
+  // A gap that did not parse is a gap that is not in any number on this page. Naming the count
+  // and the first few line numbers is the difference between a figure that is wrong and a figure
+  // that is wrong and says so.
+  const bad = $('malformed');
+  const rows = s.malformed ?? [];
+  if (rows.length) {
+    bad.hidden = false;
+    const where = rows.slice(0, 5).map((m) => m.line).join(', ');
+    bad.textContent =
+      `${rows.length} line${rows.length === 1 ? '' : 's'} of logs/gaps.jsonl could not be parsed ` +
+      `and ${rows.length === 1 ? 'is' : 'are'} missing from every figure above ` +
+      `(line${rows.length === 1 ? '' : 's'} ${where}${rows.length > 5 ? ', and more' : ''}: ${rows[0].error})`;
+  } else {
+    bad.hidden = true;
   }
 }
 
@@ -251,14 +373,14 @@ function renderVerdict(s) {
     ['Stand-down rate', pct(sd),
       'How often you told it to go away. Rising means the ladder is wrong, not the timing.',
       sd < 0.1 ? 'p-ok' : sd < 0.3 ? 'p-warn' : 'p-crit'],
-    ['Gaps below threshold', s.duration.belowArm,
+    [armSec ? `Gaps shorter than ${armSec}s` : 'Gaps too short to route', s.duration.belowArm,
       'Turns too short to route. If this is most of them, the premise does not hold for you.',
       s.duration.belowArm / Math.max(1, s.totals.gaps) < 0.5 ? 'p-ok' : 'p-warn'],
   ];
   $('verdict').innerHTML =
     '<div class="tablewrap"><table><tbody>' +
     rows.map(([k, v, why, cls]) =>
-      `<tr><td><b>${esc(k)}</b></td><td class="mono"><span class="pill ${cls}">${esc(v)}</span></td><td style="white-space:normal;color:var(--muted)">${esc(why)}</td></tr>`
+      `<tr><td><b>${esc(k)}</b></td><td class="mono">${pillHtml(cls, v)}</td><td style="white-space:normal;color:var(--muted)">${esc(why)}</td></tr>`
     ).join('') +
     '</tbody></table></div>';
 }
@@ -307,6 +429,9 @@ function renderGaps(gaps, events) {
   for (const tr of document.querySelectorAll('tr.expandable')) {
     tr.addEventListener('click', () => {
       expanded = expanded === tr.dataset.id ? null : tr.dataset.id;
+      const u = new URL(location.href);
+      if (expanded) u.searchParams.set('gap', expanded); else u.searchParams.delete('gap');
+      history.replaceState(null, '', u);
       refresh();
     });
   }
@@ -314,7 +439,10 @@ function renderGaps(gaps, events) {
 
 async function refresh() {
   try {
-    const [h, s, g] = await Promise.all([get('/api/health'), get('/api/stats'), get('/api/gaps?limit=200')]);
+    const [h, s, g, cfg] = await Promise.all([
+      get('/api/health'), get('/api/stats'), get('/api/gaps?limit=200'), get('/api/config'),
+    ]);
+    armSec = Number(cfg && cfg.arm) || null;
     renderLive(h);
     renderTiles(s);
     renderRungs(s);
@@ -336,7 +464,14 @@ async function refresh() {
 
 $('advance').addEventListener('click', async () => { await post('/api/advance'); refresh(); });
 $('standdown').addEventListener('click', async () => { await post('/api/standdown', {}); refresh(); });
-$('standdownday').addEventListener('click', async () => { await post('/api/standdown', { day: true }); refresh(); });
+$('standdownday').addEventListener('click', () => standdownAsk(true));
+$('standdownday-no').addEventListener('click', () => standdownAsk(false));
+$('standdownday-yes').addEventListener('click', async () => {
+  await post('/api/standdown', { day: true });
+  standdownAsk(false);
+  refresh();
+});
+$('resumeday').addEventListener('click', async () => { await post('/api/standdown/clear'); refresh(); });
 
 refresh();
 setInterval(refresh, 3000);

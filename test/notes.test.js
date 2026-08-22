@@ -69,8 +69,9 @@ test('empty items are dropped rather than shown as blank rows', () => {
 });
 
 test('the item cap is honoured so one enormous note cannot fill the panel', () => {
+  const CAP = 50;
   const many = '<ul>' + Array.from({ length: 500 }, (_, i) => `<li>item ${i}</li>`).join('') + '</ul>';
-  assert.equal(parseBody(many, { maxItems: 50 }).length, 50);
+  assert.equal(parseBody(many, { maxItems: CAP }).length, CAP);
 });
 
 test('a note titled like a list outranks a note that merely contains bullets', () => {

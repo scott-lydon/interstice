@@ -1,0 +1,82 @@
+{
+  "sheet": "Design__Visual_Design",
+  "targets": [
+    "PHASE 8 design output",
+    "interstice panel"
+  ],
+  "row_count": 10,
+  "entry_count": 10,
+  "run_dir": "/Users/scottlydon/.claude/projects/-Users-scottlydon/5076d517-09dd-4e8d-8aab-1d115d31b9c3/subagents/workflows/wf_4cd72def-439",
+  "counts": {
+    "pass": 2,
+    "finding": 2,
+    "not_applicable": 6,
+    "unreturned": 0
+  },
+  "entries": [
+    {
+      "row_id": "VD-001",
+      "status": "not_applicable",
+      "detail": "The rule addresses Mermaid architecture diagrams and tech-stack cards with technology logos sourced from Simple Icons CDN. The targets contain Swift source code (akin/Flows/Social), design specification documents (REDESIGN_SPECS.md), UX feedback documentation (UX_FEEDBACK.md), and web application HTML (panel.html). None of these target types contain Mermaid diagrams or architecture documentation. The rule is inapplicable because the artifact type it governs is absent from all targets.",
+      "rule_title": "Every architecture diagram node carries a technology logo"
+    },
+    {
+      "row_id": "VD-002",
+      "status": "not_applicable",
+      "detail": "Rule targets Mermaid diagrams for crossing edges. Ran `grep -rl '```mermaid'` across all four targets (akin/akin/Flows/Social, akin/REDESIGN_SPECS.md, akin/UX_FEEDBACK.md, interstice/web/panel.html) and a separate `grep -n mermaid` on panel.html to catch an HTML-style `<pre class=\"mermaid\">` block: zero matches. None of the target files/directories contain any Mermaid diagrams at all, so there is nothing to check for edge crossings.",
+      "rule_title": "No crossing edges in any diagram"
+    },
+    {
+      "row_id": "VD-003",
+      "status": "not_applicable",
+      "detail": "VD-003 audits an architecture website with 12 specific sections (hero, topology diagram, decisions table, cost charts, etc.). The targets contain no such architecture website artifact: akin/Flows/Social is Swift source code, REDESIGN_SPECS.md and UX_FEEDBACK.md are UX design docs, and interstice/web/panel.html is a reading/todo application. The artifact class (architecture website) is absent.",
+      "rule_title": "The architecture website carries all twelve required sections in order"
+    },
+    {
+      "row_id": "VD-004",
+      "status": "not_applicable",
+      "detail": "The rule addresses \"the architecture website\" - a project documentation site with specific technical stack (Tailwind, Mermaid 10, Chart.js 4) and structured content. The targets are Swift source directories, design/UX markdown specifications, and an Interstice application UI panel. None are an architecture website as defined by the rule.",
+      "rule_title": "The architecture website is one self-contained themed file"
+    },
+    {
+      "row_id": "VD-005",
+      "status": "not_applicable",
+      "detail": "The rule addresses ARCHITECTURE.md and website/index.html artifacts which are absent from the targets. Targets provided (akin Flows/Social Swift files, REDESIGN_SPECS.md, UX_FEEDBACK.md, interstice web/panel.html) do not include the architecture documentation or architecture website structure this rule applies to.",
+      "rule_title": "The architecture website updates in the same commit as the architecture"
+    },
+    {
+      "row_id": "VD-006",
+      "status": "pass",
+      "detail": "Searched all targets for Chart.js instances using rg -n 'maintainAspectRatio', grep -n 'maintainAspectRatio', and grep -i 'canvas|new Chart|chart.js'. Targets checked: /Users/scottlydon/Developer/akin/akin/Flows/Social (Swift files), REDESIGN_SPECS.md (Markdown), UX_FEEDBACK.md (Markdown), and interstice/web/panel.html (HTML). Zero Chart.js instances with maintainAspectRatio configuration found. Rule satisfied vacuously.",
+      "rule_title": "Chart.js responsive charts need a fixed-height parent"
+    },
+    {
+      "row_id": "VD-007",
+      "status": "not_applicable",
+      "detail": "The rule applies \"After any token rename\" and audits whether old token names were left behind. No design token or palette color renames occurred in this loop's work. The targets show consistent token naming throughout (ink, ink-muted, semantic.color.ink in design specs; DesignTokens.Colors.ink/inkMuted in Swift; --ink, --muted in CSS). Git history shows only token additions, not renames. Goal loop notes make no mention of any rename.",
+      "rule_title": "A palette or token rename ships with a repo-wide grep audit"
+    },
+    {
+      "row_id": "VD-008",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin/akin/Flows/Social/QuestionnaireDetailView.swift",
+      "line": 33,
+      "detail": "Rule audited: new/reshaped UIs must use a deliberate typographic scale/palette/spacing/motion instead of framework defaults. akin already has that deliberate system: /Users/scottlydon/Developer/akin/akin/Support/DesignTokens.generated.swift defines DesignTokens.TypeScale (hero 34, heading 28, body 19, caption 15, control 17, fontName \"AvalonPlain\", static func font(_:) -> Font) plus DesignTokens.Colors and DesignTokens.Motion (fastSeconds .2, baseSeconds .3), and REDESIGN_SPECS.md explicitly specifies the four Social screens under audit (QuestionnaireBrowseVC L719, QuestionnaireDetailVC L741, SubscriptionsVC L783, ProfileSwitcherVC L800) to render text at \"type-scale.body\"/\"type-scale.heading\"/\"type-scale.caption\". But `grep -n \"\\.font(\\.\" *.swift` across /Users/scottlydon/Developer/akin/akin/Flows/Social shows every Text in the four views uses SwiftUI's built-in system Font styles instead: QuestionnaireDetailView.swift:33 `Text(detail.title).font(.title2)`, and further .font(.caption)/.headline/.title3/.caption2 at lines 38,46,47,57,64,105,121,127,131,137,144; QuestionnaireBrowseView.swift:25,58,60,66,84,85 (.subheadline/.body/.caption); SubscriptionsView.swift:22,68,71 (.subheadline/.body/.caption); ProfileSwitcherView.swift:29,65,70,71,75,82 (.caption/.body/.caption2); SocialDebugRoute.swift:206 (.caption). None of these reference DesignTokens.TypeScale or Font.custom(\"AvalonPlain\", ...) (`grep -n \"TypeScale\\|AvalonPlain\\|Font.custom\" *.swift` in that directory returns zero matches), so headings and body copy render in San Francisco at the OS's default Dynamic Type sizes rather than the app's own AvalonPlain scale the spec calls for -- a framework default where a deliberate typographic choice was intended. Colors do correctly pull from DesignTokens.Colors (inkMuted, link, accent) throughout, so this is a typography-only gap, not palette. No .animation/withAnimation/DesignTokens.Motion usage exists in these files either, so motion is simply absent (no offense to cite, since nothing on these static list/detail screens obviously called for motion). panel.html and REDESIGN_SPECS.md itself were checked and are NOT in violation: panel.html (/Users/scottlydon/Developer/interstice/web/panel.html lines 16-38) defines a fully custom, WCAG-contrast-annotated token set (Charter/Iowan body serif, Avenir Next Condensed display face, --accent/--ok/--warn/--crit, shimmer/spinner motion with prefers-reduced-motion overrides at lines 463-478) -- clearly deliberate. This audit only covers the four listed target paths; the session notes file was not consulted because this rule's subject is the target codebases, not the session/transcript.",
+      "rule_title": "The visual direction is deliberate, not a framework default"
+    },
+    {
+      "row_id": "VD-009",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin/akin/Flows/Social/QuestionnaireBrowseView.swift",
+      "line": 68,
+      "detail": "Hardcoded padding values bypass the design-token architecture. The capsule's padding `.padding(.horizontal, 8).padding(.vertical, 4)` should reference spacing tokens (e.g., `DesignTokens.Space.horizontal8` and `DesignTokens.Space.vertical4`) rather than raw pixel values, so changes to spacing scale follow a single source of truth and theme flips work correctly.",
+      "rule_title": "Design tokens have one architecture and no hardcoded values bypass it"
+    },
+    {
+      "row_id": "VD-010",
+      "status": "pass",
+      "detail": "Ran `rg -n '<iframe|<webview|WKWebView|SFSafariViewController|BrowserView'` across all four targets. Only match: /Users/scottlydon/Developer/interstice/web/panel.html:776 `frame.innerHTML = '<iframe sandbox=\"allow-same-origin\" title=\"Flashcard\"></iframe>';`. Read the surrounding code (lines 750-790): this iframe's `srcdoc` is a locally-built HTML document composed from the Anki card's own question/answer HTML and CSS (fetched via AnkiConnect and re-rendered into the panel's own layout), not Anki's own web interface, navigation, or toolbars \u2014 the code comment explicitly says it's isolated \"in its own document so the deck's stylesheet cannot reach the panel\" and uses no `allow-scripts`. This is a sandboxing/style-isolation technique for the product's own re-rendered content, not an embedding of a third-party service's UI, so it does not match the rule's offense pattern (which targets things like the Kindle-web-reader-in-a-nested-view case cited in the rule's source). Checked REDESIGN_SPECS.md and UX_FEEDBACK.md for iframe/webview/kindle/nested/embed mentions: only hit was REDESIGN_SPECS.md:584, an unrelated SwiftUI view (`NearbyEmptyStateView`) being \"embedded inline\" in another native SwiftUI view, not third-party content. Checked akin/akin/Flows/Social (13 Swift files, all native SwiftUI/view-model code): zero matches for iframe/webview/WKWebView/SFSafariViewController. No offenses found in any of the four targets.",
+      "rule_title": "Third-party content is re-rendered, not embedded in a nested webview"
+    }
+  ]
+}

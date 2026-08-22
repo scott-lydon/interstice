@@ -3,31 +3,71 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Matches the two body backgrounds below, so the browser chrome around the panel is the
+     same colour as the panel rather than a strip of white above a dark page. -->
+<meta name="theme-color" content="#F1F3F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1116" media="(prefers-color-scheme: dark)">
 <title>Interstice</title>
 <style>
+  /* ------------------------------------------------------------------ tokens ---
+     ONE token set, shared verbatim with web/dashboard.html and web/debug.html. This
+     block is the source of truth: the two pages used to declare palettes of different
+     sizes under the same names (--ground was #F1F3F5 here and #EEF0F2 there, --warn
+     #9E5C0E here and #9A6A12 there), so the same word meant two colours depending on
+     which window you were looking at. There is no build step to share a file through
+     and no route that could serve one without the control token, so the block is
+     copied byte for byte instead; change it here and paste it into the other two. */
   :root {
-    --ground: #F1F3F5; --ink: #12161C; --muted: #5A6673; --rule: #CFD6DD;
-    --accent: #2440E8; --raised: #FFFFFF; --ok: #1B7A4B; --warn: #A8620F;
+    /* surfaces */
+    --ground: #F1F3F5; --raised: #FFFFFF; --sunk: #E4E8EC;
+    /* ink */
+    --ink: #12161C; --muted: #5A6673; --faint: #5E6977;
+    /* --rule is a divider, drawn to be barely there: 1.32:1 on the ground. That is under the
+       3:1 WCAG 1.4.11 bar for an interface component, so it cannot be the only boundary of a
+       button or a field. Interactive edges get --edge instead, measured at 3.2:1 or better
+       against every surface in both themes. */
+    --rule: #CFD6DD; --edge: #6D8298;
+    /* accent. --on-accent is the label that sits on a filled accent button; #fff
+       measured 2.71:1 on the dark accent, which is why it is a token and not a literal. */
+    /* --on-accent-muted is the sub-label under a filled accent button's title. It used to be
+       --on-accent at .7 opacity, which blends toward the fill and lands under 4.5:1. A flat
+       colour instead, so the ratio is a property of two named values and can be checked. */
+    --accent: #2440E8; --accent-soft: rgba(36,64,232,.10); --on-accent: #FFFFFF; --on-accent-muted: #E8ECFF;
+    /* status */
+    --ok: #1B7A4B; --warn: #96580D; --crit: #A82B22;
+    /* the loading shimmer */
     --shim-a: rgba(0,0,0,.04); --shim-b: rgba(0,0,0,.09);
+    /* type, so a font stack is named once rather than retyped at every rule */
+    --display: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", sans-serif;
+    --body: Charter, "Iowan Old Style", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --ground: #0E1116; --ink: #E4E8EE; --muted: #939EAC; --rule: #262D37;
-      --accent: #8296FF; --raised: #161A21; --ok: #4FBF8B; --warn: #D9A05B;
+      --ground: #0E1116; --raised: #161A21; --sunk: #11151B;
+      --ink: #E4E8EE; --muted: #939EAC; --faint: #7B8693;
+      --rule: #262D37; --edge: #5A6B82;
+      --accent: #8296FF; --accent-soft: rgba(130,150,255,.13); --on-accent: #0E1116; --on-accent-muted: #232A33;
+      --ok: #4FBF8B; --warn: #D9A05B; --crit: #E0736A;
       --shim-a: rgba(255,255,255,.04); --shim-b: rgba(255,255,255,.09);
     }
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
+  /* color-scheme tells the browser to render its OWN widgets, scrollbars, form controls and
+     the like, in the matching scheme. Without it a dark panel gets light native scrollbars.
+     tap-highlight is set deliberately rather than left at the default grey flash, which on a
+     panel this size reads as a rendering fault rather than as feedback. */
+  html { color-scheme: light dark; }
+  html, body { height: 100%; margin: 0; -webkit-tap-highlight-color: transparent; }
   body {
     background: var(--ground); color: var(--ink);
-    font: 15px/1.5 Charter, "Iowan Old Style", Georgia, serif;
+    font: 15px/1.5 var(--body);
     display: flex; flex-direction: column; overflow: hidden;
     -webkit-font-smoothing: antialiased;
   }
 
-  /* The header never scrolls away: whatever the view is doing, the way to the next
-     rung stays one click from wherever you are. */
+  /* The header is sticky on every rung but reading, where it is displaced behind the menu with the
+  rest of the chrome, so the next rung is one press further. */
   header {
     position: sticky; top: 0; z-index: 5; flex: 0 0 auto;
     display: flex; align-items: center; gap: 8px;
@@ -35,15 +75,31 @@
     border-bottom: 1px solid var(--rule);
   }
   .brand {
-    font: 600 11px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    font: 600 11px/1 var(--display);
     text-transform: uppercase; letter-spacing: .16em; color: var(--muted);
   }
+  /* The persistent "why is this window here" line. It sits under the header rather than
+     inside it because it is a sentence, not a control, and the header row is already full
+     at the panel's 640px. `flex: 0 0 auto` keeps it out of <main>'s scroll. */
+  #why-open {
+    flex: 0 0 auto; margin: 0; padding: 7px 14px;
+    background: var(--ground); border-bottom: 1px solid var(--rule);
+    font-size: 11.5px; line-height: 1.4; color: var(--muted);
+  }
+  #why-open .elapsed { font-family: var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
   .rungs { display: flex; gap: 2px; margin-left: auto; }
   .rungs button {
-    font: 600 10px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    font: 600 10px/1 var(--display);
     text-transform: uppercase; letter-spacing: .1em;
     background: none; border: 1px solid transparent; color: var(--muted);
     padding: 5px 7px; border-radius: 3px; cursor: pointer;
+  }
+  /* A pointer got no feedback that these were live until it clicked one. Colour and a hairline
+     rather than a fill, so hovering does not look like the selected state right beside it.
+     Guarded on the pointer being one that can hover: on a touch screen :hover sticks after a
+     tap and leaves a button looking permanently half pressed. */
+  @media (hover: hover) {
+    .rungs button:hover { color: var(--fg); border-color: var(--rule); }
   }
   .rungs button[aria-current="true"] { color: var(--ink); border-color: var(--rule); background: var(--raised); }
   .rungs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -53,18 +109,25 @@
      answer. Bounded and scrollable, because a warning you cannot scroll past is a
      warning that has taken the window. */
   #companions {
-    flex: 0 0 auto; display: none; padding: 10px 14px;
+    flex: 0 0 auto; display: none; padding: 0 14px 10px;
     background: var(--raised); border-bottom: 1px solid var(--rule);
     border-left: 2px solid var(--warn);
     max-height: 40vh; overflow-y: auto; overscroll-behavior: contain;
   }
   #companions.show { display: block; }
-  #companions .top { display: flex; align-items: baseline; gap: 8px; }
+  /* Recheck and Dismiss sit above a list that grows with every error a companion
+     reports, so at 40vh they scrolled out of reach and the banner could not be shut.
+     Pinned, with the aside's own opaque surface, so the way out is one click away at
+     any scroll position. Same shape as the star calendar's header. */
+  #companions .top {
+    display: flex; align-items: baseline; gap: 8px;
+    position: sticky; top: 0; z-index: 1; background: var(--raised); padding: 10px 0 4px;
+  }
   #companions .top .label { color: var(--warn); }
   #companions .top button {
-    font: 600 9px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    font: 600 9px/1 var(--display);
     text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
-    background: none; border: 1px solid var(--rule); border-radius: 3px;
+    background: none; border: 1px solid var(--edge); border-radius: 3px;
     padding: 3px 6px; cursor: pointer;
   }
   #companions .top button:hover { color: var(--ink); border-color: var(--accent); }
@@ -77,9 +140,9 @@
   /* The fix, next to the thing it fixes. A banner that can only tell you what is
      missing leaves the work exactly where it was. */
   #companions button.do {
-    font: 600 10px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    font: 600 10px/1 var(--display);
     text-transform: uppercase; letter-spacing: .08em; white-space: nowrap;
-    background: var(--accent); color: #fff; border: 1px solid var(--accent);
+    background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent);
     border-radius: 3px; padding: 4px 8px; cursor: pointer;
   }
   #companions button.do[disabled] { opacity: .5; cursor: default; }
@@ -88,33 +151,57 @@
   #companions .proof { display: flex; align-items: center; gap: 7px; margin-top: 3px; }
   #companions .proof img {
     height: 18px; width: auto; border: 1px solid var(--rule); border-radius: 2px;
-    background: #000; image-rendering: -webkit-optimize-contrast;
+    background: var(--ink); image-rendering: -webkit-optimize-contrast;
   }
 
   main { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 14px; }
   .view { display: none; flex-direction: column; gap: 12px; height: 100%; }
   .view.active { display: flex; }
 
-  /* Immersive reading (Phase 2): while reading, the page fills the panel and every other control
-     is behind one menu affordance. Scoped to body.immersive, which setView sets only for the
+  /* Immersive reading: while reading, the page fills the panel and every control except the page-turn pager and whatever the reader note is offering is behind
+  one menu affordance. Scoped to body.immersive, which setView sets only for the
      reading view, so the other rungs are untouched. */
   body.immersive header,
+  body.immersive #why-open,
   body.immersive footer { display: none; }
   body.immersive main { padding: 0; overflow: hidden; }
+  /* The setup check is a sibling of <main>, so the rule below that displaces the reading view's
+     own chrome never reached it: while reading it sat above the page and took up to 40vh of it.
+     It is displaced like everything else, and it is still there in full inside the open menu. */
+  body.immersive #companions { display: none; }
+  body.immersive .reader-menu-overlay.open #companions.show { display: block; }
+  /* The footer is displaced into the menu like everything else, but `body.immersive footer` hides
+     it unconditionally, so it was not moved behind the menu, it was lost: the status line and the
+     "Different rung" button computed to none even inside the open overlay. Every other displaced
+     element is reachable there, and the contract above says all of them are. */
+  body.immersive .reader-menu-overlay.open #footer-bar { display: flex; }
+  /* Same for the reader note. Floated over the page while the menu is shut, it is displaced into
+     the menu when the menu opens, and the floating rule does not reach it there. */
+  body.immersive .reader-menu-overlay.open #reader-note { display: block; }
   body.immersive #view-reading { gap: 0; height: 100%; }
-  /* Everything in the reading view except the page and the menu is displaced behind the menu. */
-  body.immersive #view-reading > :not(#reader):not(.reader-menu):not(.reader-menu-overlay) { display: none; }
+  /* Everything in the reading view except the page and the menu is displaced behind the menu.
+     The floating affordances are named here rather than left to their own rules: this selector
+     carries three ids and eight classes (a `:not()` takes its argument's specificity), so it outranks
+     every `body.immersive .thing { display: … }`
+     below it, and the pager, the calendar, the latency chip, the arrival note and the forfeit
+     banner all computed to `display: none` even with their own state class applied. */
+  body.immersive #view-reading > :not(#reader):not(.reader-menu):not(.reader-menu-overlay):not(.reader-pager-overlay):not(.reader-hint):not(#reader-note):not(.star-cal-overlay):not(.latency-row):not(.forfeit-note) { display: none; }
   body.immersive #reader { border-radius: 0; border: 0; }
-  /* The single menu affordance: one always-visible button, top-right. */
+  /* The single menu affordance: one button, top-right, present whenever the menu it opens is not. */
   .reader-menu { display: none; }
   body.immersive .reader-menu {
     display: grid; place-items: center; position: absolute; top: 8px; right: 8px; z-index: 30;
-    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--rule);
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--edge);
     background: color-mix(in srgb, var(--ground) 65%, transparent); color: var(--ink);
     font-size: 17px; cursor: pointer; backdrop-filter: blur(4px);
   }
   .reader-menu:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  /* An auto-hiding pager overlay so page-turn works without opening the menu (2C.3). */
+  /* The trigger stands down while the menu it opened is showing. At z-index 30 it sat over the
+     overlay's own Close button at 29 and swallowed the top-right corner of it, including the
+     glyph itself, and it is bound to open with no toggle, so clicking the visible dismiss mark
+     did nothing. It has nothing to offer while the thing it opens is already open. */
+  body.immersive #view-reading:has(.reader-menu-overlay.open) .reader-menu { display: none; }
+  /* An auto-hiding pager overlay so page-turn works without opening the menu. */
   .reader-pager-overlay { display: none; }
   body.immersive .reader-pager-overlay {
     display: flex; gap: 6px; position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
@@ -125,31 +212,102 @@
   body.immersive #reader:hover ~ .reader-pager-overlay,
   body.immersive .reader-pager-overlay:hover,
   body.immersive .reader-pager-overlay:focus-within { opacity: 1; }
+  /* Where you are, in the pager itself. The page label lives in #reader-page, which the menu
+     takes with it when it opens, so while reading there was nothing on screen saying the page. */
+  .reader-pager-overlay .now { align-self: center; padding: 0 4px; color: var(--ink); white-space: nowrap; }
+  /* The arrows are the page-turn that works from anywhere in the reading rung except under the star calendar, and nothing said so. Quiet, persistent, and
+     out of the page's box, exactly as the design artifact carries it. */
+  .reader-hint { display: none; }
+  body.immersive .reader-hint {
+    display: block; position: absolute; left: 10px; bottom: 62px; z-index: 24;
+    font: 600 9px/1.3 var(--display);
+    text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+    /* Above the pager's band rather than beside it. At bottom:44 the two shared a row, and the
+       tail of the sentence was printed under the buttons. Bounding the hint's width instead does
+       not work: the pager is centred on the reader, so its left edge moves with the panel, and at
+       480 wide it reaches further left than any fixed bound would allow for. Two things whose
+       widths both vary cannot be kept apart by choosing a number for one of them. */
+    max-width: calc(100% - 20px);
+  }
+  /* The per-page message, which is the only thing that ever says why the picture replaced
+     the text. It was inside the displacement rule above, so at the exact moment it applied
+     it could not be seen: the page swapped itself for a photograph and said nothing. It
+     floats like the other immersive affordances rather than sitting in the flow, so the
+     page keeps its >=90% of both viewport dimensions. Scoped to the direct child so that
+     when the menu takes it, it lays out normally inside the menu. */
+  body.immersive #view-reading > #reader-note {
+    position: absolute; left: 8px; right: 8px; bottom: 76px; z-index: 26;
+    display: flex; gap: 8px; align-items: center; justify-content: center;
+    max-height: min(30vh, 220px); overflow-y: auto; overscroll-behavior: contain;
+    margin: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--rule);
+    background: color-mix(in srgb, var(--ground) 88%, transparent); backdrop-filter: blur(4px);
+  }
+  body.immersive #view-reading > #reader-note[hidden] { display: none; }
+  /* An overlay is the thing you are looking at: the affordances for the page underneath step
+     aside rather than float on top of it. */
+  body.immersive #view-reading:has(.reader-menu-overlay.open) .reader-pager-overlay,
+  body.immersive #view-reading:has(.reader-menu-overlay.open) .reader-hint,
+  body.immersive #view-reading:has(.star-cal-overlay.open) .reader-pager-overlay,
+  body.immersive #view-reading:has(.star-cal-overlay.open) .reader-hint,
+  body.immersive #view-reading:has(.reader-menu-overlay.open) > #reader-note,
+  body.immersive #view-reading:has(.star-cal-overlay.open) > #reader-note { display: none; }
   /* The menu overlay: opened by the button, holds everything displaced. */
   .reader-menu-overlay { display: none; }
   body.immersive .reader-menu-overlay.open {
     display: flex; flex-direction: column; gap: 12px; position: absolute; inset: 0; z-index: 29;
-    padding: 16px; overflow-y: auto; background: color-mix(in srgb, var(--ground) 92%, transparent);
+    /* env() adds the device's own reserved edges to the padding. This overlay is inset: 0, so it
+       covers the whole panel including whatever the hardware keeps for a notch or a home
+       indicator, and its own padding is the only thing holding content clear of them. The values
+       are zero everywhere those insets do not exist, so this costs nothing on a desktop. */
+    padding: env(safe-area-inset-top) calc(16px + env(safe-area-inset-right))
+             calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    overflow-y: auto; overscroll-behavior: contain;
+    background: color-mix(in srgb, var(--ground) 92%, transparent);
     backdrop-filter: blur(8px);
   }
-  .reader-menu-overlay .om-close { align-self: flex-end; }
-  /* Prompt-latency indicator (Phase 5): a quiet chip, never in the page's way (position:absolute
-     so it does not change the #reader box, satisfying the >=90% contract while visible). */
+  /* This overlay holds all eight displaced controls inside a 640px panel, so it scrolls,
+     and Close was a plain first child that scrolled away with them. Its own header, pinned
+     and opaque, so the dismiss path never leaves the screen. */
+  .reader-menu-overlay .om-head {
+    position: sticky; top: 0; z-index: 1; flex: 0 0 auto;
+    display: flex; justify-content: flex-end; padding: 16px 0 8px; background: var(--ground);
+  }
+  /* Was an inline style, which no stylesheet rule can outrank: it kept #book-actions on
+     screen while immersive, overlapping the pager and costing the page 33px of the >=90%
+     contract. Inline styles are unreachable by the displacement rule, so it lives here. */
+  #book-actions { display: flex; flex-direction: column; gap: 6px; }
+  /* Prompt-latency indicator: a quiet chip, never in the page's way. The row is positioned
+     absolutely so it does not change the #reader box, which is what keeps the >=90% contract
+     while it is visible; the two children inside it are laid out normally.
+
+     A ROW rather than two absolutely-positioned boxes. They were placed at fixed left offsets,
+     8 and 108, which held for a short chip and not for a long one: "your agent: 599:59" reaches
+     144px and slid under the note, so the seconds were buried at exactly the moment somebody
+     would want them. Any fixed offset is a guess about the widest string; a row is not. */
+  .latency-row {
+    position: absolute; top: 8px; left: 8px; z-index: 25; display: flex; gap: 8px;
+    align-items: center; pointer-events: none; max-width: calc(100% - 16px);
+  }
   .latency-chip {
-    position: absolute; top: 8px; left: 8px; z-index: 25; display: none;
-    font: 600 10px/1 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .04em;
+    display: none; flex: 0 0 auto;
+    font: 600 10px/1 var(--mono); letter-spacing: .04em;
     color: var(--muted); background: color-mix(in srgb, var(--ground) 70%, transparent);
     border: 1px solid var(--rule); border-radius: 999px; padding: 5px 9px; backdrop-filter: blur(4px);
   }
   .latency-chip.show { display: inline-block; }
-  /* The arrival notification is visually and structurally distinct: filled, accented, brief. */
+  /* The arrival notification is visually and structurally distinct: filled, accented, brief. It
+     sits beside the chip, never on it: with two prompts in flight, one arriving must not hide the
+     timer still counting for the other, and an arrival cannot be its own distinct notification
+     while it covers the thing it is distinct from. It is not below it either, because the forfeit
+     banner owns the full width of the row beneath and never auto-hides. */
   .arrival-note {
-    position: absolute; top: 8px; left: 8px; z-index: 26; display: none;
-    font: 600 10px/1 "Avenir Next Condensed", sans-serif; text-transform: uppercase; letter-spacing: .1em;
+    display: none; flex: 0 1 auto; min-width: 0;
+    font: 600 10px/1 var(--display); text-transform: uppercase; letter-spacing: .1em;
     color: var(--ground); background: var(--accent); border-radius: 999px; padding: 6px 10px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .arrival-note.show { display: inline-block; }
-  /* 4.6 Legible forfeit: a bounded, dismissible banner naming the cause and the wall-clock
+  /* Legible forfeit: a bounded, dismissible banner naming the cause and the wall-clock
      time. Silent forfeiture would make the star system untrustworthy, so a lost block says so. */
   .forfeit-note {
     position: absolute; top: 44px; left: 8px; right: 8px; z-index: 27; display: none;
@@ -164,7 +322,7 @@
     float: right; margin-left: 8px; border: none; background: none; color: var(--muted);
     font-size: 14px; cursor: pointer; line-height: 1;
   }
-  /* 3.8 Star calendar: same calm system as the panel. One accent for earned days, the ground for
+  /* Star calendar: same calm system as the panel. One accent for earned days, the ground for
      empty ones, a legend, and a bounded scroll so a long month never traps the close control. */
   .star-cal-overlay { display: none; }
   body.immersive .star-cal-overlay.open, .star-cal-overlay.open {
@@ -172,9 +330,16 @@
     padding: 16px; overflow-y: auto; overscroll-behavior: contain;
     background: color-mix(in srgb, var(--ground) 94%, transparent); backdrop-filter: blur(8px);
   }
-  .star-cal-overlay header { position: sticky; top: -16px; background: var(--ground);
+  /* `body.immersive header` matches any <header>, this one included, and outranked a bare
+     `.star-cal-overlay header`: the calendar opened with its title and its close control
+     display:none. Named with the same weight so the dialog keeps a sticky header and the way
+     out stays one click away at any scroll position. */
+  body.immersive .star-cal-overlay header, .star-cal-overlay header {
+    position: sticky; top: -16px; z-index: 1; background: var(--ground);
     padding: 4px 0; display: flex; align-items: center; gap: 8px; justify-content: space-between; }
   .star-cal-overlay h3 { margin: 0; font-size: 14px; letter-spacing: .02em; }
+  /* The total, so "how am I doing this month" is read rather than counted across 31 cells. */
+  .star-cal-overlay .cal-count { font: 500 10px/1 system-ui; color: var(--muted); margin-right: auto; }
   .cal-controls { display: flex; gap: 6px; align-items: center; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
   .cal-dow { font: 600 9px/1 system-ui; text-transform: uppercase; letter-spacing: .08em;
@@ -182,7 +347,7 @@
   .cal-cell { min-height: 44px; border: 1px solid var(--rule); border-radius: 8px; padding: 3px 4px;
     background: var(--raised); display: flex; flex-direction: column; gap: 2px; }
   .cal-cell.empty { opacity: .35; }
-  .cal-cell .cal-day { font: 600 10px/1 ui-monospace, Menlo, monospace; color: var(--muted); }
+  .cal-cell .cal-day { font: 600 10px/1 var(--mono); color: var(--muted); }
   .cal-star { align-self: flex-start; border: 1px solid var(--accent); border-radius: 6px;
     background: color-mix(in srgb, var(--accent) 12%, var(--raised)); color: var(--accent);
     font-size: 11px; line-height: 1; padding: 2px 4px; cursor: pointer; }
@@ -195,12 +360,14 @@
     border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--raised)); margin-right: 4px; }
   .cal-empty-copy { color: var(--muted); font: 500 12px/1.5 system-ui; padding: 8px 0; }
 
-  h2 { font: 600 13px/1.3 Charter, Georgia, serif; margin: 0; }
+  /* balance keeps a two line heading from leaving one orphaned word on the second line,
+     which at this width happens to most book titles. */
+  h2 { font: 600 13px/1.3 Charter, Georgia, serif; margin: 0; text-wrap: balance; }
   .label {
-    font: 600 10px/1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+    font: 600 10px/1 var(--display);
     text-transform: uppercase; letter-spacing: .14em; color: var(--muted);
   }
-  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; color: var(--muted); }
+  .mono { font-family: var(--mono); font-size: 11px; color: var(--muted); }
   .why { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
 
   /* The card is a physical object on the ground: its own surface, its own edge.
@@ -209,23 +376,71 @@
     background: var(--raised); border: 1px solid var(--rule); border-radius: 4px;
     overflow: hidden; flex: 0 0 auto;
   }
-  .cardframe iframe { display: block; width: 100%; border: 0; background: #fff; }
+  .cardframe iframe { display: block; width: 100%; border: 0; background: var(--raised); }
 
+  .ease[hidden] { display: none; }
   .ease { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  button.act {
-    font: 600 11px/1.1 "Avenir Next Condensed", "Avenir Next", sans-serif;
+  button.act, a.act {
+    font: 600 11px/1.1 var(--display);
     text-transform: uppercase; letter-spacing: .08em;
     padding: 10px 6px; border-radius: 3px; cursor: pointer;
-    background: var(--raised); color: var(--ink); border: 1px solid var(--rule);
+    background: var(--raised); color: var(--ink); border: 1px solid var(--edge);
   }
-  button.act:hover { border-color: var(--accent); }
-  button.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  button.act.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  button.act small { display: block; font-size: 9px; opacity: .7; letter-spacing: .04em; margin-top: 2px; }
+  button.act:hover, a.act:hover { border-color: var(--accent); }
+  /* Off screen until focused, then placed over the header rather than displacing it, so the
+     page does not jump for people who never use it. */
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
+  .skip-link {
+    position: absolute; left: 8px; top: -40px; z-index: 100;
+    background: var(--accent); color: var(--on-accent);
+    padding: 6px 10px; border-radius: 6px; font-size: 12px; text-decoration: none;
+    transition: top .12s ease;
+  }
+  .skip-link:focus { top: 8px; }
+  button.act:focus-visible, a.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  /* Every other thing you can reach with a keyboard. Without these the focus ring existed on
+     one class of button and nowhere else, so tabbing through the panel lost the cursor the
+     moment it left that class. */
+  #companions .top button:focus-visible,
+  #companions button.do:focus-visible,
+  .forfeit-note .fn-dismiss:focus-visible,
+  .skip-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button.act.primary, a.act.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  /* No opacity here. This sub-label sits on the accent fill, and .7 blended the foreground
+     toward the background until the pair no longer cleared 4.5:1. A token that is a colour
+     rather than a transparency keeps the contrast checkable: you can read it off the two
+     values, which you cannot do once a blend is in the middle. */
+  button.act small, a.act small { display: block; font-size: 9px; color: var(--on-accent-muted); letter-spacing: .04em; margin-top: 2px; }
   button.act[disabled] { opacity: .45; cursor: default; }
+  button.act.danger, a.act.danger { border-color: var(--crit); color: var(--crit); }
+  button.act.danger:hover { border-color: var(--crit); background: color-mix(in srgb, var(--crit) 14%, transparent); }
+  /* Every rule above was qualified to `button`, so an <a class="act"> picked up none of them and
+     fell through to the bare `a` rule: the link that resolves the question state was drawn as a
+     15px serif underlined blue sentence beside a real 11px uppercase button, and the control that
+     actually clears the state was the one that did not look like a control. Anchors need the
+     text-decoration and colour reset too, since the `a` rule sets both. */
+  a.act { text-decoration: none; color: var(--ink); display: inline-block; text-align: center; }
+  /* Declared, and this is the third time this file has needed the rule. `hidden` works through the
+     user-agent rule `[hidden] { display: none }`, which ANY author `display` on the same element
+     outranks. The note above `.note` records this costing a bare button under every page of the
+     book; the same mistake here put "Open it on read.amazon.com" on the outage arm, where going to
+     Amazon's reader lands on the same broken application. Measured, not reasoned: the element
+     reported hidden true, computed display block, and a 608x34 box on screen. Every author
+     `display` in this file needs its own `[hidden]` companion, and adding one without the other
+     is the bug. */
+  a.act[hidden] { display: none; }
 
   .bar { height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; }
-  .bar > i { display: block; height: 100%; background: var(--accent); transition: width .3s ease; }
+  /* scaleX rather than width. Width is a layout property, so animating it relaid the bar on
+     every frame of the transition; a transform is composited and does not. The element is drawn
+     full width and scaled down, which is why the origin has to be the left edge. */
+  .bar > i {
+    display: block; height: 100%; width: 100%; background: var(--accent);
+    transform-origin: left center; transition: transform .3s ease;
+  }
 
   /* The book. Amazon's own reader draws this, in a browser you never see, at the
      size of this box; what arrives is the picture, and what goes back is where you
@@ -237,6 +452,14 @@
     overflow: hidden;
   }
   .reader img { display: block; width: 100%; height: 100%; object-fit: contain; cursor: pointer; }
+  /* The button is a frame around the page, not a control with its own look: no padding, no
+     border, no background, and the same box the image had. The focus ring is the one thing it
+     does draw, because it is now the focusable element. */
+  .reader-tap {
+    display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none;
+    cursor: pointer; appearance: none;
+  }
+  .reader-tap:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
   /* The page, set in our own type rather than shown as a photograph of itself.
      Amazon draws each page as one image, so these words were read back off that
@@ -245,7 +468,7 @@
   .reader .text {
     position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain;
     padding: 16px 18px 20px; background: var(--raised);
-    font: 15.5px/1.62 Charter, "Iowan Old Style", Georgia, serif;
+    font: 15.5px/1.62 var(--body);
     -webkit-font-smoothing: antialiased; hyphens: auto;
   }
   .reader .text p { margin: 0 0 0.85em; text-align: left; }
@@ -260,6 +483,27 @@
     overflow-y: auto; overscroll-behavior: contain;
   }
   .reader .over[hidden] { display: none; }
+  /* Top aligned and a little looser than the centred overlays, because this one is a title, a
+     paragraph, an evidence line and a control: a stack to read in order, not a centred message.
+
+     The extra top padding reserves the strip that page furniture already owns, and it was found
+     by LOOKING at the rendered surface rather than by reading this file. Two elements live in
+     that strip and both outrank this one: `.latency-row` at top 8px, z-index 25, which carries
+     the "your agent" timer, and the immersive `.reader-menu` at top 8px, right 8px, z-index 30.
+     This surface has no z-index at all, so the agent timer painted straight across the failure
+     title: the rendered panel read "...iled to load" and the reader could not see what had
+     failed. Hiding them was the wrong fix, because the agent timer is about the agent and stays
+     true while the reader is broken.
+
+     36px is derived, not guessed: 8px offset plus the chip's own 5px padding, 10px line, 5px
+     padding and 2px border is 30px, and the menu button is 8 + 30 = 38px, so the strip is 38px
+     and this clears it with the surface's own 16px padding already counted. */
+  .reader .over.failsurface { justify-content: flex-start; gap: 10px; padding-top: 38px; }
+  /* The hint band and the immersive pager pill are siblings of #reader with a higher z-index, so
+     in a short window they paint over this surface's lower edge and the one control that CAN help
+     ends up underneath two that cannot. They are hidden while a failure is showing. */
+  body.reader-failing .reader-hint,
+  body.reader-failing .reader-pager-overlay { display: none !important; }
   /* The per-page note, and the reason it is a class rather than an inline style.
      `hidden` works by way of the user-agent rule `[hidden] { display: none }`, which
      an inline `display: flex` on the same element outranks: the note was therefore
@@ -269,6 +513,50 @@
   .note { display: flex; align-items: center; gap: 8px; }
   .note[hidden] { display: none; }
 
+  /* The failure surface. Three different failures share it now, so the title carries the
+     meaning rather than labelling a section, and it is set like a heading instead of like an
+     eyebrow: `.label` is 10px uppercase at .14em tracking, which is a caption role, and three
+     sentences of very different lengths set that way are a wall to read at the moment the
+     reader most needs to understand something. Same face as `h2`, because that is what this
+     panel already uses for a heading. */
+  .failtitle {
+    font: 600 13px/1.3 Charter, Georgia, serif;
+    color: var(--warn); letter-spacing: -0.01em; text-wrap: balance; margin: 0;
+  }
+  /* The evidence line: a URL, or Amazon's own question, quoted back so the reader can check the
+     sentence above rather than take it. Monospaced because a URL is read character by character,
+     and coloured with a token rather than dimmed with opacity. `opacity: .75` over `--muted` on
+     `--raised` computes 4.18:1, under the 4.5:1 floor, on the one string here that has to be
+     read exactly. `--faint` is 4.71:1 and is a decision rather than a side effect.
+     A class, not an inline style, for the reason recorded above `.note`: `hidden` works through
+     a user-agent `display: none` rule that any inline `display` outranks, and this element is
+     hidden by default. */
+  .failwhat {
+    font-size: 11px; line-height: 1.5; color: var(--faint);
+    overflow-wrap: anywhere; margin: 0;
+  }
+  .failwhat[hidden] { display: none; }
+  /* A URL is read character by character, so it gets the monospaced face. Amazon's question is a
+     sentence and gets the reading face: setting a sentence in 11px mono says "machine output" and
+     makes it harder to read, and the two were sharing one presentation with nothing to say which
+     was which. The label above each says what it is, because an unlabelled string under an
+     explanation is evidence for a claim the reader has to guess at. */
+  .failwhat.isurl { font-family: var(--mono); }
+  /* Bounded, and scrollable inside its own box. Amazon's position prompts run to several
+     sentences, this surface is top-aligned, and `.reader` only guarantees a 200px minimum, so in
+     a short window a long question filled the box and pushed both remedies below the fold with no
+     scroll cue: the reader concludes the surface has no actions. The evidence scrolls; the
+     actions stay. */
+  .failwhat.isquote {
+    font-style: italic; color: var(--muted);
+    max-height: 7.5em; overflow-y: auto; overscroll-behavior: contain;
+  }
+  .faillabel {
+    font: 600 10px/1 var(--display);
+    text-transform: uppercase; letter-spacing: .14em; color: var(--faint); margin: 2px 0 -4px;
+  }
+  .faillabel[hidden] { display: none; }
+
   .pager { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
   .pager .grow { margin-left: auto; }
   .pager button.act { padding: 7px 12px; }
@@ -276,26 +564,49 @@
   .signin .label { color: var(--warn); }
 
   ul.todo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
-  ul.todo li { display: flex; gap: 8px; align-items: flex-start; padding: 4px 2px; border-radius: 3px; }
+  /* The list is however long your Notes list is, and it is rendered in full. content-visibility
+     lets the browser skip layout and paint for the rows that are scrolled out of view, and the
+     intrinsic size keeps the scrollbar honest while they are skipped. */
+  ul.todo li { display: flex; gap: 8px; align-items: flex-start; padding: 4px 2px; border-radius: 3px;
+    content-visibility: auto; contain-intrinsic-size: auto 28px; }
   ul.todo li:hover { background: var(--raised); }
   ul.todo input { margin: 4px 0 0; accent-color: var(--accent); flex: 0 0 auto; }
   ul.todo label { font-size: 13.5px; line-height: 1.4; cursor: pointer; }
   ul.todo li.done label { color: var(--muted); text-decoration: line-through; }
   .listhead { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
 
+  /* Picking another book off the shelf does something, so it is a button. It was a
+     <label>, which reads like a caption and cannot be reached by keyboard at all;
+     these two rules are only about making a button sit in a list looking like one. */
+  ul.todo button.pick {
+    font: inherit; font-size: 13.5px; line-height: 1.4; text-align: left;
+    background: none; border: 0; padding: 0; color: var(--ink); cursor: pointer;
+  }
+  ul.todo button.pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Reads as a link, behaves as a button, because it posts rather than navigates. */
+  button.linkish {
+    font: inherit; background: none; border: 0; padding: 0;
+    color: var(--accent); cursor: pointer; text-decoration: underline;
+  }
+  button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Said next to the control that was refused, not down in the footer line. */
+  .err { color: var(--warn); font-size: 12px; line-height: 1.4; }
+
   textarea {
     flex: 1 1 auto; min-height: 120px; resize: none; width: 100%; padding: 12px;
     background: var(--raised); color: var(--ink);
-    border: 1px solid var(--rule); border-radius: 3px;
-    font: 15px/1.55 Charter, "Iowan Old Style", Georgia, serif;
+    border: 1px solid var(--edge); border-radius: 3px;
+    font: 15px/1.55 var(--body);
   }
-  textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   footer {
     flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
     padding: 8px 14px; border-top: 1px solid var(--rule); background: var(--ground);
   }
-  #status { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10px; color: var(--muted); }
+  #status { font-family: var(--mono); font-size: 10px; color: var(--muted); }
   footer .grow { margin-left: auto; }
 
   /* Work in progress is always animated. A frozen word does not tell you whether
@@ -304,29 +615,65 @@
     background-size: 400% 100%; animation: shim 1.3s ease infinite; }
   @keyframes shim { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
   .skeleton { display: flex; flex-direction: column; gap: 8px; }
+  /* Without this the shimmer could not be hidden at all. `readerSay` sets `hidden` on this
+     element when the caller says nothing is in progress, and `display: flex` above outranks the
+     user-agent `[hidden] { display: none }`, so the repair that stopped a live loading animation
+     running underneath a hard, named failure did nothing whatsoever. Measured in the running
+     panel: hidden true, computed display flex. The test that guarded it read the source and was
+     satisfied by the assignment existing. */
+  .skeleton[hidden] { display: none; }
   .skeleton > i { display: block; height: 12px; }
   .spinner {
     width: 13px; height: 13px; border-radius: 50%; display: inline-block; vertical-align: -2px;
     border: 2px solid var(--rule); border-top-color: var(--accent); animation: spin .7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  /* Every motion the panel makes, not only the two that spin. The progress bar was
+     the one that got missed: it is a transition rather than a keyframe animation, so
+     stopping animations left a 300ms slide still running under someone who had asked
+     the system for none. Any new transition over about 200ms belongs in this list. */
   @media (prefers-reduced-motion: reduce) {
     .shimmer, .spinner { animation-duration: 0s; }
+    .bar > i { transition: none; }
   }
   .empty { color: var(--muted); font-size: 13px; }
   a { color: var(--accent); }
 </style>
 </head>
 <body>
+  <!-- Skip link and h1, for the reason the heading order gave away: the panel jumped straight
+       to <h2> for the deck name and the book title, so a screen reader met a level two heading
+       with no level one above it and no way past the rung buttons to the content. The h1 is
+       visually hidden rather than drawn, because the brand wordmark beside it already says this
+       out loud to everyone who can see it, and drawing both would be saying it twice. -->
+  <a class="skip-link" href="#main-content">Skip to the rung</a>
   <header>
-    <span class="brand">Interstice</span>
-    <nav class="rungs" id="rungs" aria-label="Activities">
+    <h1 class="visually-hidden">Interstice</h1>
+    <span class="brand" aria-hidden="true" translate="no">Interstice</span>
+    <!--
+      One noun for a step on the ladder, and it is "rung", the word the rest of the
+      project already uses. This label used to say "Activities" while the footer said
+      "interstice" and the dashboard said "rung", which is three names for one thing.
+      The label enumerates them rather than glossing them, so a screen reader hears
+      what the four buttons are without a second vocabulary being introduced.
+    -->
+    <nav class="rungs" id="rungs" aria-label="Rungs: cards, book, queue, to-do">
       <button data-view="flashcards" type="button">Cards</button>
       <button data-view="reading" type="button">Book</button>
       <button data-view="queue_prompt" type="button">Queue</button>
       <button data-view="todo" type="button">To-do</button>
     </nav>
   </header>
+
+  <!--
+    The question every reader arrives holding, answered where they arrive: why is this
+    window here, and how long have I got. Nothing on this panel used to name the agent,
+    the prompt or the wait at all, so the panel read as having opened by itself. The
+    line is persistent rather than a toast, and it is also where "rung" is defined, so
+    the header's four buttons and the footer's button both have a stated meaning.
+  -->
+  <p id="why-open" role="status" aria-live="polite">Interstice opens this while your agent
+    works. Each rung above is something to do until it answers.</p>
 
   <aside id="companions" aria-live="polite">
     <div class="top">
@@ -338,16 +685,16 @@
     <ul id="companions-list"></ul>
   </aside>
 
-  <main>
+  <main id="main-content" tabindex="-1">
     <!-- ---------------------------------------------------------------- cards -->
     <section class="view" id="view-flashcards">
       <div>
-        <div class="label">Least studied deck</div>
+        <div class="label" id="deck-label">Least studied deck</div>
         <h2 id="deck-name">&nbsp;</h2>
-        <div class="why" id="deck-why"></div>
+        <div class="why" id="deck-why" role="status" aria-live="polite"></div>
         <div id="deck-fix"></div>
       </div>
-      <div class="bar"><i id="deck-bar" style="width:0%"></i></div>
+      <div class="bar"><i id="deck-bar" style="transform:scaleX(0)"></i></div>
       <div class="cardframe" id="cardframe">
         <div class="skeleton" style="padding:14px">
           <i class="shimmer" style="width:70%"></i>
@@ -372,11 +719,18 @@
       <div id="book-title-wrap">
         <div class="label">Reading</div>
         <h2 id="book-title">&nbsp;</h2>
-        <div class="why" id="book-why"></div>
+        <div class="why" id="book-why" role="status" aria-live="polite"></div>
       </div>
-      <div class="bar" id="book-bar-wrap"><i id="book-bar" style="width:0%"></i></div>
+      <div class="bar" id="book-bar-wrap"><i id="book-bar" style="transform:scaleX(0)"></i></div>
       <div class="reader" id="reader">
-        <img id="reader-frame" alt="Your book, at the page you were on" hidden>
+        <!-- A real button rather than an image wearing role="button". The ARIA version needed a
+             hand-written keydown handler to make Enter and Space work, which a button does for
+             free, and a screen reader met an image claiming to be a control. The image inside is
+             decorative because the button carries the name: announcing both would say it twice. -->
+        <button id="reader-tap" type="button" class="reader-tap" hidden
+                aria-label="Your book, at the page you were on. Press Enter to tap the middle of the page.">
+          <img id="reader-frame" alt="" hidden>
+        </button>
         <div class="text" id="reader-text" hidden></div>
         <div class="over" id="reader-over">
           <div class="skeleton">
@@ -385,7 +739,8 @@
             <i class="shimmer" style="width:62%"></i>
             <i class="shimmer" style="width:88%"></i>
           </div>
-          <div class="mono" id="reader-status">opening your book</div>
+          <div class="mono" id="reader-status" role="status" aria-live="polite">opening your book</div>
+
         </div>
         <!--
           Amazon's own failure, said rather than photographed.
@@ -396,17 +751,101 @@
           progress bar still reading 39%, with nothing anywhere saying the reader had
           failed. This is that state, named, with the one thing worth pressing.
         -->
-        <div class="over" id="reader-failed" hidden style="justify-content:flex-start; gap:10px">
-          <div class="label" style="color:var(--warn)">Amazon could not open this book</div>
+        <!--
+          One live region around the whole explanation, not around the middle of it. The title
+          is the part that names the failure and it changes with the failure, so announcing only
+          the paragraph read out an explanation of something that was never named.
+        -->
+        <!--
+          The sign-in lives INSIDE the reader, beside the other two overlays, rather than in
+          #book-actions. `book-actions` is on READER_MENU_DISPLACED, so in immersive mode it is
+          moved into the unlabelled ellipsis menu, and the one control that repairs an expired
+          session went with it: the reader saw the words "sign in" in 10px mono and no way to act
+          on them without finding a menu nobody told them about. This surface is a sibling of the
+          failure and loading overlays, so it is on screen wherever they are.
+        -->
+        <div class="over failsurface" id="reader-signin" hidden tabindex="-1"></div>
+        <!--
+          Focusable, because this surface appears by hiding whichever element held focus, which
+          drops focus to <body>: the next Tab then started from the skip link at the top of the
+          document rather than at the control this surface is offering.
+        -->
+        <div class="over failsurface" id="reader-failed" hidden tabindex="-1" role="status" aria-live="polite">
+          <h2 class="failtitle" id="reader-failed-title">Amazon could not open this book</h2>
           <div class="why" id="reader-failed-why"></div>
-          <button class="act primary" id="reader-retry" type="button">Try again</button>
+          <!--
+            The evidence: the file that 404ed, or Amazon's own question. Quoted so the sentence
+            above can be checked rather than believed, which is the whole reason it is here.
+          -->
+          <p class="faillabel" id="reader-failed-detail-label" hidden></p>
+          <p class="failwhat" id="reader-failed-detail" hidden></p>
+          <!--
+            Demoted to a plain control when the failure is Amazon's outage. The button is still
+            offered, because the file may be back, but styling it as the primary action promises
+            that pressing it fixes this, and pressing it cannot fetch a file off Amazon's CDN. On
+            the failure this program CAN clear, it stays primary, because there it is the answer.
+          -->
+          <!--
+            "Read it again", which is what this action is called everywhere else: on the per-page
+            note's own button, in three of the daemon's remedy sentences, and in five of the
+            panel's. This one control said "Try again" instead, so every one of those sentences
+            told the reader to press something that was not on screen, while the thing that was
+            on screen had a different name. One action, one name, through the whole flow.
+          -->
+          <button class="act primary" id="reader-retry" type="button">Read it again</button>
+          <!--
+            A separate control for the failures this program cannot clear. `reader-retry` opens a
+            confirmation about discarding the device registration Amazon has stored here, which
+            is the right move when Amazon refused this profile as a device and is both useless
+            and destructive when the failure is a file missing from Amazon's CDN or a question
+            waiting to be answered elsewhere. Asking someone to throw away their registration to
+            fix somebody else's 404 is the interface lying about what the button does. This one
+            just looks again.
+          -->
+          <button class="act" id="reader-recheck" type="button" hidden>Check again</button>
+          <!--
+            The only remedy in this panel that has to be carried out somewhere else, so it is the
+            only one that needs a way to get there. It was plain prose naming a web address the
+            reader had to select, copy and paste, at the moment they are least willing to do
+            clerical work.
+          -->
+          <a class="act" id="reader-open-amazon" hidden target="_blank" rel="noopener noreferrer"
+            href="https://read.amazon.com/">Open it on read.amazon.com</a>
+          <!--
+            The outcome of a check that found nothing new. Without it the control's only possible
+            result is invisible, and it is offered exactly where the answer usually has not
+            changed yet: waiting on Amazon to restore a file, or on a question answered elsewhere.
+          -->
+          <p class="failwhat" id="reader-recheck-said" hidden></p>
+          <!--
+            Reopening calls revive({ clearFirst: true }), which deletes the device
+            registration Amazon has stored for this profile. That is not undoable and it
+            was one click away, so the click now only asks the question and a second one
+            answers it.
+          -->
+          <div id="reader-retry-confirm" hidden>
+            <div class="why">Reopening throws away the device registration Amazon has
+              stored here. Your sign-in stays, and the book opens fresh. There is no
+              way to put the old registration back.</div>
+            <div class="ease" style="grid-template-columns:1fr 1fr; margin-top:8px">
+              <!--
+                The destructive answer is drawn in --crit, and the keeping one carries the accent.
+                They were the other way round: the irreversible answer wore the panel's
+                recommended-action fill and was the brightest thing on the surface, while focus
+                sat on "Keep it", so the colour and the keyboard default disagreed about which
+                answer was expected. --crit was defined in the tokens and used nowhere here.
+              -->
+              <button class="act danger" id="reader-retry-yes" type="button">Discard it and reopen</button>
+              <button class="act primary" id="reader-retry-no" type="button">Keep it</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="pager" id="reader-pager">
         <button class="act" id="page-prev" type="button">&#8249; Back</button>
         <span class="mono" id="reader-page"></span>
         <span class="grow"></span>
-        <button class="act" id="reader-mode" type="button" title="Show the page as Amazon drew it">Page</button>
+        <button class="act" id="reader-mode" type="button" title="Swap between the transcribed text and the page Amazon drew">See the real page</button>
         <button class="act" id="page-next" type="button">Next &#8250;</button>
       </div>
       <!--
@@ -419,34 +858,50 @@
       -->
       <div class="why note" id="reader-note" hidden>
         <span id="reader-note-text"></span>
-        <button class="act" id="read-again" type="button" style="padding:2px 8px">Read it again</button>
+        <!--
+          "Transcribe again", because that is what it does: it asks the daemon to look at the page
+          again and re-read it, and the usual reason a page reads badly is a picture taken while
+          one of Amazon's dialogs was still on top of it. It used to be called "Read it again",
+          which is the name every remedy sentence uses for a completely different action, clearing
+          what Amazon stored here and reopening the book. Unifying the LABEL across two different
+          actions was the wrong half of "one action, one name": the two needed separating, not
+          merging, and for an hour this button carried the name of a promise it could not keep.
+        -->
+        <button class="act" id="read-again" type="button" style="padding:2px 8px">Transcribe again</button>
       </div>
-      <div id="book-actions" style="display:flex; flex-direction:column; gap:6px"></div>
-      <!-- Immersive affordances (Phase 2C): shown only while body.immersive. -->
-      <div class="latency-chip" id="latency-chip" aria-live="polite"></div>
-      <div class="arrival-note" id="arrival-note" role="status">Response landed</div>
+      <div id="book-actions"></div>
+      <!-- Immersive affordances: shown only while body.immersive. -->
+      <div class="latency-row" id="latency-row">
+        <div class="latency-chip" id="latency-chip" aria-live="polite"></div>
+        <div class="arrival-note" id="arrival-note" role="status">Your agent answered. Go back to it.</div>
+      </div>
       <div class="forfeit-note" id="forfeit-note" role="alert" aria-live="assertive"></div>
       <button class="reader-menu" id="reader-menu" type="button" aria-label="Reading menu" aria-expanded="false" aria-controls="reader-menu-overlay">&#8943;</button>
+      <div class="reader-hint">Press &#8594; for the next page, &#8592; to go back. The rest is behind &#8943;</div>
       <div class="reader-pager-overlay" aria-label="Turn the page">
         <button class="act" id="page-prev-imm" type="button">&#8249; Back</button>
+        <span class="mono now" id="page-now-imm" aria-live="polite"></span>
         <button class="act" id="page-next-imm" type="button">Next &#8250;</button>
       </div>
       <div class="reader-menu-overlay" id="reader-menu-overlay" role="dialog" aria-modal="true" aria-label="Reading menu">
-        <button class="act om-close" id="reader-menu-close" type="button">Close &times;</button>
+        <div class="om-head">
+          <button class="act om-close" id="reader-menu-close" type="button">Close &times;</button>
+        </div>
         <button class="act" id="open-star-cal" type="button">Star calendar &#9733;</button>
         <div id="reader-menu-slot"></div>
       </div>
       <div class="star-cal-overlay" id="star-cal-overlay" role="dialog" aria-modal="true" aria-label="Star calendar">
         <header>
           <h3 id="cal-title">Stars</h3>
+          <span class="cal-count" id="cal-count"></span>
           <div class="cal-controls">
             <button class="act" id="cal-prev" type="button" aria-label="Previous month">&#8249;</button>
-            <button class="act" id="cal-view-toggle" type="button">Day view</button>
+            <button class="act" id="cal-view-toggle" type="button">Switch to day view</button>
             <button class="act" id="cal-next" type="button" aria-label="Next month">&#8250;</button>
             <button class="act om-close" id="cal-close" type="button">Close &times;</button>
           </div>
         </header>
-        <div class="cal-legend"><span><span class="swatch"></span>an earned 25-minute block</span></div>
+        <div class="cal-legend"><span><span class="swatch"></span><span id="cal-legend-block">an earned focus block</span></span></div>
         <div id="cal-body"></div>
         <div class="cal-reveal" id="cal-reveal" hidden></div>
       </div>
@@ -455,10 +910,12 @@
     <!-- --------------------------------------------------------------- queue -->
     <section class="view" id="view-queue_prompt">
       <div>
-        <div class="label">Queue your next prompt</div>
-        <div class="why">Held here until you want it. &#8984;&#9166; saves.</div>
+        <label class="label" for="box">Queue your next prompt</label>
+        <div class="why" id="box-why">Held here until you want it. &#8984;&#9166; saves.</div>
       </div>
-      <textarea id="box" placeholder="What do you want to hand off next?"></textarea>
+      <textarea id="box" placeholder="Refactor the reader poll so a turn does not re-render the shelf…"
+                aria-describedby="box-why box-err"></textarea>
+      <div class="err" id="box-err" role="alert" hidden></div>
       <button class="act primary" id="save" type="button">Save</button>
       <ul class="todo" id="queued"></ul>
     </section>
@@ -467,14 +924,14 @@
     <section class="view" id="view-todo">
       <div>
         <div class="label">From your Notes</div>
-        <div class="why" id="todo-why">Read only. Ticking here is tracked by Interstice and never edits the note.</div>
+        <div class="why" id="todo-why">Tick anything you have already done. Interstice keeps the tick; your note is never changed.</div>
       </div>
       <div id="todo-lists"></div>
     </section>
   </main>
 
   <footer id="footer-bar">
-    <span id="status"></span>
+    <span id="status" role="status" aria-live="polite"></span>
     <span class="grow"></span>
     <!--
       Not "Next". This steps to the next thing on the ladder; the book's own "Next"
@@ -482,13 +939,89 @@
       that do entirely different things is a coin toss, and on the book screen it was
       being read as a second, broken page-turn.
     -->
-    <button class="act" id="advance" type="button" title="Show me a different interstice">Something else</button>
+    <button class="act" id="advance" type="button" title="Show a different rung: cards, book, queue or to-do">Different rung</button>
   </footer>
 
 <script>
 'use strict';
 
 const $ = (id) => document.getElementById(id);
+
+  /* The progress bars are scaled rather than resized: width is a layout property and animating
+     it relaid the bar every frame. The element is full width in CSS and squeezed with a
+     transform, so every caller goes through here rather than setting a style directly. Five
+     call sites set the inline width directly before this existed, and the CSS change alone
+     would have left all five drawing a bar that was always full.
+
+     The property is named generically on purpose: a check that this file no longer sets that
+     style inline is a grep, and a comment quoting the thing it removed sits inside the grep's
+     reach and fails it. */
+  /* The page picture and the button around it are hidden together, always. They were one element
+     before the button existed, and leaving the button visible over a hidden image gives a screen
+     reader and a keyboard a control with nothing behind it, which is worse than either state. */
+  /* The controls that turn a page, and the reason they cannot be used when they cannot.
+     A button that is enabled and does nothing when pressed is worse than one that shows it
+     cannot be pressed: the first is indistinguishable from a broken app. The sign-in state and
+     the book-failed state disable the same three through here, so a new state cannot disable
+     two of them and forget the third, which is how the failed-book case was missed: its early
+     return happens before the sign-in branch that was doing this by hand. */
+  /* Why turning is unavailable, kept because the buttons are not the only way to turn a page and
+     the other ways need to be able to say it. Empty when turning is available. */
+  let pagerWhy = '';
+  const setPagerDisabled = (disabled, why) => {
+    pagerWhy = disabled ? why : '';
+    // The immersive pager is in this list because in immersive mode it is the ONLY pager on
+    // screen: `body.immersive` hides everything in the reading view except a whitelist, and the
+    // main pager is not on it. Its buttons forward to these by calling .click(), so a disabled
+    // main button already stopped the turn, but the visible control stayed bright and did
+    // nothing when pressed, which is the silent no-op that disabling exists to replace.
+    for (const id of ['page-prev', 'page-next', 'reader-mode', 'page-prev-imm', 'page-next-imm']) {
+      const el = $(id);
+      if (!el) continue;
+      el.dataset.title ??= el.title;
+      el.disabled = disabled;
+      el.title = disabled ? why : el.dataset.title;
+    }
+  };
+
+  /* Which control the failure surface offers. One at a time, because they are not variants of
+     each other: `retry` discards the device registration Amazon stored here and reopens the
+     book, and `recheck` does nothing but look again. Offering both would ask the reader to tell
+     them apart at the moment they are least equipped to. */
+  const setFailAction = (which, opts = {}) => {
+    $('reader-recheck-said').hidden = true;
+    // Shown only for the one failure whose remedy is somewhere else.
+    const away = $('reader-open-amazon');
+    if (away) {
+      away.hidden = !opts.elsewhere;
+      if (opts.elsewhere && opts.asin) away.href = `https://read.amazon.com/?asin=${encodeURIComponent(opts.asin)}`;
+    }
+    $('reader-retry').hidden = which !== 'retry';
+    $('reader-recheck').hidden = which !== 'recheck';
+    // A half-answered confirmation must not survive into a failure that does not ask it.
+    $('reader-retry-confirm').hidden = true;
+  };
+
+  const setFrameHidden = (hidden) => {
+    const img = $('reader-frame');
+    const tap = $('reader-tap');
+    if (img) img.hidden = hidden;
+    if (tap) tap.hidden = hidden;
+  };
+
+  const setBar = (id, percent) => {
+    const el = $(id);
+    if (!el) return;
+    const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
+    el.style.transform = 'scaleX(' + (clamped / 100).toFixed(4) + ')';
+    const bar = el.parentElement;
+    if (bar) {
+      bar.setAttribute('role', 'progressbar');
+      bar.setAttribute('aria-valuenow', String(Math.round(clamped)));
+      bar.setAttribute('aria-valuemin', '0');
+      bar.setAttribute('aria-valuemax', '100');
+    }
+  };
 const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 const status = $('status');
 
@@ -500,6 +1033,14 @@ function say(text, spin) {
   status.innerHTML = (spin ? '<span class="spinner"></span> ' : '') + esc(text);
 }
 
+/** View state that survives a refresh and travels in a link, written without a navigation. */
+function setUrlParam(key, value) {
+  const u = new URL(location.href);
+  if (value === null || value === undefined || value === '') u.searchParams.delete(key);
+  else u.searchParams.set(key, value);
+  history.replaceState(null, '', u);
+}
+
 function setView(name, { fromServer = false } = {}) {
   if (!name) return;
   const leaving = currentView;
@@ -509,13 +1050,35 @@ function setView(name, { fromServer = false } = {}) {
   if (leaving === 'reading' && name !== 'reading') stopReader();
   for (const s of document.querySelectorAll('.view')) s.classList.toggle('active', s.id === 'view-' + name);
   document.body.classList.toggle('immersive', name === 'reading');
-  if (name !== 'reading' && typeof closeReaderMenu === 'function' && document.getElementById('reader-menu-overlay')?.classList.contains('open')) closeReaderMenu();
+  // Restore the displaced elements BEFORE the reading view goes dark, or they are hidden with it,
+  // and shut BOTH overlays. The star calendar is the second one: left open, it survives the view
+  // change and repaints a full-panel dialog over the page on the way back, with no keyboard route
+  // out, because its only Escape handler is bound to the overlay that no longer holds focus.
+  if (name !== 'reading') {
+    if (document.getElementById('reader-menu-overlay')?.classList.contains('open')) window.__closeReaderMenu?.();
+    if (document.getElementById('star-cal-overlay')?.classList.contains('open')) window.__closeStarCal?.();
+  }
   for (const b of document.querySelectorAll('#rungs button')) {
     b.setAttribute('aria-current', String(b.dataset.view === name));
   }
   const load = LOADERS[name];
   if (load) load({ fromServer });
   if (name === 'queue_prompt' && fromServer) $('box').focus();
+  // The rung goes in the URL, so a reload comes back where you were and the address names what is
+  // on screen. Guarded on `fromServer`: a view the ROUTER chose is not one you navigated to, and
+  // writing it would let the daemon rewrite your address bar underneath you. replaceState rather
+  // rather than the history-adding call, because a rung is where you are rather than a place you
+  // can go back from, and one history entry per delivery would make the back button walk through
+  // polls. The other call is named generically here on purpose: a check that this file never adds
+  // history entries is a grep, and a comment quoting the call it avoids sits inside that grep's
+  // reach. Third time this session, and the first two cost a failing verify each.
+  if (!fromServer) {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('view') !== name) {
+      url.searchParams.set('view', name);
+      window.history.replaceState(null, '', url);
+    }
+  }
 }
 
 /* ------------------------------------------------------------------ cards --- */
@@ -523,12 +1086,22 @@ function setView(name, { fromServer = false } = {}) {
 let queue = [];
 let cardIndex = 0;
 let answering = false;
+// How many cards the deck actually has due, which is not how many the panel loaded: the queue is
+// capped at `anki.queueSize`. Held so the end of the queue can tell the truth about which it was.
+let deckDue = 0;
 
 function renderCard(revealed) {
   const card = queue[cardIndex];
   const frame = $('cardframe');
   if (!card) {
-    frame.innerHTML = '<div class="empty" style="padding:16px">Deck finished. Nothing else is due here.</div>';
+    // Not "deck finished": the queue is capped at `anki.queueSize`, so a deck with more due
+    // cards than that runs out here with work still waiting in Anki.
+    const more = deckDue > queue.length;
+    frame.innerHTML = '<div class="empty" style="padding:16px">'
+      + (more
+        ? 'That is everything this panel took from the deck. Open Cards again for the next batch.'
+        : 'Deck finished. Nothing else is due here.')
+      + '</div>';
     $('card-controls').hidden = true;
     $('ease').hidden = true;
     $('card-meta').textContent = '';
@@ -555,10 +1128,67 @@ function renderCard(revealed) {
 
   $('card-controls').hidden = revealed;
   $('ease').hidden = !revealed;
-  $('deck-bar').style.width = ((cardIndex / queue.length) * 100).toFixed(1) + '%';
+  setBar('deck-bar', (cardIndex / queue.length) * 100);
   $('card-meta').textContent =
     (cardIndex + 1) + ' of ' + queue.length + ' · ' + card.reps + ' review' + (card.reps === 1 ? '' : 's')
     + (card.lapses ? ' · ' + card.lapses + ' lapse' + (card.lapses === 1 ? '' : 's') : '');
+}
+
+/**
+ * What to do about it, from what AnkiConnect said.
+ *
+ * "AnkiConnect unreachable: fetch failed" is true and useless. Each of these states
+ * has a different next move, and three of the four are fixed by the button directly
+ * below this line without leaving the panel.
+ */
+function ankiRemedy(reason) {
+  const r = String(reason || '');
+  if (/unreachable/i.test(r)) {
+    return 'Anki is not running, or AnkiConnect is not installed in it. Press Reconnect to '
+      + 'Anki below and Interstice will start it for you.';
+  }
+  if (/timed out/i.test(r)) {
+    return 'Anki is running but did not answer in time, usually because macOS put it to '
+      + 'sleep. Press Reconnect to Anki below to wake it.';
+  }
+  if (/HTTP/.test(r)) {
+    return 'AnkiConnect answered with an error. Press Reconnect to Anki below, and if it '
+      + 'says the same thing again, quit Anki and reopen it.';
+  }
+  return 'Anki refused the request. Press Reconnect to Anki below, and if it says the same '
+    + 'thing again, quit Anki and reopen it.';
+}
+
+/**
+ * The reader's failures, each with the move that clears it.
+ *
+ * Mirrors `ankiRemedy` above, and for the same reason: `d.error` is the daemon's own sentence,
+ * which is accurate and tells you nothing to do. The strings matched here are the ones the reader
+ * actually produces, taken from live failures rather than guessed at, so a new one falls through
+ * to the general case rather than being mismatched into a wrong instruction.
+ */
+function readerRemedy(reason) {
+  const r = String(reason || '');
+  // The wedge: the page is loaded and its main thread has stopped answering, so the probe cannot
+  // run. Measured live, this is the common one, and Read it again is what recovers it.
+  if (/did not answer in \d+ms/i.test(r)) {
+    return 'The book is open but the page has stopped responding, so Interstice cannot see it. '
+      + 'Press Read it again: it clears what Amazon stored here, keeps you signed in, and reopens '
+      + 'the book.';
+  }
+  if (/no Chromium-family browser/i.test(r)) {
+    return 'No browser Interstice can drive is installed. Install Google Chrome, or another '
+      + 'Chromium-family browser, and press Read it again.';
+  }
+  if (/sign|signed out|ap\/signin/i.test(r)) {
+    return 'Amazon wants you to sign in again. Use Sign in to Amazon in Chrome below; the window '
+      + 'closes itself once the session lands.';
+  }
+  if (/profile|user-data-dir|in use/i.test(r)) {
+    return 'Another window is holding the reader profile. Close it, then press Read it again.';
+  }
+  return 'The book did not open. Press Read it again, which clears what Amazon stored here and '
+    + 'reopens it without signing you out.';
 }
 
 async function loadCards() {
@@ -574,9 +1204,15 @@ async function loadCards() {
       // panel, so the two cases are told apart here rather than shown as one.
       const unreachable = d.reason !== 'no_due_cards';
       $('deck-name').textContent = unreachable ? 'Anki is not answering' : 'Nothing due';
-      $('deck-why').textContent = unreachable
-        ? String(d.reason || '')
-        : 'No cards are due in any deck right now.';
+      if (unreachable) {
+        // The sentence says what to do; the string Anki actually returned stays on
+        // screen underneath it, because a remedy you cannot check is a remedy you
+        // have to take on faith.
+        $('deck-why').innerHTML = esc(ankiRemedy(d.reason))
+          + '<div class="mono" style="margin-top:4px">Anki said: ' + esc(String(d.reason || 'nothing')) + '</div>';
+      } else {
+        $('deck-why').textContent = 'No cards are due in any deck right now.';
+      }
       $('deck-fix').innerHTML = unreachable ? ankiFixHtml() : '';
       if (unreachable) {
         $('anki-reconnect').addEventListener('click', reconnectAnki);
@@ -595,15 +1231,30 @@ async function loadCards() {
     cardIndex = 0;
     $('deck-fix').innerHTML = '';
     $('deck-name').textContent = d.deck;
-    // Show the arithmetic behind the choice, not just the conclusion.
-    $('deck-why').textContent =
-      d.metric.meanReps + (d.metric.meanReps === 1 ? ' review' : ' reviews') + ' per due card, the lowest of '
-      + d.metric.decksWithDue + ' decks with anything due · ' + d.metric.due
-      + ' due here of ' + d.totalDue + ' overall';
+    // Show the arithmetic behind the choice, not just the conclusion. Two ideas, two
+    // sentences on two lines. An earlier version ran them together as one line of the form
+    // "<n> reviews per due card, the lowest of <m> decks with anything due · <k> due here of
+    // <t> overall", which carried a ranking and a count in the same breath, and the middot in
+    // the middle of it read as a third clause rather than a break.
+    // The chosen deck is the least studied one only when nothing is configured. `reason` and
+    // `rank` are computed for exactly this, and asserting the superlative regardless is a claim
+    // the API next to it contradicts.
+    deckDue = d.metric.due;
+    const leastStudied = d.reason === 'least_studied';
+    const decks = d.metric.decksWithDue + (d.metric.decksWithDue === 1 ? ' deck' : ' decks');
+    $('deck-label').textContent = leastStudied ? 'Least studied deck' : 'Your configured deck';
+    $('deck-why').innerHTML =
+      esc(d.metric.meanReps + (d.metric.meanReps === 1 ? ' review' : ' reviews')
+        + ' per due card, '
+        + (leastStudied
+          ? 'the fewest of your ' + decks + ' with work waiting.'
+          : 'ranked ' + d.metric.rank + ' of your ' + decks + ' with work waiting.'))
+      + '<div>' + esc(d.metric.due + ' of your ' + d.totalDue + ' due cards are here.') + '</div>';
     renderCard(false);
     say('');
   } catch (err) {
-    say('cards unavailable');
+    say('Cards did not load, because Interstice is not running in the background. '
+      + 'Open a terminal, run interstice start, then press Cards again.');
   }
 }
 
@@ -612,14 +1263,15 @@ async function loadCards() {
  *
  * Anki is started behind everything, App Nap is turned off for both of the bundle
  * ids it ships under, and then it is waited for rather than declared dead at the
- * 800ms the router allows itself. Nothing about the window changes: Anki has never
- * been visible in this design and does not become visible now.
+ * 800ms the router allows itself. Nothing about the panel window changes. Anki's deck list can
+ * flash while it loads; Interstice puts it back behind everything and says so when it will not go.
  */
 function ankiFixHtml() {
   return '<button class="act primary" id="anki-reconnect" type="button" style="width:100%;margin-top:8px">'
     + 'Reconnect to Anki</button>'
-    + '<div class="why" style="margin-top:6px">Starts Anki behind everything, turns off App Nap, '
-    + 'and waits for AnkiConnect to answer. Nothing comes to the front.</div>'
+    + '<div class="why" style="margin-top:6px">Wakes Anki and waits for it. Its deck list can '
+    + 'flash, because its launcher ignores the flags asking it to start hidden; Interstice puts '
+    + 'it straight back behind everything.</div>'
     + '<div class="why" id="anki-how"></div>';
 }
 
@@ -675,7 +1327,7 @@ async function reconnectAnki({ automatic = false } = {}) {
     }
     say('Anki did not answer');
   } catch {
-    say('the daemon is not answering');
+    say('Interstice is not running in the background. Open a terminal and run interstice start.');
   } finally {
     if (btn()) {
       btn().disabled = false;
@@ -701,7 +1353,7 @@ async function answer(ease) {
     renderCard(false);
     say('reviewed');
   } catch (err) {
-    say('could not record that review');
+    say('That review was not recorded. Press the same ease button again.');
   } finally {
     answering = false;
   }
@@ -730,6 +1382,8 @@ let readerSignedOut = false;
 // Whether the last poll found Amazon's failure page rather than a book. See the
 // `#reader-failed` block above, and `bookError` in the daemon's probe.
 let readerFailed = false;
+/** Which failure is on screen, so a change of kind redraws rather than keeping the old words. */
+let readerFailKind = '';
 let readerViewport = { width: 0, height: 0 };
 let readerBusy = false;
 let readerTextSeq = -1;
@@ -739,14 +1393,14 @@ let readerTextBusy = false;
 // rather than a thing you have to take on trust.
 let readerShelf = null;
 
-/**
+/*
  * Words by default, the picture on request.
  *
  * Amazon draws each page as a single image with no text in it anywhere, so the words
  * here were read back off that image on this machine. That reading is what belongs
  * in a panel: it sets in our own type, at a size that suits the window, and it
  * reflows. What it cannot do is a diagram, a table or an equation, which is why the
- * page Amazon actually drew is always one press away.
+ * page Amazon actually drew stays one press away inside the reading menu.
  */
 /**
  * Versioned, and deliberately so.
@@ -778,7 +1432,7 @@ function setReaderMode(mode) {
   } catch {
     /* a panel without storage just starts in text every time */
   }
-  $('reader-mode').textContent = mode === 'text' ? 'Page' : 'Text';
+  $('reader-mode').textContent = mode === 'text' ? 'See the real page' : 'Back to the text';
   $('reader-mode').title = mode === 'text'
     ? 'Show the page as Amazon drew it'
     : 'Back to the text, set in this window’s type';
@@ -787,9 +1441,9 @@ function setReaderMode(mode) {
     // "This page did not read cleanly" is about the text view, and you have just
     // left it. Saying it over a picture you asked for is noise.
     readerNote('');
-    if ($('reader-frame').src) $('reader-frame').hidden = false;
+    if ($('reader-frame').src) setFrameHidden(false);
   } else {
-    $('reader-frame').hidden = true;
+    setFrameHidden(true);
     readerTextSeq = -1;
     loadReaderText();
   }
@@ -810,12 +1464,14 @@ function readerBox() {
  *
  * In image mode it is exactly this window, because the picture has to fit it. In
  * text mode the words are reflowed into our own type, so the page they were read
- * from can be any shape at all, and a taller one is simply a better deal: measured
- * on this book, the same panel got 39 words a page at its own height, 109 at 1000,
- * and 178 at 1400, while the reading got *more* confident rather than less (a fifth
- * of the lines doubted became a thirtieth, because a taller page sets fewer lines
- * broken across a page edge). Fewer turns for the same reading is the point: the
- * complaint that started this was not being able to settle into the text.
+ * from can be any shape at all, and a taller one is simply a better deal. Measured once,
+ * on one book on one machine, the same panel got 39 words a page at its own height, 109 at
+ * 1000, and 178 at 1400, while the reading got *more* confident rather than less (a fifth
+ * of the lines doubted became a thirtieth, because a taller page sets fewer lines broken
+ * across a page edge). That is a single reading and not a benchmark, but it is the reason
+ * the two constants below are the sizes they are, and the direction it points in is the
+ * point: fewer turns for the same reading. The complaint that started this was not being
+ * able to settle into the text.
  */
 const TEXT_RENDER_SCALE = 2.2;
 const TEXT_RENDER_MAX = 1400;
@@ -826,9 +1482,44 @@ function readerRenderBox() {
   return { width: box.width, height: Math.min(TEXT_RENDER_MAX, Math.round(box.height * TEXT_RENDER_SCALE)) };
 }
 
+/** When the current open began, so that waiting can be shown to be waiting. */
+let readerOpenedAt = 0;
+
+/**
+ * How long this open has been going, said in a way that changes.
+ *
+ * The loading line was re-fired every 1500ms with an identical string, so five seconds and five
+ * minutes were pixel-identical and a reader had nothing to judge by: no elapsed time, no change
+ * of wording, and nothing to distinguish a slow link from a reader that had died. The threshold
+ * copy is not a guess dressed as knowledge. It says the one thing that is actually known, which
+ * is that this is longer than it usually takes, so the reader can decide to stop waiting.
+ */
+function openingLine() {
+  const secs = readerOpenedAt ? Math.round((Date.now() - readerOpenedAt) / 1000) : 0;
+  if (secs < 8) return 'opening your book';
+  if (secs < 30) return `opening your book, ${secs}s`;
+  return `still opening after ${secs}s. This is longer than usual.`;
+}
+
+/** A sentence shortened where a sentence can be shortened: at a space, and marked as cut. */
+function shorten(text, max) {
+  const t = String(text ?? '').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max - 1);
+  const space = cut.lastIndexOf(' ');
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[,;:.\s]+$/, '')}\u2026`;
+}
+
 function readerSay(text, spin) {
   const el = $('reader-status');
   if (el) el.innerHTML = (spin ? '<span class="spinner"></span> ' : '') + esc(text);
+  // The shimmer is this panel's signal for "still working", and it kept animating underneath a
+  // hard, named failure: the daemon's remedy went into an 11px line below four bars still saying
+  // the opposite. On a slow link a reader reads the animation, not the line, and waits for
+  // something that has already stopped happening. `spin` is exactly the caller saying whether
+  // this is still in progress, so it decides the skeleton too.
+  const bones = $('reader-over')?.querySelector('.skeleton');
+  if (bones) bones.hidden = !spin;
 }
 
 function stopReader() {
@@ -839,8 +1530,8 @@ function stopReader() {
 /**
  * What this view has to say about the page you are on, where you can see it.
  *
- * Shown under the pager rather than over the page, because a message drawn on top of
- * the book is a message you have to dismiss to keep reading.
+ * Floated over the foot of the page while immersive, bounded and out of the way, so it never
+ * eats into the page's share of the panel. Outside the reading view it sits in the flow.
  */
 function readerNote(text, { again = false } = {}) {
   const box = $('reader-note');
@@ -854,6 +1545,31 @@ function readerNote(text, { again = false } = {}) {
 }
 
 /**
+ * How much of this page the reader was unsure of, as a count rather than a hedge.
+ *
+ * `weak` is the fraction of non-chrome lines that scored under the weak-line bar and
+ * `lines` is how many lines there were, both from lib/ocr.js. The old string said
+ * "some of this page read poorly" with those two numbers in the same object it was
+ * reading `confidence` out of, which asked the reader to go and look at the page
+ * without telling them how much of it was in doubt.
+ */
+function weakLinesPhrase(d) {
+  // The scored lines, not every line: `weak` is a fraction of the lines that were scored, and the
+  // reader's own toolbar and location strip are not among them.
+  const lines = Number(d.scoredLines) || Number(d.lines) || 0;
+  const weak = Math.round((Number(d.weak) || 0) * lines);
+  if (weak > 0 && lines > 0) {
+    return ' \u00b7 ' + weak + ' of ' + lines + (lines === 1 ? ' line' : ' lines') + ' read poorly';
+  }
+  // No line was individually weak, but the typical line was still doubted. Said as the
+  // median it is, because there is no count to give.
+  if (d.confidence !== null && d.confidence !== undefined && d.confidence < 0.85) {
+    return ' \u00b7 the typical line read at ' + Math.round(d.confidence * 100) + '% confidence';
+  }
+  return '';
+}
+
+/**
  * Read the page that is on screen, once per page.
  *
  * Keyed to the frame it came from: the panel polls, and reading the same page twice
@@ -861,6 +1577,12 @@ function readerNote(text, { again = false } = {}) {
  * after a turn would be worse than showing nothing at all.
  */
 async function loadReaderText({ force = false, fresh = false } = {}) {
+  // A load started on one poll can resolve after the next has already found the book failed and
+  // hidden the picture and the transcript together. This function un-hides both, before its await
+  // and again on its low-confidence path, and consulted neither flag: the failure surface paints
+  // over the result so the damage stays invisible, but the state is wrong and a per-page note gets
+  // written about a page that is not there.
+  if (readerFailed || readerSignedOut) return;
   if (readerMode() !== 'text' || readerTextBusy) return;
   if (!force && !fresh && readerTextSeq === readerSeq) return;
   readerTextBusy = true;
@@ -876,7 +1598,7 @@ async function loadReaderText({ force = false, fresh = false } = {}) {
     if (d.shelf) readerShelf = d.shelf;
     if (!d.ok || !d.blocks || !d.blocks.length) {
       host.innerHTML = '<p class="thin">Nothing could be read from this page. '
-        + 'Press <em>Page</em> to see what is actually on it.</p>';
+        + 'Press <em>See the real page</em> to see what is actually on it.</p>';
       readerNote('Nothing was legible on this page.', { again: true });
       readerTextSeq = readerSeq;
       return;
@@ -893,7 +1615,7 @@ async function loadReaderText({ force = false, fresh = false } = {}) {
     // is the whole complaint this view exists to answer.
     if (d.confidence !== null && (d.confidence < 0.6 || (d.weak ?? 0) > 0.5)) {
       host.hidden = true;
-      $('reader-frame').hidden = false;
+      setFrameHidden(false);
       // Said with a way out of it. This is a per-page decision, and it used to look
       // exactly like the view having given up and gone back to the old one: the page
       // came forward, nothing said why in a way you could act on, and the only route
@@ -912,14 +1634,17 @@ async function loadReaderText({ force = false, fresh = false } = {}) {
       + '<p class="thin">Read from the page Amazon drew'
       // Said when any of it was doubted, which is a lower bar than sending you to
       // the picture and is the honest thing to say about a transcription.
-      + ((d.weak ?? 0) > 0 || (d.confidence !== null && d.confidence < 0.85)
-        ? ' · some of this page read poorly' : '')
+      // The exact figure, because it is already in hand: `weak` is the fraction of lines
+      // the reader was unsure of and `lines` is how many there were, so "some of this page"
+      // was vagueness chosen over a number sitting in the same object.
+      + weakLinesPhrase(d)
       + '.</p>';
-    $('reader-frame').hidden = true;
+    setFrameHidden(true);
     host.scrollTop = 0;
     readerTextSeq = readerSeq;
   } catch {
-    host.innerHTML = '<p class="thin">The daemon stopped answering.</p>';
+    host.innerHTML = '<p class="thin">Interstice stopped running in the background, so this page could not '
+      + 'be read. Restart it with <b>interstice start</b>, then turn the page.</p>';
   } finally {
     readerTextBusy = false;
   }
@@ -928,21 +1653,34 @@ async function loadReaderText({ force = false, fresh = false } = {}) {
 function startReader(asin) {
   stopReader();
   readerAsin = asin;
+  // Which book you are reading lived only in this variable, so a refresh put you back
+  // on the daemon's default and the book you had chosen could not be linked to.
+  setUrlParam('asin', asin);
   readerSeq = -1;
   readerTextSeq = -1;
   readerSignedOut = false;
   readerFailed = false;
+  readerFailKind = '';
   readerShelf = null;
   readerNote('');
+  readerOpenedAt = Date.now();
+  // Turning is unavailable until there is something to turn. These controls were live through
+  // the whole open, so on a slow link a reader could press Next, and See the real page, against
+  // a book that did not exist yet and watch nothing happen. That is the same silent no-op the
+  // failure states were fixed for, in the state that comes before them.
+  setPagerDisabled(true, 'The book is still opening.');
   $('reader-failed').hidden = true;
-  $('reader-frame').hidden = true;
+  setFrameHidden(true);
   $('reader-text').hidden = readerMode() !== 'text';
   $('reader-text').innerHTML = '';
+  // A new open, so the elapsed count measures THIS one.
+  readerOpenedAt = Date.now();
   $('reader-over').hidden = false;
-  readerSay('opening your book', true);
+  readerSay(openingLine(), true);
   tickReader();
-  // Slow on purpose. The reader pushes a frame whenever it repaints, so this poll
-  // is only asking whether anything happened, not driving the rendering.
+  // Slow on purpose. Frames are pulled, not pushed: each tick takes one screenshot, and an
+  // unchanged page costs a comparison and no download. Pushing them was tried and rejected, see
+  // the trap table in the README.
   readerTimer = setInterval(tickReader, 1500);
 }
 
@@ -969,39 +1707,180 @@ function renderReader(d) {
   if (d.shelf) readerShelf = d.shelf;
 
   if (!d.ok) {
-    $('reader-frame').hidden = true;
-    $('reader-over').hidden = false;
-    readerSay(d.error || 'the book could not be opened here');
+    // Routed to the FAILURE surface, which is where the controls the remedies name already live,
+    // rather than printed into the loading overlay with a control invented for it. That invented
+    // control called the note's re-transcribe, so the reader read a specific promise about
+    // clearing Amazon's stored data, pressed the button carrying its name, and got a page
+    // re-transcription whose only visible surface was painted over. One label had come to mean
+    // three different actions.
+    setFrameHidden(true);
+    $('reader-text').hidden = true;
+    $('reader-over').hidden = true;
+    readerFailed = true;
+    readerFailKind = 'daemon';
+    document.body.classList.add('reader-failing');
+    $('reader-failed').hidden = false;
+    $('reader-failed').focus?.();
+    $('reader-failed-title').textContent = 'The reader is not answering';
+    // The daemon's own sentence, mapped to one that names a move. Its remedies name the control
+    // that is now on screen beside them.
+    $('reader-failed-why').textContent = readerRemedy(d.error);
+    $('reader-failed-detail').hidden = true;
+    $('reader-failed-detail-label').hidden = true;
+    // A signed-out daemon needs the sign-in box, not the reopen: its remedy is the one of the five
+    // that names a control the reopen cannot stand in for.
+    const wantsSignIn = /sign in to amazon in chrome/i.test($('reader-failed-why').textContent);
+    if (wantsSignIn) {
+      readerSignedOut = true;
+      renderSignIn(d);
+      $('reader-failed').hidden = true;
+    } else {
+      setFailAction('retry');
+    }
+    setPagerDisabled(true, 'The reader is not answering, so there is no page to turn.');
     return;
   }
 
   // Amazon opened something that is not the book. Said here, once, rather than left
   // to arrive as a transcription of its error page in the middle of your reading.
   // Everything below this is about a page of a book, and there is not one.
-  if (Boolean(d.bookError) !== readerFailed) {
-    readerFailed = Boolean(d.bookError);
+  // Two different failures share one surface, because from here they are the same situation:
+  // there is no page, turning one cannot work, and the reader needs to be told why rather than
+  // shown a spinner. They are told apart only in the copy, because the remedies differ, and one
+  // of them has no remedy at all.
+  //
+  // The second was measured on 2026-08-22: Amazon's own reader asked for two of its own script
+  // chunks and its CDN answered 404 for both, so the app threw ChunkLoadError and never mounted
+  // the book. Nothing here can fix a file missing from Amazon's servers. Saying so beats an
+  // indefinite spinner, which is what this looked like before and reads as our bug.
+  // Signed out beats every one of them, and it has to be decided here rather than below, because
+  // the failure surface returns early and the sign-in branch is after that return. So a reader
+  // whose Amazon session had quietly expired was shown a failure that says, in plain words, that
+  // their account is fine, and was pointed at a button that discards their device registration.
+  // The panel had established nothing of the kind. It is the defect this loop is about, wearing
+  // its most expensive costume: not a missing explanation, but a confident wrong one attached to
+  // an irreversible control.
+  const vendorBroken = !d.signedOut && !d.bookError
+    && Array.isArray(d.deadScripts) && d.deadScripts.length > 0;
+  // A question standing over the book, still there after the dismissal that should have answered
+  // it. The picture is refused for it, so without this the panel would sit on the last good page
+  // with no explanation while Amazon waits for an answer nobody can see. Item 1.3.
+  const askedSomething = !d.signedOut && !d.bookError && !vendorBroken && Boolean(d.prompt);
+  const failing = !d.signedOut && (Boolean(d.bookError) || vendorBroken || askedSomething);
+  // Keyed on the KIND, not on the boolean. All of this copy was composed inside a test of
+  // `failing !== readerFailed`, so it ran once on the way in and never again while the failure
+  // lasted. A failure that changed kind without a passing frame in between, an outage resolving
+  // into a refused device, or a question appearing over an already-failed reader, kept every
+  // word of the previous one: the title, the paragraph, the evidence and its label, the choice
+  // between the destructive control and the harmless one, and the pager's reason. The reader was
+  // then shown one failure's explanation beside the other failure's button, and "Checked just
+  // now. Still the same." confirmed the stale sentence as current.
+  const failKind = !failing ? '' : (askedSomething ? 'asked' : (vendorBroken ? 'vendor' : 'refused'));
+  if (failing !== readerFailed || failKind !== readerFailKind) {
+    readerFailKind = failKind;
+    readerFailed = failing;
     $('reader-failed').hidden = !readerFailed;
+    document.body.classList.toggle('reader-failing', readerFailed);
     if (readerFailed) {
+      // Focus follows the surface, for the reason recorded on the element itself.
+      $('reader-failed').focus?.();
       $('reader-over').hidden = true;
-      $('reader-frame').hidden = true;
+      setFrameHidden(true);
       $('reader-text').hidden = true;
       readerNote('');
-      $('reader-failed-why').textContent =
-        'Amazon’s reader answered with “Please try to open this book from the library '
-        + 'again”, which it says whether or not the book came from the library. You are '
-        + 'signed in and the book is yours: what Amazon refused was this reader’s '
-        + 'registration as a device. Trying again throws away what Amazon has stored '
-        + 'here, keeps your session, and opens the book fresh.';
+      // A new failure asks the question again rather than arriving mid-answer.
+      $('reader-retry').hidden = false;
+      $('reader-retry-confirm').hidden = true;
+      // Four sentences, the first 26 words long and wrapped around a quotation of
+      // Amazon's own wording, is a paragraph to decode at the moment the book failed to
+      // open. Three short ones, in the order the reader needs them: what happened, whose
+      // fault it is not, and what the button does.
+      if (askedSomething) {
+        // Amazon's own words, shown rather than summarised: it is a question about this reader's
+        // position in this book, and the operator is the only one who can answer it.
+        $('reader-failed-title').textContent = 'Amazon is asking about your place in the book';
+        $('reader-failed-why').textContent =
+          'Amazon put a question over the book and it is still there after Amazon\u2019s own '
+          + 'reader tried to answer it. Nothing is lost. Open the book in the Kindle app or on '
+          + 'read.amazon.com, answer it once there, and it will not be asked again here.';
+        $('reader-failed-detail-label').textContent = 'What Amazon is asking';
+        $('reader-failed-detail-label').hidden = false;
+        $('reader-failed-detail').textContent = d.prompt;
+        $('reader-failed-detail').className = 'failwhat isquote';
+        $('reader-failed-detail').style.whiteSpace = '';
+        $('reader-failed-detail').hidden = false;
+        setFailAction('recheck', { elsewhere: true, asin: d.asin ?? readerAsin });
+        setPagerDisabled(true, 'Amazon is waiting for an answer, so there is no page to turn.');
+      } else if (vendorBroken) {
+        // Named, with the file, because the operator can check this one themselves in a
+        // second and nothing else on this surface lets them. Retrying is offered but not
+        // promised: a missing file on Amazon's CDN comes back when Amazon puts it back.
+        $('reader-failed-title').textContent = 'Amazon\u2019s reader failed to load';
+        // Says what was OBSERVED, and stops there. The previous wording ruled out three local
+        // causes by name, in absolute terms, on the evidence that two script requests did not
+        // come back. That is exactly the signal a
+        // dropped connection, a captive portal, a DNS filter, a proxy or a content blocker
+        // produces on this machine, so on a filtered link the panel told the reader, in absolute
+        // terms, not to look at the one thing that was actually wrong. Naming the files is the
+        // useful half and it survives; the three-way exculpation was a claim this program never
+        // established, which is the whole defect this loop exists to remove, committed while
+        // removing it.
+        $('reader-failed-why').textContent =
+          'Amazon\u2019s own reader asked for these files and they did not come back, so the book '
+          + 'never rendered. That usually means Amazon is having trouble, though anything between '
+          + 'this machine and Amazon can cause it too. This panel keeps checking every couple of '
+          + 'seconds and will clear this by itself once the files load.';
+        // Both are named when both are missing. Showing one of two and saying nothing about the
+        // second invites the reader to check that one file, find it is genuinely gone, and still
+        // not know whether it was the whole story.
+        $('reader-failed-detail-label').textContent = d.deadScripts.length > 1
+          ? `${d.deadScripts.length} files Amazon could not serve`
+          : 'The file Amazon could not serve';
+        $('reader-failed-detail-label').hidden = false;
+        $('reader-failed-detail').textContent = d.deadScripts.join('\n');
+        $('reader-failed-detail').className = 'failwhat isurl';
+        $('reader-failed-detail').style.whiteSpace = 'pre-line';
+        $('reader-failed-detail').hidden = false;
+        setFailAction('recheck');
+        setPagerDisabled(true, 'Amazon\u2019s reader did not load, so there is no page to turn.');
+      } else {
+        $('reader-failed-title').textContent = 'Amazon could not open this book';
+        // Says what was SEEN, and offers the reopen as the thing worth trying rather than as the
+        // known cure. Everything behind the previous sentence was one text match on Amazon's
+        // generic error page, which is also what a revoked licence, a content problem or a region
+        // block draws. The device-registration diagnosis was established once, by hand, on
+        // 2026-08-17, by reading four 403s off the network panel; none of that is available here.
+        // So the arm asserted two exculpations and a diagnosis from a string carrying none of the
+        // three, and attached them to the one irreversible control on the surface. This is the
+        // pattern struck from the vendor arm above, and it stood ten lines below it: fixing the
+        // instance that was reported instead of the pattern is how it survived.
+        $('reader-failed-why').textContent =
+          'Amazon answered with its own error page instead of the book. That often means Amazon '
+          + 'has stopped recognising this reader as a device, which Read it again can clear: it '
+          + 'throws away what Amazon stored here, keeps you signed in, and reopens the book.';
+        $('reader-failed-detail').hidden = true;
+        $('reader-failed-detail-label').hidden = true;
+        $('reader-retry').textContent = 'Read it again';
+        // Here the destructive one IS the answer: it clears what Amazon stored and reopens.
+        setFailAction('retry');
+        // There is no page, so turning one cannot work. Item 1.7 asks for disabled rather than
+        // silently doing nothing.
+        setPagerDisabled(true, 'Amazon would not open this book. Press Read it again.');
+      }
     } else {
       // Back to a real page: everything held about the old one is about an error.
       readerSeq = -1;
       readerTextSeq = -1;
       $('reader-over').hidden = false;
-      readerSay('opening your book', true);
+      readerOpenedAt = Date.now();
+      readerSay(openingLine(), true);
+      // The pager comes back with the page.
+      setPagerDisabled(false, '');
     }
   }
   if (readerFailed) {
     $('reader-page').textContent = '';
+    $('page-now-imm').textContent = '';
     return;
   }
 
@@ -1012,20 +1891,26 @@ function renderReader(d) {
     renderSignIn(d);
     // Turning a page of a sign-in form does nothing, and a button that does nothing
     // when pressed is worse than one that shows it cannot be pressed.
-    for (const id of ['page-prev', 'page-next', 'reader-mode']) {
-      const el = $(id);
-      el.dataset.title ??= el.title;
-      el.disabled = readerSignedOut;
-      el.title = readerSignedOut ? 'Sign in to Amazon first' : el.dataset.title;
-    }
+    setPagerDisabled(readerSignedOut, 'Sign in to Amazon first');
   }
 
   // The page, and how much of the book is already in hand behind it. The second half
-  // is the thing that makes the speed checkable: "2 ready" means the next two turns
-  // cost nothing, and its absence is why one of them did not.
+  // is the thing that makes the speed checkable: the next N turns cost nothing, and its
+  // absence is why one of them did not. It used to read "· 2 ready", a count with no
+  // noun, which left the reader to guess what was ready and whether it mattered.
+  //
+  // Gated on the label, which is now gated on the page having arrived. The shelf is only ever
+  // assigned, never cleared, so the count outlives the failure that made it false: with a wedged
+  // reader the panel printed a page number over a spinner and promised two more turns behind it.
+  // The count is a claim about a page that is on screen, so it goes when the page does.
+  const ahead = d.label && readerShelf?.ahead > 0 ? readerShelf.ahead : 0;
   $('reader-page').textContent = d.signedOut
     ? 'sign in'
-    : (d.label || '') + (readerShelf?.ahead > 0 ? '  ·  ' + readerShelf.ahead + ' ready' : '');
+    : (d.label || '') + (ahead
+      ? '  ·  ' + ahead + (ahead === 1 ? ' page' : ' pages') + ' ready to turn instantly'
+      : '');
+  // The same position, in the immersive pager, where the label is all that fits.
+  $('page-now-imm').textContent = d.signedOut ? 'sign in' : (d.label || '');
 
   if (d.seq && d.seq !== readerSeq) {
     readerSeq = d.seq;
@@ -1036,10 +1921,14 @@ function renderReader(d) {
       // picture, whatever the mode says.
       if (readerMode() === 'image' || readerSignedOut) img.hidden = false;
     };
-    img.src = '/api/reading/frame?s=' + d.seq;
+    setReaderFrame(img, d.seq);
+    // A page exists, so turning it is available again. Enabling was previously reached only by
+    // the transition OUT of a failure, so an open that never failed never re-enabled anything:
+    // it was only ever enabled because it had never been disabled.
+    if (!readerFailed && !readerSignedOut) setPagerDisabled(false, '');
     if (readerMode() === 'text' && !readerSignedOut) loadReaderText();
   } else if (!d.ready && !d.signedOut) {
-    readerSay('opening your book', true);
+    readerSay(openingLine(), true);
   }
 }
 
@@ -1061,7 +1950,7 @@ function renderReader(d) {
 let signinPoll = null;
 
 function signinBox() {
-  return $('book-actions').querySelector('.signin');
+  return $('reader-signin').querySelector('.signin');
 }
 
 function signinSay(text, spin) {
@@ -1071,20 +1960,26 @@ function signinSay(text, spin) {
 }
 
 function renderSignIn(d) {
-  const host = $('book-actions');
+  const host = $('reader-signin');
   if (!readerSignedOut) {
     signinBox()?.remove();
+    host.hidden = true;
+    document.body.classList.remove('reader-failing');
     return;
   }
+  host.hidden = false;
+  // Same reason the failure surface hides them: the hint band and the pager pill paint over this
+  // one's lower edge, and neither can do anything while Amazon is asking for a sign-in.
+  document.body.classList.add('reader-failing');
   if (signinBox()) return;
   const box = document.createElement('div');
   box.className = 'signin';
   box.innerHTML =
-    '<div class="label">Amazon is asking you to sign in</div>'
+    '<h2 class="failtitle">Amazon is asking you to sign in</h2>'
     + '<button class="act primary" id="signin-chrome" type="button" style="width:100%;margin-top:6px">'
     + 'Sign in to Amazon in Chrome<small>password, emailed code, or scan the QR with your phone</small>'
     + '</button>'
-    + '<div class="signin-status mono" style="margin-top:6px;min-height:1.2em"></div>'
+    + '<div class="signin-status mono" role="status" aria-live="polite" style="margin-top:6px;min-height:1.2em"></div>'
     + '<div class="why" style="margin-top:4px">A Chrome window opens on Amazon\'s sign-in page and '
     + 'closes itself as soon as you are in, then your book opens here. Nothing types a password for '
     + 'you and nothing stores one.</div>'
@@ -1094,6 +1989,9 @@ function renderSignIn(d) {
     + 'still signed in to Amazon: the amazon.com cookies it holds are copied across, sealed, on this '
     + 'machine.</div>';
   host.prepend(box);
+  // Focus follows the surface, for the same reason it does on the failure surface: this appears
+  // by covering whatever held focus, which would otherwise drop it to the document body.
+  host.focus?.();
 
   // A sign-in already in flight when this was drawn: the window is open and the
   // person is in it, and a panel that re-rendered in the meantime must pick the
@@ -1119,7 +2017,7 @@ function renderSignIn(d) {
       await fetch('/api/reading/signin', { method: 'POST' });
       watchSignIn();
     } catch {
-      signinSay('the daemon is not answering');
+      signinSay('Interstice is not running in the background. Open a terminal and run interstice start.');
       $('signin-chrome').disabled = false;
       $('carry-session').disabled = false;
     }
@@ -1137,17 +2035,31 @@ function renderSignIn(d) {
         readerSignedOut = false;
         renderSignIn({});
         $('reader-over').hidden = false;
-        readerSay('opening your book', true);
+        readerSay(openingLine(), true);
         return;
       }
-      // It cannot work until that browser has a live session again, so it stops
-      // offering itself rather than staying pressable and doing nothing.
-      $('carry-session').textContent = 'That session has expired';
+      // The OUTCOME goes where every other outcome of this control goes, and the button stays a
+      // button. It used to overwrite its own label with the outcome and stay disabled, so a
+      // control turned into a greyed sentence at 45% opacity, and `renderSignIn` early-returns
+      // while the box exists, so it never came back: a reader who signed into Amazon in their
+      // ordinary browser to fix exactly this could not retry the cheap path without reloading the
+      // panel. A label says what the control does; it is not a status line.
+      // The daemon's own reason is KEPT. It distinguishes six cases and words each one, and this
+      // overwrote all six with the sentence for the last of them, so a reader whose ordinary
+      // Chrome the daemon could not find, or whose cookie store has a different shape, was told
+      // their session had expired and sent to sign in somewhere that would not change the
+      // outcome. The one honest sentence available was fetched, assigned, and thrown away a line
+      // later. The instruction is appended to it rather than substituted for it.
+      signinSay(`${r.reason || 'That session could not be carried.'} Once that is sorted, press `
+        + 'Use the session from your own Chrome instead again.');
     } catch {
-      signinSay('the daemon is not answering');
+      signinSay('Interstice is not running in the background. Open a terminal and run interstice start.');
       $('carry-session').disabled = false;
     } finally {
       $('signin-chrome').disabled = false;
+      // Re-enabled with its sibling. Only one of the two was ever restored here, so the cheap
+      // path was disabled for the life of the panel after a single failed attempt.
+      $('carry-session').disabled = false;
     }
   };
 }
@@ -1171,7 +2083,8 @@ function watchSignIn() {
       readerSignedOut = false;
       renderSignIn({});
       $('reader-over').hidden = false;
-      readerSay('opening your book', true);
+      readerOpenedAt = Date.now();
+      readerSay(openingLine(), true);
       return;
     }
     signinSay(s.reason || 'the sign-in did not finish');
@@ -1190,7 +2103,7 @@ async function readerInput(payload) {
     if (d.shelf) readerShelf = d.shelf;
     if (d.seq && d.seq !== readerSeq) {
       readerSeq = d.seq;
-      $('reader-frame').src = '/api/reading/frame?s=' + d.seq;
+      setReaderFrame($('reader-frame'), d.seq);
     }
     return d;
   } catch {
@@ -1208,6 +2121,24 @@ async function readerInput(payload) {
  * stutter rather than as progress.
  */
 async function turnPage(direction) {
+  // The guard lives HERE, at the one point every path goes through, rather than at each call
+  // site. There are three: the two pager buttons, and the arrow keys, which called this directly
+  // with nothing stopping them. Disabling the buttons therefore never disabled turning at all: a
+  // reader could arrow past a book that had failed to open and watch nothing happen, which is
+  // the silent no-op item 1.7 replaced for the buttons and left standing for the keyboard.
+  if (readerFailed || readerSignedOut) {
+    // Said where it can be SEEN. `readerSay` writes into #reader-status, which lives inside
+    // #reader-over, and that overlay is hidden whenever one of these surfaces is up: the sentence
+    // was being written into a hidden element, so pressing an arrow key during a failure was
+    // silent in exactly the state this guard exists for. The surface that IS on screen already
+    // explains the situation, so the press moves focus to it rather than narrating over it.
+    const shown = !$('reader-failed').hidden
+      ? $('reader-failed')
+      : (!$('reader-signin').hidden ? $('reader-signin') : null);
+    if (shown) shown.focus?.();
+    else readerSay(pagerWhy || 'There is no page to turn yet.');
+    return;
+  }
   const held = readerShelf && (direction === 'next'
     ? readerShelf.ahead > 0
     : readerShelf.pos > 0 && readerShelf.held > 1);
@@ -1227,9 +2158,18 @@ async function turnPage(direction) {
   await loadReaderText();
 }
 
+/**
+ * Where you are in the book, in words a reader has a use for.
+ *
+ * "ASIN B0..." is Amazon's own product identifier. It was here because the panel had it,
+ * not because anybody reading a book needs it, and there is nothing to do with it on this
+ * screen; it is still in /api/health and in this window's own ?asin= query, where an
+ * identifier belongs. "position" got its unit,
+ * which is Kindle's location number rather than a page.
+ */
 function bookLine(b) {
-  return b.percent + '% · position ' + b.position.toLocaleString()
-    + ' of ' + b.end.toLocaleString() + ' · ASIN ' + b.asin;
+  return b.percent + '% read · Kindle location ' + b.position.toLocaleString()
+    + ' of ' + b.end.toLocaleString();
 }
 
 async function loadBook() {
@@ -1248,12 +2188,20 @@ async function loadBook() {
         library_found_no_positions: 'This Kindle app does not record reading positions.',
         // Not "no book". macOS is refusing the read, and saying so is the
         // difference between a fixable state and an inexplicable one.
+        // macOS names the program by the runtime Interstice is built on, so the prompt
+        // says "node" and nothing on screen used to connect that word to Interstice. The
+        // reader is told which name to look for rather than left to recognise it.
         book_data_forbidden: 'macOS will not let Interstice read your Kindle library. '
-          + 'Answer the “node would like to access data from other apps” prompt, or add node '
-          + 'under Privacy & Security → Full Disk Access.',
-      }[d.reason]) || String(d.reason || '');
-      $('book-bar').style.width = '0%';
-      $('reader-frame').hidden = true;
+          + 'macOS asks about this using the name of the program Interstice runs on, which '
+          + 'is “node”. Allow it when macOS asks, or add it yourself under Privacy & '
+          + 'Security, then Full Disk Access.',
+        // One sentence for every reason not named above, rather than the reason code
+        // itself. The code is kept out of the sentence and put where a code belongs.
+      }[d.reason]) || 'Interstice could not find a book to open. Run interstice doctor to see why.';
+      $('book-why').dataset.reason = String(d.reason || '');
+      if (d.reason) console.debug('[interstice] no book, reason:', d.reason);
+      setBar('book-bar', 0);
+      setFrameHidden(true);
       $('reader-over').hidden = false;
       readerSay('nothing to open');
       $('book-actions').innerHTML = '';
@@ -1264,41 +2212,66 @@ async function loadBook() {
     $('book-title').textContent = b.title;
     // A remembered position is never shown as a live one. The book still opens at
     // the right page, because Amazon holds that; this is only about what we know.
+    // `stale` is set for ANY failed read, and only one of those is a permission refusal. Saying
+    // macOS refused when the store was merely busy sends the reader to Full Disk Access to fix a
+    // thing that is not broken, and it was doing exactly that: the busy-store guard is the most
+    // common reason of the three.
+    const refused = String(d.reason || '').startsWith('book_data_forbidden');
     $('book-why').textContent = d.stale
       ? 'Remembered from ' + new Date(d.staleSince).toLocaleString()
-        + '. macOS is refusing the read now, so this position may have moved since.'
+        + (refused
+          ? '. macOS is refusing the read now, so this position may have moved since.'
+          : '. The last read did not come back, so this position may have moved since.')
       : 'Most recently read book you have not finished · ' + bookLine(b);
-    $('book-bar').style.width = (b.percent || 0) + '%';
+    setBar('book-bar', b.percent || 0);
     $('book-actions').innerHTML =
       (d.shelf && d.shelf.length
         ? '<div class="listhead"><span class="label">Or another one you have going</span></div>'
           + '<ul class="todo" id="shelf">' + d.shelf.map((s, i) =>
-              '<li><label data-shelf="' + i + '">' + esc(s.title)
-              + ' <span class="mono">' + (s.percent === null ? '' : s.percent + '%') + '</span></label></li>'
+              '<li><button type="button" class="pick" data-shelf="' + i + '">' + esc(s.title)
+              + ' <span class="mono">' + (s.percent === null ? '' : s.percent + '%') + '</span></button></li>'
             ).join('') + '</ul>'
         : '')
       + '<div class="why">Amazon’s own reader is drawing this, in a browser you never see, at '
-      + 'the page your Kindle synced to. <a href="#" id="read-app">Open the Kindle app instead.</a></div>';
+      + 'the page your Kindle synced to. '
+      + '<button type="button" class="linkish" id="read-app">Open the Kindle app instead.</button></div>';
 
-    for (const el of document.querySelectorAll('#shelf label[data-shelf]')) {
+    for (const el of document.querySelectorAll('#shelf button[data-shelf]')) {
       const s = d.shelf[Number(el.dataset.shelf)];
       el.onclick = () => {
         $('book-title').textContent = s.title;
-        $('book-bar').style.width = (s.percent || 0) + '%';
+        setBar('book-bar', s.percent || 0);
         startReader(s.asin);
       };
     }
-    $('read-app').onclick = async (e) => {
-      e.preventDefault();
+    $('read-app').onclick = async () => {
       say('opening Kindle', true);
-      await fetch('/api/reading/open', { method: 'POST' });
-      say('opened in Kindle');
+      // It said "opened in Kindle" whether or not it opened: the request was fired and the
+      // sentence followed, with nothing between them establishing that the first had worked.
+      try {
+        const r = await fetch('/api/reading/open', { method: 'POST' });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok || d.ok === false) throw new Error(d.detail || d.reason || 'refused');
+        say('opened in Kindle');
+      } catch (err) {
+        say('Kindle did not open: ' + String(err.message || err).slice(0, 60)
+          + '. The book is still open here.');
+      }
     };
 
-    if (readerAsin !== b.asin || !readerTimer) startReader(b.asin);
+    // A book named in the URL wins over the daemon's default, so a reload lands where
+    // you were. An asin that is not on your shelf is ignored rather than opened.
+    const wanted = new URLSearchParams(location.search).get('asin');
+    const linked = wanted ? [b].concat(d.shelf || []).find((x) => x && x.asin === wanted) : null;
+    if (linked && linked.asin !== b.asin) {
+      $('book-title').textContent = linked.title;
+      setBar('book-bar', linked.percent || 0);
+    }
+    const target = linked ? linked.asin : b.asin;
+    if (readerAsin !== target || !readerTimer) startReader(target);
     say('');
   } catch {
-    say('book unavailable');
+    say('Your book did not load. Open the Kindle app once, then press Book again.');
   }
 }
 
@@ -1384,7 +2357,10 @@ async function loadTodos() {
         // Interstice will not start Notes for you. Say that plainly instead of
         // reporting a failure, because nothing failed.
         notes_not_running: 'Notes is closed, and Interstice will not open it. Open Notes once and your lists appear here.',
-      }[d.reason]) || String(d.reason || 'Nothing found.')) + '</div>';
+        // Same rule as the book and the deck: a sentence on screen, the code in the console
+        // and on the element, never the code as the explanation.
+      }[d.reason]) || 'Interstice could not read your notes. Open Notes once, then press To-do again.') + '</div>';
+      if (d.reason) console.debug('[interstice] no to-do lists, reason:', d.reason);
       say('');
       return;
     }
@@ -1401,22 +2377,35 @@ async function loadTodos() {
         // The point of ticking a box is to stop having to look at it.
         moveTodoItem(li, section, box.checked);
         retallyTodos(section);
-        await fetch('/api/todos/toggle', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            key: box.dataset.key,
-            done: box.checked,
-            noteId: box.dataset.note,
-            text: li.querySelector('label').textContent,
-          }),
-        });
+        // The row moves first, which is right: a tick should feel instant. But the write was
+        // then fired and forgotten, so a refusal left the panel showing an item as done that
+        // Notes never recorded, and the next reload silently put it back. Say so instead, and
+        // put the row back where it was, so what is on screen is what was actually stored.
+        try {
+          const r = await fetch('/api/todos/toggle', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              key: box.dataset.key,
+              done: box.checked,
+              noteId: box.dataset.note,
+              text: li.querySelector('label').textContent,
+            }),
+          });
+          if (!r.ok) throw new Error('refused');
+        } catch {
+          box.checked = !box.checked;
+          moveTodoItem(li, section, box.checked);
+          retallyTodos(section);
+          say('That did not save to Notes, so the item is back where it was.');
+        }
         say(box.checked ? 'marked done' : 'reopened');
       });
     }
     say('');
   } catch {
-    host.innerHTML = '<div class="empty">Notes could not be read.</div>';
+    host.innerHTML = '<div class="empty">Interstice could not read Notes. Open Notes once, '
+      + 'then press To-do again.</div>';
     say('');
   }
 }
@@ -1424,20 +2413,89 @@ async function loadTodos() {
 /* ------------------------------------------------------------------ queue --- */
 
 async function loadQueued() {
+  // Before the fetch settles this list was empty markup, which reads exactly like a
+  // queue with nothing in it. Three states: loading, failed, and genuinely empty.
+  if (!$('queued').children.length) {
+    $('queued').innerHTML = '<li><span class="skeleton" style="flex:1 1 auto">'
+      + '<i class="shimmer" style="width:70%"></i><i class="shimmer" style="width:45%"></i>'
+      + '</span></li>';
+  }
   try {
-    const d = await (await fetch('/api/queued')).json();
-    $('queued').innerHTML = (d.queued || []).slice(-6).reverse()
-      .map((q) => '<li><label>' + esc(q.text.slice(0, 140)) + '</label></li>').join('');
-  } catch { /* daemon gone */ }
+    const r = await fetch('/api/queued');
+    if (!r.ok) throw new Error('refused');
+    const d = await r.json();
+    const queued = d.queued || [];
+    // A blank strip under the Save button read as a list that had failed to load.
+    // Every other rung says what nothing looks like; this one says it too.
+    $('queued').innerHTML = queued.length
+      ? queued.slice(-6).reverse()
+          .map((q) => '<li><span>' + esc(q.text.slice(0, 140)) + '</span></li>').join('')
+      : '<li><span class="empty">Nothing queued yet. What you write above waits here '
+        + 'until you want it.</span></li>';
+  } catch {
+    $('queued').innerHTML = '<li><span class="empty">Interstice is not running in the background, so what '
+      + 'you have queued could not be read. Start it with interstice start, then press '
+      + 'Queue again. Nothing was lost.</span></li>';
+  }
+}
+
+/**
+ * The reason a save was refused, under the box that was refused, and the cursor put
+ * back in it. An empty save used to be a silent `return`: the button moved, nothing
+ * changed, and nothing anywhere said why. The footer line is the wrong place for it,
+ * being a banner's distance from the control the person is looking at.
+ */
+// UX-FORM-011. What you have typed and not saved is the only thing in this panel that cannot be
+// recovered: everything else is read from Anki, Amazon or Notes and comes back on reload. The box
+// is a handoff note written between two other tasks, which is exactly the moment a window gets
+// closed by reflex. The browser decides whether to show its own prompt; all this does is say the
+// page has something worth keeping.
+//
+// Cleared rather than compared against a snapshot: savePrompt empties the box on success, so an
+// empty box is a saved box, and a dirty check that tracked the last saved TEXT would also fire
+// after someone typed a note and then deleted it themselves.
+window.addEventListener('beforeunload', (e) => {
+  const box = document.getElementById('box');
+  if (!box || !box.value.trim()) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
+function boxError(text) {
+  const el = $('box-err');
+  el.textContent = text || '';
+  el.hidden = !text;
+  $('box').setAttribute('aria-invalid', text ? 'true' : 'false');
+  if (text) $('box').focus();
 }
 
 async function savePrompt() {
   const text = $('box').value.trim();
-  if (!text) return;
-  await fetch('/api/queued', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ text }),
-  });
+  if (!text) {
+    boxError('Write something first. An empty note has nothing to hand off.');
+    return;
+  }
+  boxError('');
+  // Disabled for the round trip, not before it. The button stayed live while the request was in
+  // flight, so a second press queued the same words twice, and there was nothing on screen saying
+  // the first press had been taken. The label is restored in `finally` so a refusal does not leave
+  // the button dead.
+  const save = $('save');
+  const savedLabel = save ? save.textContent : '';
+  if (save) { save.disabled = true; save.textContent = 'Saving…'; }
+  try {
+    const r = await fetch('/api/queued', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    if (!r.ok) throw new Error('refused');
+  } catch {
+    boxError('That did not save. The daemon did not take it, so nothing was lost: your '
+      + 'words are still in the box.');
+    return;
+  } finally {
+    if (save) { save.disabled = false; save.textContent = savedLabel; }
+  }
   $('box').value = '';
   say('saved');
   loadQueued();
@@ -1474,7 +2532,7 @@ const SAYS = {
 /** What the button does, and what it says while it is doing it. */
 const FIXES = {
   binaural: { label: 'Play', route: '/api/companions/binaural/play', doing: 'starting your track' },
-  pomodoro: { label: 'Start 25:00', route: '/api/companions/pomodoro/start', doing: 'starting a 25 minute timer' },
+  pomodoro: { label: 'Start a full interval', route: '/api/companions/pomodoro/start', doing: 'starting a fresh interval' },
 };
 
 function renderCompanions(d) {
@@ -1519,7 +2577,7 @@ async function runFix(key, button) {
   if (!fix) return;
   button.disabled = true;
   const wasLabel = button.textContent;
-  button.textContent = 'working';
+  button.innerHTML = '<span class="spinner"></span> working';
   say(fix.doing, true);
   try {
     const d = await (await fetch(fix.route, { method: 'POST' })).json();
@@ -1528,10 +2586,23 @@ async function runFix(key, button) {
     if (!d.ok && how) {
       how.innerHTML = esc(d.detail || d.reason || 'that did not work')
         + (d.how && d.how.length ? '<ul>' + d.how.map((h) => '<li>' + esc(h) + '</li>').join('') + '</ul>' : '');
+    } else if (d.ok && d.note && how) {
+      // A fix can succeed and still not do the thing its label promised. "Start a full interval"
+      // resumes the current one when Be Focused has no skip shortcut set, and said so in `note`,
+      // which nothing rendered: the user got eleven minutes back and was told "started".
+      how.innerHTML = esc(d.note);
     }
-    say(d.ok ? (d.playing ? 'playing ' + String(d.playing).slice(0, 40) : 'started') : 'could not do that');
+    // The failure already carries `reason` and `detail` from the daemon, and the row below
+    // renders them. The status line used to replace both with a fixed phrase that named
+    // nothing, so the one line a user reads first was the one line that could not be acted
+    // on. Same source, trimmed to a status line's width.
+    say(
+      d.ok
+        ? (d.playing ? 'playing ' + String(d.playing).slice(0, 40) : 'started')
+        : String(d.detail || d.reason || 'the daemon refused and gave no reason').slice(0, 80)
+    );
   } catch {
-    say('the daemon is not answering');
+    say('Interstice is not running in the background. Open a terminal and run interstice start.');
   } finally {
     button.disabled = false;
     button.textContent = wasLabel;
@@ -1557,6 +2628,8 @@ $('save').addEventListener('click', savePrompt);
 $('box').addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); savePrompt(); }
 });
+// The complaint was about an empty box. Typing answers it, so it goes away then.
+$('box').addEventListener('input', () => { if ($('box').value.trim()) boxError(''); });
 $('companions-recheck').addEventListener('click', async () => {
   say('checking your setup', true);
   companionsHiddenFor = -1;
@@ -1576,19 +2649,86 @@ $('advance').addEventListener('click', async () => {
 // Not a reload, and not a new browser either. What Amazon refused was this profile's
 // registration as a device, and that outlives both; the daemon throws away what
 // Amazon has stored here, keeps the session, and opens the book in a new tab.
-$('reader-retry').addEventListener('click', async () => {
-  const b = $('reader-retry');
+function readerRetryAsk(show) {
+  $('reader-retry').hidden = show;
+  $('reader-retry-confirm').hidden = !show;
+  // "Keep it", not "Discard it and reopen". The confirmation existed because the discard is
+  // irreversible and was one click away; focusing the destructive answer put it one KEY away
+  // instead, so an operator who pressed Enter on Read it again and, mid-thought, pressed Enter
+  // destroyed the registration without reading a word. A confirmation whose default answer is
+  // the destructive one is not a confirmation.
+  (show ? $('reader-retry-no') : $('reader-retry')).focus();
+}
+$('reader-retry').addEventListener('click', () => readerRetryAsk(true));
+// Nothing is cleared and nothing is reopened. The next poll asks the daemon again, and if the
+// answer is the same the surface comes straight back, which is the honest outcome and is why
+// this control does not promise otherwise.
+$('reader-recheck').addEventListener('click', async () => {
+  const b = $('reader-recheck');
   b.disabled = true;
-  b.textContent = 'Reopening';
+  b.innerHTML = '<span class="spinner"></span> Checking';
+  // What the failure was before, so that "nothing changed" can be SAID. `renderReader` only
+  // redraws this surface when the condition transitions, so a check that finds the same answer
+  // repaints nothing at all: the spinner ran, the button came back, and the screen was identical.
+  // A control whose only outcome is invisible is indistinguishable from one that is broken, and
+  // this one is offered precisely in the cases where the answer usually has NOT changed yet.
+  const before = $('reader-failed-why').textContent;
   try {
-    await fetch('/api/reading/retry', { method: 'POST' });
+    await tickReader();
+  } finally {
+    b.disabled = false;
+    b.textContent = 'Check again';
+    if (!$('reader-failed').hidden && $('reader-failed-why').textContent === before) {
+      // Said on the surface itself rather than in the footer line, because the reader is looking
+      // at this overlay and the footer is behind it.
+      $('reader-recheck-said').textContent = 'Checked just now. Still the same.';
+      $('reader-recheck-said').hidden = false;
+    } else {
+      $('reader-recheck-said').hidden = true;
+    }
+  }
+});
+$('reader-retry-no').addEventListener('click', () => readerRetryAsk(false));
+$('reader-retry-yes').addEventListener('click', async () => {
+  const b = $('reader-retry-yes');
+  b.disabled = true;
+  // A frozen word does not say whether the thing is thinking or has died, and this
+  // round trip drives a headless browser through a fresh registration.
+  b.innerHTML = '<span class="spinner"></span> Reopening';
+  say('discarding the old registration and reopening the book', true);
+  // The answer is read. It used to be thrown away: the daemon computes ok, stage, expected,
+  // actual and a reason ending in a remedy, the route serialises all five, and this dropped them
+  // on the floor and then called say('') to clear the line they would have gone on. So the
+  // explanations were true of the daemon and invisible in the product, which is the same defect
+  // as the reader reporting a page it never had, one layer further out.
+  let outcome = null;
+  try {
+    const r = await fetch('/api/reading/retry', { method: 'POST' });
+    outcome = await r.json().catch(() => null);
   } catch {
-    /* the next tick reports whatever actually happened */
+    outcome = { ok: false, reason: 'Interstice is not running in the background. '
+      + 'Open a terminal and run interstice start.' };
   }
   readerSeq = -1;
   readerTextSeq = -1;
   b.disabled = false;
-  b.textContent = 'Try again';
+  b.textContent = 'Discard it and reopen';
+  readerRetryAsk(false);
+  if (outcome && outcome.ok === false) {
+    // A refused retry leaves the failure surface up and says why, rather than clearing the line
+    // and returning to "opening your book" over a spinner, which is what it did before and which
+    // reads as the retry having worked.
+    const why = String(outcome.reason || 'The book did not come back.');
+    $('reader-failed-why').textContent = why;
+    $('reader-failed').hidden = false;
+    readerFailed = true;
+    setPagerDisabled(true, 'Amazon would not open this book. Press Read it again.');
+    // Trimmed at a word, with an ellipsis, because a sentence cut at exactly 80 characters ends
+  // mid-word and reads as something broken rather than as something shortened.
+  say(shorten(why, 80));
+  } else {
+    say('');
+  }
   if (readerTimer) tickReader();
 });
 $('page-next').addEventListener('click', () => turnPage('next'));
@@ -1599,7 +2739,7 @@ $('read-again').addEventListener('click', () => {
   // back the reading it already has. The usual reason a page reads badly is a
   // picture taken while one of Amazon's dialogs was still on top of it.
   readerNote('');
-  $('reader-frame').hidden = readerMode() === 'text';
+  setFrameHidden(readerMode() === 'text');
   loadReaderText({ fresh: true });
 });
 
@@ -1610,14 +2750,25 @@ $('read-again').addEventListener('click', () => {
  * this image happens to be drawn at, so a footnote is still a footnote after the
  * window has been resized.
  */
-$('reader-frame').addEventListener('click', (e) => {
-  const r = e.currentTarget.getBoundingClientRect();
+function readerPress(fx, fy) {
+  const r = $('reader-frame').getBoundingClientRect();
   if (!readerViewport.width || !r.width) return;
-  readerInput({
-    kind: 'click',
-    x: ((e.clientX - r.left) / r.width) * readerViewport.width,
-    y: ((e.clientY - r.top) / r.height) * readerViewport.height,
-  });
+  readerInput({ kind: 'click', x: fx * readerViewport.width, y: fy * readerViewport.height });
+}
+
+$('reader-tap').addEventListener('click', (e) => {
+  // A click synthesised by Enter or Space carries no pointer position: `detail` is 0 and the
+  // coordinates are 0, which would press the top left corner of the page. A keyboard cannot aim,
+  // so it presses the middle, which is what a Kindle's own centre tap does and what the previous
+  // hand-written keydown handler did before a real button made it unnecessary. Turning pages is
+  // not this key's job; the arrows already do that from anywhere in the rung.
+  if (e.detail === 0) {
+    readerPress(0.5, 0.5);
+    return;
+  }
+  const r = $('reader-frame').getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  readerPress((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
 });
 
 // The panel resizes with the window, and the page was laid out for the old box.
@@ -1632,7 +2783,14 @@ document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
 
   if (currentView === 'reading') {
+    // The star calendar covers the page and shows no position anywhere, so a turn under it
+    // moved the reader with nothing on screen saying so. The calendar keeps its own keys.
+    // The reading menu is deliberately not guarded: arrows have to keep
+    // working with it open, and it can, because the menu is where #reader-page is displaced
+    // to, so the position change stays visible while it turns.
+    const calOpen = Boolean(document.querySelector('#view-reading .star-cal-overlay.open'));
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      if (calOpen) return;
       e.preventDefault();
       turnPage(e.key === 'ArrowLeft' ? 'prev' : 'next');
       return;
@@ -1658,11 +2816,34 @@ document.addEventListener('keydown', (e) => {
   if (['1', '2', '3', '4'].includes(e.key) && !$('ease').hidden) answer(Number(e.key));
 });
 
-/**
+/*
  * The panel tells the daemon it is on screen, and the daemon answers with the rung
  * that should be showing. One poll does both, which is why a second window never
  * gets opened on top of this one.
  */
+// The reader frame is the one thing the page loads that `fetch` does not reach: an <img src> is
+// issued by the browser itself, so the auth wrapper in the injected bootstrap never sees it and
+// the request arrives with no token. That is a 401 and a blank book. Fetching the bytes and
+// handing the element an object URL keeps the token on the request without exempting the route,
+// which would have made the page image the one unauthenticated thing the daemon serves.
+let _frameUrl = null;
+async function setReaderFrame(img, seq) {
+  if (!img) return;
+  try {
+    const r = await fetch('/api/reading/frame?s=' + seq);
+    if (!r.ok) return;
+    const url = URL.createObjectURL(await r.blob());
+    // Revoke the previous one only after the new src is set, or a fast page turn revokes a blob
+    // the element is still painting.
+    const previous = _frameUrl;
+    _frameUrl = url;
+    img.src = url;
+    if (previous) setTimeout(() => URL.revokeObjectURL(previous), 1000);
+  } catch {
+    /* the reader will be reopened by the next tick */
+  }
+}
+
 async function beat() {
   try {
     const d = await (await fetch('/api/panel/ping', { method: 'POST' })).json();
@@ -1678,7 +2859,38 @@ async function beat() {
       // it was dismissed in.
       loadCompanions({ force: true });
     }
+    applyFocusBeat(d);
   } catch { /* daemon restarting */ }
+}
+
+// The daemon is the only thing that knows a block forfeited or a prompt is still in flight, so
+// the panel learns both from the heartbeat and renders them through the same surfaces the tests
+// drive. `_seenForfeitAt` keeps the banner from re-raising itself every 1500ms for one forfeit.
+let _seenForfeitAt = null;
+let _seenDeliveryAt = null;
+function applyFocusBeat(d) {
+  const f = d.focus;
+  if (f && window.__starCalendar) window.__starCalendar.setBlockMinutes(f.blockMinutes);
+  if (f && f.lastForfeit && f.lastForfeit.at !== _seenForfeitAt) {
+    _seenForfeitAt = f.lastForfeit.at;
+    window.__focus.forfeit(f.lastForfeit);
+  }
+  const lat = d.latency;
+  if (!lat) return;
+  // Feed the existing latency surface rather than a second one: `window.__latency` already owns
+  // the chip's format, its ticking timer and the arrival note, and its own comment says a real
+  // event calls it while a test calls it directly. This is that real event finally arriving.
+  const live = new Set();
+  for (const w of lat.waiting || []) {
+    live.add(w.sessionId);
+    if (!window.__latency.waiting(w.sessionId)) window.__latency.submit(w.sessionId, Date.now() - w.elapsedMs);
+  }
+  if (lat.lastDelivery && lat.lastDelivery.arrivedAt !== _seenDeliveryAt) {
+    _seenDeliveryAt = lat.lastDelivery.arrivedAt;
+    // `complete` no-ops on a session it never saw, so a delivery whose submit predates this
+    // window raises nothing rather than a phantom notification.
+    window.__latency.complete(lat.lastDelivery.sessionId);
+  }
 }
 
 setInterval(beat, 1500);
@@ -1686,14 +2898,11 @@ setInterval(loadCompanions, 30000);
 
 window.addEventListener('load', () => {
   beat();
-  $('reader-mode').textContent = readerMode() === 'text' ? 'Page' : 'Text';
+  $('reader-mode').textContent = readerMode() === 'text' ? 'See the real page' : 'Back to the text';
   // ------------------------------------------------------------- immersive menu ---
-  // One menu affordance holds everything the immersive page displaced. Opening it moves the
-  // displaced reading-view controls into the overlay; closing it puts them back, so nothing is
-  // duplicated and every displaced control is reachable from exactly one place.
   // Everything the immersive page displaces, moved into the one menu when it opens and restored to
   // its exact original position when it closes, so nothing is duplicated and nothing is lost when
-  // the reading view is left. IDs cover every element enumerated in the 2A.1 inventory.
+  // the reading view is left. The ids below cover every element the reading view displaces.
   const READER_MENU_DISPLACED = ['rungs', 'book-title-wrap', 'book-bar-wrap', 'reader-pager', 'reader-note', 'book-actions', 'companions', 'footer-bar'];
   let readerMenuLastFocus = null;
   const readerMenuHomes = new Map(); // el -> { parent, next }
@@ -1723,6 +2932,13 @@ window.addEventListener('load', () => {
     document.getElementById('reader-menu').setAttribute('aria-expanded', 'false');
     (readerMenuLastFocus || document.getElementById('reader-menu')).focus();
   }
+  // Published so `setView` can reach it. Both menu functions are declared inside this load
+  // callback, so `setView`'s own `typeof closeReaderMenu === 'function'` guard was never true:
+  // leaving the reading view with the menu open left all eight displaced elements parked inside
+  // `#reader-menu-slot`, which the departing view then hid, taking the rung ladder and the footer
+  // with it. Pressing a rung button from inside the menu is the ordinary way to hit that, and a
+  // delivery arriving does it with no click at all, because `beat()` calls `setView` too.
+  window.__closeReaderMenu = closeReaderMenu;
   document.getElementById('reader-menu')?.addEventListener('click', openReaderMenu);
   document.getElementById('reader-menu-close')?.addEventListener('click', closeReaderMenu);
   document.getElementById('reader-menu-overlay')?.addEventListener('keydown', (e) => {
@@ -1743,17 +2959,35 @@ window.addEventListener('load', () => {
   // ------------------------------------------------------------- prompt latency ---
   const _lat = new Map(); // sessionId -> submittedAtMs
   let _latTimer = null;
-  function _fmtElapsed(ms) {
+  function _clock(ms) {
     const s = Math.floor(ms / 1000); const m = Math.floor(s / 60);
-    return m > 0 ? `waited ${m}:${String(s % 60).padStart(2, '0')}` : `waited 0:${String(s).padStart(2, '0')}`;
+    return `${m}:${String(s % 60).padStart(2, '0')}`;
+  }
+  // "waited 2:14" named no waiter. The subject is the thing the reader is actually
+  // wondering about, and it is the only reason this window is open.
+  function _fmtElapsed(ms) { return `your agent: ${_clock(ms)}`; }
+  // The same fact, in the sentence under the header, where it is on the three non-reading rungs; on the book the latency chip carries it. This is the question a reader arrives holding.
+  const WHY_IDLE = 'Interstice opens this while your agent works. '
+    + 'Each rung above is something to do until it answers.';
+  function _renderWhyOpen(waitingMs) {
+    const el = document.getElementById('why-open');
+    if (!el) return;
+    if (waitingMs === null) { el.textContent = WHY_IDLE; return; }
+    el.innerHTML = 'Your agent has been working <span class="elapsed">' + _clock(waitingMs) + '</span>. '
+      + 'Each rung above is something to do until it answers.';
   }
   function _renderLatency(nowMs) {
     const chip = document.getElementById('latency-chip');
-    if (!chip) return;
-    if (_lat.size === 0) { chip.classList.remove('show'); chip.textContent = ''; return; }
+    if (_lat.size === 0) {
+      _renderWhyOpen(null);
+      if (chip) { chip.classList.remove('show'); chip.textContent = ''; }
+      return;
+    }
     // Show the longest-waiting in-flight prompt; the concurrent map keeps them distinct.
     let oldest = Infinity;
     for (const t of _lat.values()) oldest = Math.min(oldest, t);
+    _renderWhyOpen(nowMs - oldest);
+    if (!chip) return;
     chip.textContent = _fmtElapsed(nowMs - oldest);
     chip.classList.add('show');
   }
@@ -1761,16 +2995,16 @@ window.addEventListener('load', () => {
     if (_latTimer) return;
     _latTimer = setInterval(() => _renderLatency(Date.now()), 1000);
   }
-  // The public, injectable surface. A real submit/completion event, from either surface (5.5), calls
+  // The public, injectable surface. A real submit/completion event, from either surface, calls
   // these; a test calls them directly. `nowMs` is optional so tests can control time.
   window.__latency = {
     submit(sessionId, nowMs = Date.now()) { _lat.set(sessionId, nowMs); _renderLatency(nowMs); _ensureTimer(); },
     complete(sessionId, nowMs = Date.now()) {
       if (!_lat.has(sessionId)) return;               // no phantom notification
       _lat.delete(sessionId);
-      _renderLatency(nowMs);                            // clears the chip when none remain (5.3)
+      _renderLatency(nowMs);                            // clears the chip when none remain
       const note = document.getElementById('arrival-note');
-      if (note) {                                      // the distinct arrival notification (5.4)
+      if (note) {                                      // the distinct arrival notification
         note.classList.add('show');
         setTimeout(() => note.classList.remove('show'), 2500);
       }
@@ -1779,7 +3013,7 @@ window.addEventListener('load', () => {
     waiting: (sessionId) => _lat.has(sessionId),
   };
 
-  // ------------------------------------------------------------- forfeit legibility (4.6) ---
+  // ------------------------------------------------------------- forfeit legibility ---
   // A lost block is never silent. The forfeit record already carries {cause, at, elapsedMs}
   // (lib/focus/blocks.js); this surfaces both the cause and the wall-clock time it happened.
   function _wallClock(iso) {
@@ -1789,7 +3023,7 @@ window.addEventListener('load', () => {
     return m ? `${m[1]}:${m[2]}` : String(iso);
   }
   const _causeWords = { app: 'a blacklisted app came to the front', lock: 'the screen locked',
-    video: 'non-whitelisted video played', manual: 'you ended the block' };
+    video: 'non-whitelisted video played' };
   window.__focus = {
     // A real forfeit event calls this; a test calls it directly with a blockForfeited record.
     forfeit(record) {
@@ -1799,45 +3033,123 @@ window.addEventListener('load', () => {
       const words = _causeWords[cause] || cause;
       el.innerHTML = '<button class="fn-dismiss" type="button" aria-label="Dismiss">&times;</button>'
         + `Block forfeited at <span class="fn-when">${_wallClock(record.at)}</span>: `
-        + `<span class="fn-cause" data-cause="${cause}">${words}</span>.`;
+        + `<span class="fn-cause" data-cause="${cause}">${words}</span>. `
+        // The minutes lost are the whole reason this stings, and the record already carries them.
+        // Naming what happens next matters as much: without it the banner reads as a punishment
+        // rather than a status, and a reader who thinks the day is spoiled stops reading.
+        + `<span class="fn-lost">${Math.round((record.elapsedMs || 0) / 60000)} minutes lost.</span> `
+        + `A fresh block starts on the next clear check.`;
       el.classList.add('show');
       el.querySelector('.fn-dismiss').onclick = () => el.classList.remove('show');
     },
   };
 
-  // ------------------------------------------------------------- star calendar (3.8) ---
-  // Day and month views behind the Phase 2 menu. Every star reveals the wall-clock start and end
+  // ------------------------------------------------------------- star calendar ---
+  // Day and month views behind the reading menu. Every star reveals the wall-clock start and end
   // of the block that earned it. Data is real: production loads it from /api/stars; a test injects
-  // it via render(). Nothing is stubbed (3.9) — an empty history renders an honest empty calendar.
+  // it via render(). Nothing is stubbed: an empty history renders an honest empty calendar.
   const _cal = { view: 'month', key: null, stars: [] };
   function _openStarCal() {
     document.getElementById('star-cal-overlay').classList.add('open');
     document.getElementById('cal-close').focus();
-    // If nothing has been rendered yet, try the live surface; fall back to an empty month.
-    if (_cal.key === null) _loadStarCal(_thisMonth());
+    // Always re-ask, and always open on the month that contains today. Loading only when nothing
+    // had been rendered yet meant a star earned during the session stayed invisible until the
+    // panel reloaded. Deriving the month from `_cal.key` instead is wrong twice over: in day view
+    // that key is a full date, which the server rejects as `bad_date`, and in month view it is
+    // wherever the last session happened to page to, not where the reader is now.
+    _loadStarCal(_today().slice(0, 7));
   }
   function _closeStarCal() {
     document.getElementById('star-cal-overlay').classList.remove('open');
-    document.getElementById('reader-menu')?.focus();
+    // Back to the button that opened it, not to the menu trigger two layers out.
+    (document.getElementById('open-star-cal') || document.getElementById('reader-menu'))?.focus();
+  }
+  function _today() {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
   }
   function _thisMonth() {
-    // Derived from the newest star if present, else left null so callers can pass one in.
+    // Derived from the newest star if present, then from whatever is already on screen, and
+    // finally from the actual calendar. Returning null here was a false zero: the first open
+    // short-circuited before any fetch and asserted "no stars earned yet" without ever asking.
     if (_cal.stars.length) return _cal.stars[_cal.stars.length - 1].day.slice(0, 7);
-    return _cal.key || null;
+    return _cal.key || _today().slice(0, 7);
   }
-  async function _loadStarCal(yyyyMM) {
+  // `showDay` steps day view into a day of another month: the stars of the month it belongs to
+  // have to be loaded before that day can be rendered, or the day reads empty when it is not.
+  // A month has three states, not two: loaded, in flight, and never answered. Sending an
+  // unreachable route to the empty branch printed "No stars earned this month yet.", which is a
+  // claim about your history made from a request that was never answered.
+  function _calLoading(yyyyMM) {
+    document.getElementById('cal-title').textContent = `Stars in ${yyyyMM}`;
+    document.getElementById('cal-count').innerHTML = '<span class="spinner"></span> reading your stars';
+    document.getElementById('cal-reveal').hidden = true;
+    let cells = '';
+    for (let i = 0; i < 35; i += 1) {
+      cells += '<div class="cal-cell"><i class="shimmer" style="display:block;height:100%;min-height:34px"></i></div>';
+    }
+    document.getElementById('cal-body').innerHTML = '<div class="cal-grid">' + cells + '</div>';
+  }
+  function _calFailed(yyyyMM, showDay) {
+    _cal.view = showDay ? 'day' : 'month';
+    _cal.key = showDay || yyyyMM;
+    _cal.stars = [];
+    document.getElementById('cal-title').textContent = showDay ? `Stars on ${showDay}` : `Stars in ${yyyyMM}`;
+    document.getElementById('cal-count').textContent = '';
+    document.getElementById('cal-reveal').hidden = true;
+    document.getElementById('cal-prev').disabled = false;
+    document.getElementById('cal-next').disabled = false;
+    const body = document.getElementById('cal-body');
+    body.innerHTML = '<div class="cal-empty-copy" id="cal-failed">Your stars could not be read. '
+      + 'This is not an empty month, it is a question that went unanswered. If Interstice is '
+      + 'not running, start it with interstice start, then press Try again.</div>';
+    const b = document.createElement('button');
+    b.className = 'act'; b.type = 'button'; b.id = 'cal-retry'; b.textContent = 'Try again';
+    b.onclick = () => _loadStarCal(yyyyMM, showDay);
+    body.appendChild(b);
+  }
+  async function _loadStarCal(yyyyMM, showDay = null) {
     if (!yyyyMM) { _renderStarCal('month', null, []); return; }
+    _calLoading(yyyyMM);
     try {
       const r = await fetch(`/api/stars/month?month=${yyyyMM}`);
+      if (!r.ok) throw new Error('http ' + r.status);
       const body = await r.json();
-      _renderStarCal('month', yyyyMM, Array.isArray(body.stars) ? body.stars : []);
-    } catch { _renderStarCal('month', yyyyMM, []); } // offline/file:// — honest empty, never stubbed
+      // A 200 with no list in it is still a month nobody answered for. Coercing a missing
+      // `stars` to [] was the last route by which an unmeasured month reached the grid
+      // looking exactly like a measured one.
+      if (!Array.isArray(body.stars)) throw new Error('no star list in the answer');
+      const stars = body.stars;
+      if (showDay) _renderStarCal('day', showDay, stars); else _renderStarCal('month', yyyyMM, stars);
+    } catch {
+      _calFailed(yyyyMM, showDay);
+    }
   }
   function _shiftMonth(yyyyMM, delta) {
     let [y, m] = yyyyMM.split('-').map(Number);
     m += delta; if (m < 1) { m = 12; y -= 1; } if (m > 12) { m = 1; y += 1; }
     return `${y}-${String(m).padStart(2, '0')}`;
   }
+  function _shiftDay(yyyyMMdd, delta) {
+    const [y, m, d] = String(yyyyMMdd).split('-').map(Number);
+    const t = new Date(Date.UTC(y, m - 1, d + delta));
+    return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
+  }
+  // The block length is configuration, so the copy asks the daemon for it rather than stating a
+  // number. `focus.blockMinutes` rides the heartbeat; until the first beat lands the copy stays
+  // true by naming no length at all.
+  let _blockMinutes = null;
+  function _blockPhrase() {
+    return Number.isFinite(_blockMinutes) ? `a ${_blockMinutes}-minute block` : 'a focus block';
+  }
+  window.__starCalendar = window.__starCalendar || {};
+  window.__starCalendar.setBlockMinutes = (m) => {
+    if (!Number.isFinite(m)) return;
+    _blockMinutes = m;
+    const legend = document.getElementById('cal-legend-block');
+    if (legend) legend.textContent = `an earned ${m}-minute block`;
+  };
+
   function _reveal(star) {
     const r = document.getElementById('cal-reveal');
     r.hidden = false;
@@ -1846,10 +3158,19 @@ window.addEventListener('load', () => {
   }
   function _renderStarCal(view, key, stars) {
     _cal.view = view; _cal.key = key; _cal.stars = stars.slice();
-    document.getElementById('cal-view-toggle').textContent = view === 'month' ? 'Day view' : 'Month view';
+    document.getElementById('cal-view-toggle').textContent = view === 'month' ? 'Switch to day view' : 'Switch to month view';
     const title = document.getElementById('cal-title');
+    const count = document.getElementById('cal-count');
     const body = document.getElementById('cal-body');
     document.getElementById('cal-reveal').hidden = true;
+    // The step buttons step whatever is on screen, and say which.
+    document.getElementById('cal-prev').setAttribute('aria-label', view === 'month' ? 'Previous month' : 'Previous day');
+    document.getElementById('cal-next').setAttribute('aria-label', view === 'month' ? 'Next month' : 'Next day');
+    // With no key there is no month to step from, and `_step` returned in silence: two
+    // arrows that looked live and did nothing, forever. Said in the control itself.
+    document.getElementById('cal-prev').disabled = !key;
+    document.getElementById('cal-next').disabled = !key;
+    const stated = (n) => (n === 1 ? '1 star' : `${n} stars`);
     const starsFor = (day) => stars.filter((s) => s.day === day);
     function starButton(star, idx) {
       const b = document.createElement('button');
@@ -1864,6 +3185,7 @@ window.addEventListener('load', () => {
       title.textContent = `Stars on ${key}`;
       body.innerHTML = '';
       const list = starsFor(key);
+      count.textContent = stated(list.length);
       if (!list.length) { body.innerHTML = '<div class="cal-empty-copy">No stars earned this day yet.</div>'; return; }
       const wrap = document.createElement('div'); wrap.className = 'cal-cell'; wrap.style.minHeight = 'auto';
       list.forEach((st, i) => wrap.appendChild(starButton(st, i)));
@@ -1872,8 +3194,9 @@ window.addEventListener('load', () => {
     }
     // month view
     title.textContent = `Stars in ${key || '(no month)'}`;
+    count.textContent = key ? stated(stars.length) : '';
     body.innerHTML = '';
-    if (!key) { body.innerHTML = '<div class="cal-empty-copy">No stars earned yet. Complete a 25-minute block to earn your first.</div>'; return; }
+    if (!key) { body.innerHTML = `<div class="cal-empty-copy">No stars earned yet. Complete ${_blockPhrase()} of unbroken focus to earn your first.</div>`; return; }
     const [y, mo] = key.split('-').map(Number);
     const grid = document.createElement('div'); grid.className = 'cal-grid';
     ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach((d) => { const c = document.createElement('div'); c.className = 'cal-dow'; c.textContent = d; grid.appendChild(c); });
@@ -1893,22 +3216,53 @@ window.addEventListener('load', () => {
   }
   document.getElementById('open-star-cal')?.addEventListener('click', _openStarCal);
   document.getElementById('cal-close')?.addEventListener('click', _closeStarCal);
-  document.getElementById('star-cal-overlay')?.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); _closeStarCal(); } });
-  document.getElementById('cal-view-toggle')?.addEventListener('click', () => {
-    if (_cal.view === 'month') { const day = _cal.stars.length ? _cal.stars[_cal.stars.length - 1].day : `${_cal.key || _thisMonth()}-01`; _renderStarCal('day', day, _cal.stars); }
-    else { _renderStarCal('month', (_cal.key || '').slice(0, 7) || _thisMonth(), _cal.stars); }
+  document.getElementById('star-cal-overlay')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); _closeStarCal(); }
+    if (e.key === 'Tab') {
+      // Trap focus within the calendar while open, the same trap the reading menu has: a modal
+      // that Tab walks out of leaves the keyboard on controls nobody can see.
+      const focusables = document.getElementById('star-cal-overlay').querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])');
+      if (!focusables.length) return;
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
   });
-  document.getElementById('cal-prev')?.addEventListener('click', () => { if (_cal.view === 'month' && _cal.key) _renderStarCal('month', _shiftMonth(_cal.key, -1), _cal.stars); });
-  document.getElementById('cal-next')?.addEventListener('click', () => { if (_cal.view === 'month' && _cal.key) _renderStarCal('month', _shiftMonth(_cal.key, 1), _cal.stars); });
+  document.getElementById('cal-view-toggle')?.addEventListener('click', () => {
+    // Day view opens on today when today is in the month on screen, not on the newest star: the
+    // question the day view answers is "did today happen yet".
+    if (_cal.view === 'month') {
+      const month = _cal.key || _thisMonth() || _today().slice(0, 7);
+      const day = _today().slice(0, 7) === month ? _today() : `${month}-01`;
+      _renderStarCal('day', day, _cal.stars);
+    } else { _renderStarCal('month', (_cal.key || '').slice(0, 7) || _thisMonth(), _cal.stars); }
+  });
+  // Stepping loads the month it steps to. Re-rendering the month already in hand made every other
+  // month read "No stars earned this month yet." whatever it actually held.
+  function _step(delta) {
+    if (!_cal.key) return;
+    if (_cal.view === 'month') { _loadStarCal(_shiftMonth(_cal.key, delta)); return; }
+    const day = _shiftDay(_cal.key, delta);
+    if (day.slice(0, 7) === _cal.key.slice(0, 7)) _renderStarCal('day', day, _cal.stars);
+    else _loadStarCal(day.slice(0, 7), day);
+  }
+  document.getElementById('cal-prev')?.addEventListener('click', () => _step(-1));
+  document.getElementById('cal-next')?.addEventListener('click', () => _step(1));
   // Injectable surface: production wires _loadStarCal to the live routes; a test drives render()
   // directly with seeded stars so the calendar is exercised without a running server.
+  // Published for the same reason as __closeReaderMenu: `setView` must be able to shut this
+  // overlay when the reading view goes away, and it is declared out of that scope.
+  window.__closeStarCal = _closeStarCal;
   window.__stars = {
     render: (view, key, stars) => _renderStarCal(view, key, stars),
     open: _openStarCal,
     load: _loadStarCal,
   };
 
-  setView('flashcards');
+  // The rung named in the URL, when it is one that exists. An unknown or absent value falls back
+  // to cards, which is what this did unconditionally before.
+  const wanted = new URLSearchParams(window.location.search).get('view');
+  setView(Object.prototype.hasOwnProperty.call(LOADERS, wanted) ? wanted : 'flashcards');
   loadCompanions();
 });
 </script>

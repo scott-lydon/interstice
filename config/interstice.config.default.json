@@ -109,6 +109,7 @@
       "*.udemy.com",
       "*.udemycdn.com"
     ],
-    "videoBreakAfterMs": 4000
+    "videoBreakAfterMs": 4000,
+    "videoBrowsers": []
   }
 }

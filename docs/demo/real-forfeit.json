@@ -1,0 +1,8 @@
+{
+  "cause": "video",
+  "at": "2026-08-20T07:51:31-07:00",
+  "detail": {
+    "host": "localhost"
+  },
+  "elapsedMs": 1200000
+}

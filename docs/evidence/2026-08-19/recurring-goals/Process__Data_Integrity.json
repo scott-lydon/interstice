@@ -1,0 +1,85 @@
+{
+  "sheet": "Process__Data_Integrity",
+  "targets": [
+    "akin-server-side/Sources/App/Models/Migrations",
+    "akin-server-side/Sources/App/Subscriptions",
+    "akin-server-side/Sources/App/Matchmaking",
+    "akin-server-side/Sources/App/AuthorVisibility",
+    "akin-server-side/Sources/App/Models/Questionnaire.swift"
+  ],
+  "row_count": 10,
+  "entry_count": 10,
+  "run_dir": "/Users/scottlydon/.claude/projects/-Users-scottlydon/5076d517-09dd-4e8d-8aab-1d115d31b9c3/subagents/workflows/wf_08982b0c-3d0",
+  "counts": {
+    "pass": 4,
+    "finding": 2,
+    "not_applicable": 4,
+    "unreturned": 0
+  },
+  "entries": [
+    {
+      "row_id": "DI-001",
+      "status": "pass",
+      "detail": "Ran `rg -n 'lorem|foo|bar|dummy|placeholder|mock|stub|sample_|demo_|TODO' -i` and a second pass for `example.com|John Doe|Jane Doe|hardcoded|fixture|test@|123-456|fake` over all five targets (Migrations, Subscriptions, Matchmaking, AuthorVisibility, Questionnaire.swift). Only hits were the word \"placeholder\" in comments/filenames: Questionnaire.swift:69 (comment about avoiding a placeholder), SubscriptionError.swift:13 (unrelated \"bare\" comment, matched on \"bar\"), and Migrations/AddPlaceholderSettingsToUsers.swift (name + comments at lines 2,5,14) plus its reference in Migrations/[Migrations].swift:79-80. I read AddPlaceholderSettingsToUsers.swift in full: it is a real migration adding real backing columns (allowsCourtesyCall, silentPushLocationUpdatesEnabled, deviceDescription, meetingSchedule) to replace four routes that previously returned a hardcoded `success: true` without persisting anything \u2014 i.e. this work product removes stub behavior rather than introducing it. No lorem ipsum, no fixture files wired into a user-facing path, no fake emails/names, no TODO strings in user-visible fields anywhere in the five targets. I could not independently confirm from these files alone that every result \"presented to the user this session came from a run that actually executed\" (that requires the session transcript, not these source files); for that part I can only say the target file set shows no injected mock/stub data.",
+      "rule_title": "Never use mock, stub, fake, or reused data"
+    },
+    {
+      "row_id": "DI-002",
+      "status": "pass",
+      "detail": "Rule DI-002 requires stopping and disclosing when a real result is unavailable, rather than substituting fake/old data or papering over gaps; SUBJECT is 'the work product produced this session', so per task instructions I audited it against the only written record available, /Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md (356 lines, read in full). Also ran a targeted grep for assum/infer/presum/cached/stale/carried-over language to catch undisclosed substitutions. Every instance found is the document explicitly disclosing a substitution or a blocked gap rather than hiding one: the 'What blocks Phase 1' section (lines 45-56) stops and states a real Amazon reader session is unavailable rather than faking one; item 3.3 (lines 345-356) leaves an item unticked and explains a branch does not exist rather than cutting a cosmetic one after the fact; item 9.4 and Z.4 (lines 105-111, 250-253) disclose a method substitution (reading files directly instead of spawning an agent) by name; item 3.2 (lines 340-343) discloses that the entitlements check ran against a freshly migrated database rather than $DATABASE_URL because none is exported, and explains why that still answers the question; item 4.13 (lines 322-330) records a harness finding where a suite silently reported success on 0 executed tests, and states the fix used to make the following run real rather than accepting the false pass. No line in the file presents an inferred, filled-in, or old result as if it were a fresh success without disclosure. This is the only account of the session available to me per the task's own instruction, so I cannot independently verify mtimes of the artifacts it references, but on the written record itself the rule holds.",
+      "rule_title": "Stop and say so when a real result is unavailable"
+    },
+    {
+      "row_id": "DI-003",
+      "status": "pass",
+      "detail": "All artifacts in the session notes (test runs, verification outputs, log results, and metrics shown to the user) are either dated 2026-08-20 or 2026-08-21 (after session start on 2026-08-19), or properly disclosed as previous/failed attempts. Method substitutions (sections 9.4, Z.4) are explicitly disclosed. References to previous work are transparently attributed to specific sources. No cached, replayed, reconstructed, or stale output is presented without disclosure.",
+      "rule_title": "Disclose replayed, cached, or reconstructed output up front and unprompted"
+    },
+    {
+      "row_id": "DI-004",
+      "status": "pass",
+      "detail": "Ran the deterministic pattern `rg -n -i '(cost|dollars|latency|tokens|count|score|percent|duration|total|spent|rating)\\s*[:=]\\s*(0|0\\.0|-1|999)'` against all five targets (Migrations dir, Subscriptions, Matchmaking, AuthorVisibility, Questionnaire.swift). One hit: /Users/scottlydon/Developer/akin-server-side/Sources/App/Subscriptions/NotificationDispatcher.swift:58 `var recipientCount = -1`. Read the full function (lines 1-97): the -1 is never surfaced as a real count. It exists only to distinguish \"recipient read itself failed\" from a genuine zero, and line 79 converts it to the string \"unknown\" before it reaches any log line (`recipientCount < 0 ? \"unknown\" : \"\\(recipientCount)\"`) - the surrounding comment (lines 76-77) explicitly states this is to avoid the number claiming zero subscribers. It never reaches a user-facing aggregate (no sum/avg/chart/total column) and never propagates as a fabricated measurement, so it does not violate the rule's crime (a default value silently standing in for a real measurement in a user-facing aggregate) - it is the correct \"not-yet-measured\" signal pattern the rule itself prescribes as the fix, applied to a log string rather than a numeric field consumers read as data. A broader unfiltered grep for count/score/percent/total/avg/rating/tokens assignments across the same targets (second command) surfaced no other numeric-literal assignments to check. No other cost/latency/score/percent/rating/duration/spent fields exist in these targets at all (grep found zero hits for those terms outside NotificationDispatcher.swift and two unrelated `.count` property reads in ProfileResolver.swift/ProfileService.swift, which are live collection counts, not stored defaults).",
+      "rule_title": "Numbers in user-facing aggregates are real measurements, never defaults"
+    },
+    {
+      "row_id": "DI-005",
+      "status": "not_applicable",
+      "detail": "Rule targets aggregators (sum/avg/min/max/percent) over nullable numeric fields that coerce null to zero instead of excluding it. Searched all five target paths with rg for the deterministic pattern (or 0|?? 0|coalesce|fillna(0)|default: 0) and for sum/average/reduce/count/percent usage: zero matches for the null-coercion patterns; the only reduce/count calls found (Matchmaking/ProfileActivation.swift:106,188, Subscriptions/SubscriptionService.swift:140,146, Models/Migrations/CreateGreetUserSettings.swift:45,57, Subscriptions/NotificationFanOut.swift:161) are dictionary-building or SQL EventLoopFuture chaining, not numeric aggregation over a nullable measurement field. Models/Questionnaire.swift and AuthorVisibility/*.swift contain no scoring/averaging aggregation code at all (the only 'score' hit is an unrelated comment at Questionnaire.swift:12). No dashboard-style cost/measurement aggregation exists in these targets, so the rule's subject (an aggregator conflating absent-measurement with measured-zero) has nothing to attach to here.",
+      "rule_title": "Aggregators treat None as absent, not as zero"
+    },
+    {
+      "row_id": "DI-006",
+      "status": "not_applicable",
+      "detail": "Ran `rg -n -i 'class (Scripted|Mock|Fake|Stub)'` across all five targets (Migrations, Subscriptions, Matchmaking, AuthorVisibility, Questionnaire.swift) with zero hits, so no stub/mock/fake/scripted providers exist there needing a contract test. Rule's SUBJECT is \"the work product produced this session,\" which per the task instructions means this audit agent's own session behavior; this session performed only read-only greps/reads and produced no code, let alone a stub/mock/fake/scripted billing provider. The rule's specific pattern (a scripted provider whose aggregate, e.g. summary.total_dollar_cost, must be pinned to the real value like 0.0) is a billing/cost-tracking concern absent from both the Swift target files and this session's actions, so the rule does not apply here.",
+      "rule_title": "Every stub provider carries a contract test pinning its aggregate to the real value"
+    },
+    {
+      "row_id": "DI-007",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin-server-side/Sources/App/Models/Questionnaire.swift",
+      "line": 76,
+      "detail": "README.md:21 states \"Migrations: `Sources/App/Models/Migrations/Create*.swift`\", but this session's swath migrations are not there: `CreateQuestionnaire` is declared at Sources/App/Models/Questionnaire.swift:76, `CreateAuthorVisibilityAudit` at Sources/App/Models/AuthorVisibilityAudit.swift:65, the D20 partial unique index migration inside Sources/App/Matchmaking/MatchmakingProfileModel.swift:74-100, and the one file that did land in the directory, Models/Migrations/AddPushedAtToFollowNotifications.swift, is not a `Create*` file. (Pre-existing drift too, roughly twenty older models embed migrations the same way, so the honest fix is amending README.md:21 rather than moving files.) Everything substantive I checked in the spec pair ARCHITECTURE.md / acceptance-tests.md held against the target code: D20 partial unique index `WHERE is_active` (MatchmakingProfileModel.swift:93-100), D21/D22 single disclosure decision with the raw-value fallback returning nil (AuthorDisclosure.swift:50-59, call sites ApiController.swift:1142-1148), D24 write-every-row-then-push with `pushedAt` skip on retry (NotificationFanOut.swift:125-209), the non-retroactive audited visibility change with the `old_visibility <> new_visibility` check constraint (AuthorVisibilityService.swift:74-95, AuthorVisibilityAudit.swift:87-91), AT-N1.2's database-level duplicate refusal (`no_duplicate_question_in_questionnaire`, QuestionnaireQuestion.swift:61), and N4's empty-profile refusal plus context-scoped median invalidation (ProfileActivation.swift:108, 129-134). I did not run any build or test; this is file reads and greps only.",
+      "rule_title": "Projects are internally consistent: the product never contradicts its spec"
+    },
+    {
+      "row_id": "DI-008",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 64,
+      "detail": "The session reports \"git -C $SRV status --porcelain -> empty\" but did not report fishy repository state: akin-server-side has 3 lock files (worktree locks at .git/worktrees/akin-server-hotfix/{index,HEAD}.lock and .git/objects/maintenance.lock) and 1 stash on main_change_get_to_post branch; akin has 1 maintenance.lock and 7 stashes from develop_update_instruction_address. The rule requires reporting branch, ahead/behind counts, untracked files, stashes, and lock files at each commit point; `git status --porcelain` only shows untracked/modified files and is insufficient.",
+      "rule_title": "Flag fishy repository state instead of working through it"
+    },
+    {
+      "row_id": "DI-009",
+      "status": "not_applicable",
+      "detail": "No git stash operations found in the session transcript. The rule audits whether git stash --include-untracked operations enumerated files before stashing; the session notes make no mention of any stash operations, indicating the rule did not apply to this session's work.",
+      "rule_title": "Never let git stash silently eat untracked work"
+    },
+    {
+      "row_id": "DI-010",
+      "status": "not_applicable",
+      "detail": "Rule DI-010 scopes to **/*.md documents that quote user-facing strings or cite file:line references. I ran `find <dir> -maxdepth 5 -iname '*.md'` against all five audit targets (Migrations, Subscriptions, Matchmaking, AuthorVisibility directories, and the Models directory containing Questionnaire.swift) and found zero .md files in any of them \u2014 these are pure Swift source directories with no documentation artifacts present. The rule's subject is documents (a category of artifact), not \"the session\"/transcript/diff/agent behavior, so the GOAL_LOOP_INTERSTICE notes file substitution instruction does not apply here; there is simply no markdown surface in these targets for the rule to check.",
+      "rule_title": "A document that quotes shipped copy is generated, not written"
+    }
+  ]
+}

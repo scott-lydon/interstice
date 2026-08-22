@@ -1,0 +1,96 @@
+{
+  "sheet": "Code__Testing_and_Coverage",
+  "targets": [
+    "akin-server-side/Tests",
+    "AkinFrontBackModels/Tests",
+    "akin/akinTests",
+    "akin/akinUITests",
+    "interstice/test",
+    "akin-android/app/src/test"
+  ],
+  "row_count": 10,
+  "entry_count": 10,
+  "run_dir": "/Users/scottlydon/.claude/projects/-Users-scottlydon/5076d517-09dd-4e8d-8aab-1d115d31b9c3/subagents/workflows/wf_563321d1-179",
+  "counts": {
+    "pass": 1,
+    "finding": 7,
+    "not_applicable": 2,
+    "unreturned": 0
+  },
+  "entries": [
+    {
+      "row_id": "TC-001",
+      "status": "finding",
+      "file": "akin/MANUAL_TESTS.md",
+      "line": 207,
+      "detail": "TC-001 requires every entry in MANUAL_TESTS.md to have a matching automated test. Method: found the only MANUAL_TESTS.md among the six targets (only /Users/scottlydon/Developer/akin has one; akin-server-side, AkinFrontBackModels, interstice, and akin-android have none, so this rule is not applicable to those five and the finding below is scoped to akin). Extracted all 30 numbered T-ids plus the D1-D6 and V1-V9 items and rg-searched akin/akinTests and akin/akinUITests for `func <name>\\b` for every automated test name cited inline. All T01-T30 and D1-D5 named functions/classes exist (e.g. AccountDeletionUITests.swift, AccountDeletionSignOutTests.swift, and akin-server-side/Tests/AppTests/AccountDeletionCascadeTests.swift for D5). The V1-V9 venue-ask items look unmapped inline but are legitimately covered via a separate cross-reference file, VENUE_ASK_TEST_MAP.md, which I spot-checked (4 of its cited functions confirmed present). Two real gaps: (1) akin/MANUAL_TESTS.md:207 cites `testMoreInfoRenders` for T27 (\"Automated: `testMoreInfoRenders`\") but no such function or any \"MoreInfo\"-named test exists anywhere in akinTests or akinUITests (rg for \"MoreInfo\" in both dirs returns zero hits) - the manual test entry has no automated counterpart despite claiming one. (2) akin/MANUAL_TESTS.md:345-350, D6 (\"delete account, the debug route never reaches a shipping build\") cites no automated test at all, and none exists: rg for \"DeleteAccountVC\" combined with \"release/debug/shipping\" in the test targets returns nothing, unlike its analogous V9 case which is at least documented in VENUE_ASK_TEST_MAP.md as covered by a Release-build compile check. D6 has neither an inline citation nor an external map entry, so it is a manual-only test with no automated equivalent anywhere.",
+      "rule_title": "Every assignment ships manual tests as an automated test file"
+    },
+    {
+      "row_id": "TC-002",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 158,
+      "detail": "Defect #5 \"A .silent question was announced to questionnaire followers\" is reported in the loop notes but has no corresponding manual test case in akin/MANUAL_TESTS.md. The Questions section (T10-T17) does not include a test verifying that silent questions are not announced to followers. Add test case to MANUAL_TESTS.md to verify silent question visibility behavior.",
+      "rule_title": "Every complaint about the product becomes a new manual test"
+    },
+    {
+      "row_id": "TC-003",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md",
+      "line": 106,
+      "detail": "TC-003 requires vouch to run in a fresh context after every assignment code change before the task is reported done. The rule's subject is the agent's own process, so per the task instructions I audited it against the loop's written record, GOAL_LOOP_INTERSTICE_HANGS_AND_AKIN_SOCIAL_2026-08-19_NOTES.md (356 lines, read in full plus targeted grep for \"vouch\", \"adversary\", \"subagent\", \"QA\", \"fresh context\"). Two things: (1) the string \"vouch\" does not appear anywhere in this file even though the loop shipped real code (swath N1: new Questionnaire/QuestionnaireStats/AuthorVisibility contracts, two new DB tables, create/browse/respond endpoints, nine new test classes, per lines 58-101) across $SRV and $AFBM. (2) the notes twice self-disclose a \"method substitution\": item 9.4 (line 104-108) says the checklist item called for \"an agent that reads both\" but \"This session runs under a standing instruction not to spawn subagents unless the operator asks for them, so I read both myself rather than delegating\" (line 106-107), and Z.4 (line 251) repeats the identical substitution for a six-document consistency sweep. That is exactly the failure mode TC-003 exists to prevent: the implementing session doing its own QA instead of delegating to a fresh-context checker, on the grounds of a standing instruction rather than the rule's only sanctioned skip (\"the user explicitly says hold off\"). Item 4.12 (line 99) claims \"adversarial review, one blocking defect found and fixed\" for the swath, but the notes give no detail on whether that review was vouch-in-fresh-context or another self-review, and no other record of a vouch invocation exists anywhere in the file. Fix: for the code changes in swath N1 (and any future assignment code change), run the vouch sub-agent in a fresh context per the rule, or if the standing no-subagent instruction is meant to override this rule, get that conflict resolved explicitly with the operator rather than silently overriding a blocker-severity QA gate.",
+      "rule_title": "Run vouch in a fresh context after every assignment code change"
+    },
+    {
+      "row_id": "TC-004",
+      "status": "pass",
+      "detail": "Verified no placeholder templates in CATA docs (coding-practices.md, ARCHITECTURE.md, acceptance-tests.md, tasks.md, QA_ADVERSARY.md). Both QA_ADVERSARY.md files fully populated: akin-server-side has test runner (swift test setup), harness path (database/Redis config), hot files list (lines 134-148), and named non-negotiables (lines 149-155); akin has test runner (xcodebuild), harness scripts (lines 37-39), hot files via git diff (lines 69-76), and non-negotiables (lines 41-67).",
+      "rule_title": "QA_ADVERSARY.md is populated, not a verbatim template"
+    },
+    {
+      "row_id": "TC-005",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin/akinUITests/AccountDeletionUITests.swift",
+      "line": 44,
+      "detail": "Fixed timeout without CI branching. The timeout value 20 is hardcoded and does not scale for continuous integration environments. VenueCaptureUITests.swift implements the correct pattern using ProcessInfo.processInfo.environment[\"CI\"] detection with a 3x scale factor. This pattern should be applied to all UI test files: use environment-aware timeout scaling instead of fixed values.",
+      "rule_title": "UI tests carry a timeout, longer on continuous integration"
+    },
+    {
+      "row_id": "TC-006",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin/docs/COVERAGE_CHECKLIST.md",
+      "line": 27,
+      "detail": "Coverage campaign uses per-file percentage format (file \u2014 X% coverage) instead of nested body-level enumeration with line ranges. The rule requires campaigns to enumerate every uncovered function/property body grouped by file and type with line ranges, not per-file percentages which hide unreached bodies. Fix: restructure as body-level checklist matching the format in COVERAGE_BODIES_CHECKLIST.md, or make that file the authoritative campaign checklist.",
+      "rule_title": "Coverage gaps are enumerated per uncovered body, not per file percentage"
+    },
+    {
+      "row_id": "TC-007",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/akin/scripts/measure-tap-latency.sh",
+      "line": 67,
+      "detail": "Test invocation uses \"-only-testing\" filter at line 67 but script never verifies the executed test count. If the filter matches zero tests, xcodebuild succeeds silently, making the script report false success. Must parse the test summary and assert on executed-count > 0.",
+      "rule_title": "Test filters are proven to have matched something"
+    },
+    {
+      "row_id": "TC-008",
+      "status": "finding",
+      "file": "/Users/scottlydon/Developer/AkinFrontBackModels/Tests/FrontBackModelsTests/QuestionManagementBatch5Tests.swift",
+      "line": 701,
+      "detail": "XCTAssertEqual(ReportFlag.allCases.count, 20) compares the enum case count to a bare hardcoded literal. The expected count should be derived from the fixture (e.g., ReportFlag.allCases.count or a fixture-based constant) rather than a hardcoded \"20\", because when ReportFlag cases change, the hardcoded value becomes brittle and tests can silently fail to catch the mismatch.",
+      "rule_title": "Spec, fixture, and oracle assertions carry no bare literals"
+    },
+    {
+      "row_id": "TC-009",
+      "status": "not_applicable",
+      "detail": "Ran grep -rniE for solver/backtrack/brute-force/findSolution/enumerat(e) across all six target dirs (akin-server-side/Tests, AkinFrontBackModels/Tests, akin/akinTests, akin/akinUITests, interstice/test, akin-android/app/src/test). Every hit is Swift's built-in .enumerated() array iterator or prose like \"enumerate the data types collected\" / \"enumerated from GatedRoutes\" in unrelated coverage/disclosure tests (e.g. akin-server-side/Tests/AppTests/Coverage/QuestionnaireDetailTests.swift:66, DisclosureSingleSourceTests.swift:38, TrackingTransparencyTests.swift:52, akin/akinUITests/Permutateable.swift:61). None of these are an enumerator-based existence proof for a solution-finding feature. These codebases are a dating/social app (akin, akin-server-side, AkinFrontBackModels, akin-android) and a webapp/browser-extension (interstice); none contains a \"find a solution\" / \"find a valid X\" UI surface (no puzzle solver, scheduler solver, matcher, or constraint solver) for the rule to apply to. The rule's subject (solution-finding UI features requiring enumerator proofs in commit messages) is absent from all audited targets.",
+      "rule_title": "Correctness proofs ship with a solution-finding UI"
+    },
+    {
+      "row_id": "TC-010",
+      "status": "not_applicable",
+      "detail": "Rule TC-010 targets shell-pipeline \"Verify\" lines, gate scripts, and checklist checks (e.g. `rg -c ... | grep -qx 0`, `wc -l | grep -qx 0`, jq `unique` ordering checks) that can never pass or never fail. The six audit targets are unit/UI test source trees (Swift XCTest in akin-server-side/Tests, AkinFrontBackModels/Tests, akin/akinTests, akin/akinUITests; JS test files in interstice/test) plus one fixture-generation shell script (akin-server-side/Tests/AppTests/Fixtures/generate_asc_fixtures.sh, read in full: it only runs openssl/python3 fixture generation, no pass/fail check at all). None of these are checklists, goal loops, or gate scripts containing shell Verify lines; they are ordinary automated test assertions (XCTAssert*, expect/assert in JS), a different mechanism than the shell-pipeline gate checks this rule addresses. Ran `rg -n \"grep -qx 0|wc -l.*grep -q|unique\\)|rg -c .*grep -q|grep -q 'unresolved'|# *Verify:\"` across all six target roots (the seventh, akin-android/app/src/test, does not exist; android tests live at core-data/src/test, which I also scanned) and got zero matches for any Verify-style shell pipeline. The rule's subject matter (shell gate-check pipelines) is absent from these targets.",
+      "rule_title": "A verify line must be able to fail and to pass"
+    }
+  ]
+}
