@@ -222,10 +222,12 @@ panel set that in the reading type as the book, under a progress bar reporting t
 before the reader went blank, because `state` fell back to the shelf's remembered label whenever the
 browser's own was empty.
 **Prevention.** Three separate rules, because this was three bugs wearing one symptom. The probe
-reports the vendor's loading element by name and `painted` requires its absence. `capture` refuses a
-probe with no position label, letting `bookError` through by name so the failure surface still works.
-And a fallback to a remembered value is gated on the live source having produced one at all: a
-browser showing nothing has no label, which is different from a browser that has run ahead. The
+reports the vendor's loading element by name, asked as "is it showing" rather than "is it in the
+document", and `painted` requires its absence. `capture` refuses a probe that is not `painted`,
+letting `bookError` through by name so the failure surface still works. And a fallback to a
+remembered value is gated on the page having ARRIVED, not on the live source having produced a
+string: the measured wedge is a spinner under a truthful page number, so a gate on the string
+passing leaves the remembered page printed over a spinner. The
 cheap check: sample the DOM once a second through a cold start and write the node counts down. The
 measurement is what showed `painted` was already right and the other two were not.
 
@@ -242,3 +244,16 @@ cookies turns a stuck book into a sign-in page. The cheap check is a test that t
 the real failure text, does not fire on a page of the book, and does not fire on prose that merely
 contains the word, plus an assertion that the probe actually reports the field. General rule behind
 all three: a page that loaded is not a page that is what you asked for.
+
+## A prevention entry can describe the rule that was replaced (2026-08-21)
+**Cause.** The entry above was written from the first draft of the fix and not revisited when the
+rule changed. It described `capture` as refusing a probe with no position label, which is precisely
+the rule that draft was found insufficient for and replaced: the wedge that motivated it carries a
+truthful label. A prevention document that states a superseded rule teaches the next reader to
+reintroduce the bug, which is worse than not writing one.
+**Prevention.** This file is source about source, so it goes stale the same way a README does, and
+it gets the same check: when a named function changes behaviour, grep this file for that name and
+reconcile every hit before the change is committed. The entry that prescribed that check for
+`README.md` was added in the same diff that let this one rot, so applying it to only one file is
+the specific mistake. The cheap check: `grep -n '`capture`' docs/BUG_ISSUE_PREVENTION.md` when
+`capture` changes, and read every hit.

@@ -62,3 +62,25 @@ probe cannot run, every field is null rather than carrying the previous answer, 
 This proves the rule now classifies the case correctly. It does not prove the reader stops wedging:
 it still does, four samples in eight. The wedge is `retryBook`'s job and it recovers, verified
 separately. What changed is that the panel no longer photographs the wait and calls it a page.
+
+## What this trace does not show (2026-08-21)
+
+Every `spinner=False` sample above also has `painted=False` and `label=''`. There is no sample
+here of an ARRIVED page with the loading element absent, so this file does not establish the
+necessary condition that `painted` was made to depend on. The adversarial review raised that,
+and it is right: the rule is probably correct and it has not been shown correct.
+
+Producing the missing sample needs a reader that reaches a page of the book, which is the thing
+PB-9 blocks. So the weaker of the two remedies was taken instead, and it removes the risk the
+missing measurement was guarding against. `spinner` is now asked as "is it showing", using the
+size and hidden-class test that `dismissScript` already applies to the sync prompt for the same
+reason: three `ion-modal` elements sit permanently in that DOM, so presence proves nothing there
+and would prove nothing here. Under the presence test, a vendor change that kept the element
+mounted and hidden would have stopped the reader photographing anything, permanently, silently,
+and with no measurement anywhere that would have caught it.
+
+The behaviour is asserted four ways in `test/reader.test.js`, by running `PROBE` against a
+document rather than by reading its source: showing, collapsed to a zero-size box, hidden by the
+vendor's own class, and absent entirely.
+
+The live sample is still worth taking when a page of the book is reachable again.

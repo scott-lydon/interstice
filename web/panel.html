@@ -1344,6 +1344,12 @@ function weakLinesPhrase(d) {
  * after a turn would be worse than showing nothing at all.
  */
 async function loadReaderText({ force = false, fresh = false } = {}) {
+  // A load started on one poll can resolve after the next has already found the book failed and
+  // hidden the picture and the transcript together. This function un-hides both, before its await
+  // and again on its low-confidence path, and consulted neither flag: the failure surface paints
+  // over the result so the damage stays invisible, but the state is wrong and a per-page note gets
+  // written about a page that is not there.
+  if (readerFailed || readerSignedOut) return;
   if (readerMode() !== 'text' || readerTextBusy) return;
   if (!force && !fresh && readerTextSeq === readerSeq) return;
   readerTextBusy = true;

@@ -11,6 +11,7 @@ import {
   Reader,
   displayScript,
   fitViewport,
+  arrivedAtSomething,
   readerUrl,
   signedInToReader,
 } from '../lib/reader.js';
@@ -582,10 +583,16 @@ test('a spinner is not a painted page', () => {
   // painted, and the shell grows. The probe now reports the spinner separately, so a caller can
   // tell "still loading" from "loaded something that is not the book".
   assert.ok(PROBE.includes('kg-spinner'), 'the probe knows the reader own loading element by name');
-  assert.ok(PROBE.includes('spinner:'), 'and reports it as a field of its own');
+  assert.ok(/\bspinner\b/.test(PROBE), 'and reports it as a field of its own');
+  // The rule itself is asserted by RUNNING the probe, in "a spinner that is mounted but hidden
+  // does not blind the reader" below. This used to pin the exact opening text of the painted
+  // clause, which made it a test of one phrasing rather than of one rule: the repair for a
+  // spinner that is mounted but not showing had to change that text, and broke this assertion
+  // while strictly improving the behaviour it exists to protect.
   const paintedClause = PROBE.slice(PROBE.indexOf('painted:'));
-  assert.ok(
-    paintedClause.startsWith('painted: !document.querySelector'),
+  assert.match(
+    paintedClause.slice(0, 40),
+    /^painted: !spinner/,
     'painted requires the absence of the spinner before it considers anything else'
   );
 });
@@ -716,16 +723,21 @@ test('revive reports whether the book came back, not whether its steps ran', asy
     !/^\s*return true;\s*$/m.test(revive),
     'revive no longer returns an unconditional true from its success path'
   );
-  assert.match(
-    revive,
-    /return Boolean\(settled && \(settled\.painted \|\| settled\.bookError \|\| settled\.signedOut\)\)/,
-    'and answers on what arrived'
-  );
+  // Matched on the shared predicate rather than on one inlined expression. Pinning the exact
+  // text made this a test of a phrasing: naming the predicate so that two callers could stop
+  // disagreeing about what arrival means broke this assertion while improving the thing it
+  // cares about. The behaviour is asserted by running revive, in the two tests below.
+  assert.match(revive, /arrivedAtSomething\(settled\)/, 'and answers on what arrived');
 
   // The three that count as arrival are deliberate, so each is named rather than left to a
-  // reader of the expression to infer.
+  // reader of the expression to infer. Read off the predicate now rather than off this method:
+  // both callers used to carry their own copy and had drifted on exactly this list, which is
+  // what moved it. Asserted by running it, too, in "arrival means the same thing to everything
+  // that asks".
+  const predicate = src.slice(src.indexOf('export function arrivedAtSomething'));
+  const declaration = predicate.slice(0, predicate.indexOf('}') + 1);
   for (const arrived of ['painted', 'bookError', 'signedOut']) {
-    assert.ok(revive.includes(arrived), `${arrived} counts as the page having arrived`);
+    assert.ok(declaration.includes(arrived), `${arrived} counts as the page having arrived`);
   }
 });
 
@@ -1071,4 +1083,134 @@ test('the panel does not promise turns over a page that is not there', async () 
     /d\.label\s*&&/,
     `the count is gated on the page having arrived: ${line.trim()}`
   );
+});
+
+test('a failed revive keeps the error that explains it', async () => {
+  // Finding 12. `this.error = null` ran unconditionally, on the same path that can return false.
+  // That string is what `state` reports and what the panel's remedy mapper is driven off, so a
+  // failed revive erased the one message that routes to the remedy for a page that has stopped
+  // responding, and the panel was left with a failure it could say nothing about.
+  const reader = new Reader({ config: { reading: {} }, logger: { info() {}, warn() {}, error() {} } });
+  reader.asin = 'B0046LU7H0';
+  reader.sessionId = 'test-session';
+  reader.targetId = 'test-target';
+  reader.error = 'Runtime.evaluate did not answer in 8000ms';
+  reader.settle = async () => null;
+  reader.cdp = { closed: false, async send() { return {}; } };
+
+  const back = await reader.revive();
+
+  assert.equal(back, false, 'a settle that found nothing is not a recovery');
+  assert.equal(
+    reader.error,
+    'Runtime.evaluate did not answer in 8000ms',
+    'and the message the panel needs to explain it survives'
+  );
+});
+
+test('a revive that works does clear the error', async () => {
+  // The other half, so the fix cannot be "never clear it", which would strand the panel on a
+  // stale failure after a recovery that really happened.
+  const reader = new Reader({ config: { reading: {} }, logger: { info() {}, warn() {}, error() {} } });
+  reader.asin = 'B0046LU7H0';
+  reader.sessionId = 'test-session';
+  reader.targetId = 'test-target';
+  reader.error = 'Runtime.evaluate did not answer in 8000ms';
+  reader.settle = async () => ({ painted: true, label: 'Page 80 of 220' });
+  reader.cdp = { closed: false, async send() { return {}; } };
+
+  assert.equal(await reader.revive(), true);
+  assert.equal(reader.error, null, 'a recovery clears the failure it recovered from');
+});
+
+test('arrival means the same thing to everything that asks', async () => {
+  // Finding 13. Two callers computed this separately and had drifted: a reopen landing on the
+  // sign-in page was arrival for one and not for the other, so a fully rendered form waiting for
+  // input was described to the panel as a tab that had not painted anything.
+  assert.equal(arrivedAtSomething({ signedOut: true }), true, 'a sign-in page is asking, not wedged');
+  assert.equal(arrivedAtSomething({ bookError: true }), true, "the vendor's failure page arrived");
+  assert.equal(arrivedAtSomething({ painted: true }), true);
+  assert.equal(arrivedAtSomething({ spinner: true }), false, 'a spinner is the case this refuses');
+  assert.equal(arrivedAtSomething(null), false, 'and so is nothing at all');
+
+  // Both call sites go through it, so the divergence has to be written down to exist again.
+  const src = fs.readFileSync(path.join(ROOT, 'lib', 'reader.js'), 'utf8');
+  const uses = (src.match(/arrivedAtSomething\(/g) || []).length;
+  assert.ok(uses >= 3, `the predicate is used, not just declared: ${uses} references`);
+  // Everything except the declaration itself, which is allowed to contain its own expression.
+  const body = src.slice(src.indexOf('export function arrivedAtSomething'));
+  const elsewhere = src.replace(body.slice(0, body.indexOf('}') + 1), '');
+  assert.equal(
+    (elsewhere.match(/\.painted \|\| \w+\.bookError/g) || []).length,
+    0,
+    'and nobody computes their own copy of it'
+  );
+});
+
+test('a retry that could not reopen the tab says so', async () => {
+  // Finding 15. Every test stubbed `revive` to a constant true, so the reopen refusal was never
+  // executed by anything: its four fields were checked only by a scan of the source text, which
+  // would pass just as well if the branch were unreachable or its remedy were nonsense.
+  const reader = new Reader({ config: { reading: {} }, logger: { info() {}, warn() {}, error() {} } });
+  reader.asin = 'B0046LU7H0';
+  Object.defineProperty(reader, 'running', { get: () => true, configurable: true });
+  reader.sessionId = 'test-session';
+  reader.viewport = { width: 900, height: 1200 };
+  reader.revive = async () => false;
+  reader.cdp = { async send() { return {}; } };
+
+  const out = await reader.retryBook();
+
+  assert.equal(out.ok, false);
+  assert.equal(out.stage, 'reopen', 'the branch is reachable and names its stage');
+  assert.ok(out.expected && out.actual && /Remedy:/.test(out.reason), 'and it names a move');
+});
+
+test('a spinner that is mounted but hidden does not blind the reader', async () => {
+  // Finding 17. `painted` became conditional on an element's EXISTENCE in the document. The same
+  // weakness was already measured on the sync prompt, where three ion-modal elements sit
+  // permanently in that DOM, so presence proves nothing. Nothing in the evidence shows an arrived
+  // page with this element absent, so under a presence test a vendor change that keeps it mounted
+  // would stop the reader photographing anything, permanently and silently.
+  const run = (spinnerBox, spinnerHidden = false) => {
+    const el = spinnerBox && {
+      classList: { contains: () => spinnerHidden },
+      getBoundingClientRect: () => spinnerBox,
+    };
+    const document = {
+      body: { innerText: 'Page 80 of 220 ● 37%' },
+      title: 'Kindle',
+      querySelector: (q) => (q === '.kg-spinner' ? el || null : null),
+      querySelectorAll: () => [],
+    };
+    const location = { href: 'https://read.amazon.com/?asin=B0046LU7H0' };
+    const window = { devicePixelRatio: 2 };
+    // eslint-disable-next-line no-new-func
+    return JSON.parse(new Function('document', 'location', 'window', `return ${PROBE}`)(document, location, window));
+  };
+
+  const showing = run({ width: 48, height: 48, x: 0, y: 0 });
+  assert.equal(showing.spinner, true, 'a spinner with a box on screen is a spinner');
+  assert.equal(showing.painted, false, 'and the page it covers has not arrived');
+
+  const collapsed = run({ width: 0, height: 0, x: 0, y: 0 });
+  assert.equal(collapsed.spinner, false, 'a node with no box is not showing anything');
+  assert.equal(collapsed.painted, true, 'so the page under it is the book');
+
+  const classHidden = run({ width: 48, height: 48, x: 0, y: 0 }, true);
+  assert.equal(classHidden.spinner, false, "and the vendor's own hidden class is honoured");
+
+  const absent = run(null);
+  assert.equal(absent.painted, true, 'no element at all is still the ordinary case');
+});
+
+test('a text load started before the failure does not un-hide over it', async () => {
+  // Finding 16. `loadReaderText` un-hides the transcript before it awaits, and again on its
+  // low-confidence path, and `renderReader` does not await it. A load started on one poll can
+  // therefore resolve after the next poll has found the book failed and hidden both elements.
+  const panel = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const start = panel.indexOf('async function loadReaderText(');
+  assert.ok(start > 0, 'the function is there to guard');
+  const head = panel.slice(start, panel.indexOf('readerTextBusy = true;', start));
+  assert.match(head, /if \(readerFailed/, `the failure flag is consulted before anything is shown: ${head}`);
 });
