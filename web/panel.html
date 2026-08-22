@@ -718,6 +718,12 @@
           -->
           <button class="act" id="reader-recheck" type="button" hidden>Check again</button>
           <!--
+            The outcome of a check that found nothing new. Without it the control's only possible
+            result is invisible, and it is offered exactly where the answer usually has not
+            changed yet: waiting on Amazon to restore a file, or on a question answered elsewhere.
+          -->
+          <p class="failwhat" id="reader-recheck-said" hidden></p>
+          <!--
             Reopening calls revive({ clearFirst: true }), which deletes the device
             registration Amazon has stored for this profile. That is not undoable and it
             was one click away, so the click now only asks the question and a second one
@@ -873,6 +879,7 @@ const $ = (id) => document.getElementById(id);
      book, and `recheck` does nothing but look again. Offering both would ask the reader to tell
      them apart at the moment they are least equipped to. */
   const setFailAction = (which) => {
+    $('reader-recheck-said').hidden = true;
     $('reader-retry').hidden = which !== 'retry';
     $('reader-recheck').hidden = which !== 'recheck';
     // A half-answered confirmation must not survive into a failure that does not ask it.
@@ -2381,11 +2388,25 @@ $('reader-recheck').addEventListener('click', async () => {
   const b = $('reader-recheck');
   b.disabled = true;
   b.innerHTML = '<span class="spinner"></span> Checking';
+  // What the failure was before, so that "nothing changed" can be SAID. `renderReader` only
+  // redraws this surface when the condition transitions, so a check that finds the same answer
+  // repaints nothing at all: the spinner ran, the button came back, and the screen was identical.
+  // A control whose only outcome is invisible is indistinguishable from one that is broken, and
+  // this one is offered precisely in the cases where the answer usually has NOT changed yet.
+  const before = $('reader-failed-why').textContent;
   try {
     await tickReader();
   } finally {
     b.disabled = false;
     b.textContent = 'Check again';
+    if (!$('reader-failed').hidden && $('reader-failed-why').textContent === before) {
+      // Said on the surface itself rather than in the footer line, because the reader is looking
+      // at this overlay and the footer is behind it.
+      $('reader-recheck-said').textContent = 'Checked just now. Still the same.';
+      $('reader-recheck-said').hidden = false;
+    } else {
+      $('reader-recheck-said').hidden = true;
+    }
   }
 });
 $('reader-retry-no').addEventListener('click', () => readerRetryAsk(false));

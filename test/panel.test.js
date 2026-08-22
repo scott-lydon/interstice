@@ -436,7 +436,11 @@ test('the destructive control is not offered for a failure it cannot fix', () =>
   assert.match(helper, /reader-retry-confirm'\)\.hidden = true/, 'a half-answered confirmation does not survive');
 
   // The harmless control must not reach the endpoint that clears anything.
-  const handler = html.slice(html.indexOf("$('reader-recheck').addEventListener"), html.indexOf("$('reader-recheck').addEventListener") + 700);
+  // Sliced to the end of the handler, not to a fixed number of characters. A count is a guess
+  // about how long the code will stay: adding a comment to the handler pushed the call this
+  // asserts on past the end of the window and failed the test without changing the behaviour.
+  const recheckAt = html.indexOf("$('reader-recheck').addEventListener");
+  const handler = html.slice(recheckAt, html.indexOf('});', recheckAt) + 3);
   assert.ok(!/reading\/retry/.test(handler), 'checking again does not call the clearing route');
   assert.match(handler, /tickReader\(\)/, 'it just asks the daemon again');
 });
@@ -527,4 +531,25 @@ test('a signed-out reader is never told their account is fine', () => {
   // And the sentence that made it expensive is only ever reached when the session is not the
   // problem, which is the arm it belongs to.
   assert.match(html, /account and the book are both fine/, 'the sentence is still there for the case it is true of');
+});
+
+
+test('checking again says what it found, including nothing', () => {
+  // Pass 10 finding 15. `renderReader` only repaints the failure surface when the condition
+  // TRANSITIONS, so a check that finds the same answer repaints nothing: the spinner ran, the
+  // button came back, and the screen was identical. A control whose only outcome is invisible
+  // cannot be told apart from a broken one, and this control is offered precisely in the cases
+  // where the answer usually has not changed yet.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const handler = html.slice(
+    html.indexOf("$('reader-recheck').addEventListener"),
+    html.indexOf('});', html.indexOf("$('reader-recheck').addEventListener")) + 3
+  );
+  assert.match(handler, /const before = /, 'it remembers what the failure said');
+  assert.match(handler, /reader-recheck-said'\)\.hidden = false/, 'and reports an unchanged answer');
+  assert.match(html, /id="reader-recheck-said"/, 'the element it reports into exists');
+
+  // A fresh failure must not arrive carrying the previous check's outcome.
+  const helper = html.slice(html.indexOf('const setFailAction ='), html.indexOf('const setFrameHidden'));
+  assert.match(helper, /reader-recheck-said'\)\.hidden = true/, 'a new failure clears the old outcome');
 });
