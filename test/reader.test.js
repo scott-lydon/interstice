@@ -712,3 +712,51 @@ test('revive reports whether the book came back, not whether its steps ran', asy
     assert.ok(revive.includes(arrived), `${arrived} counts as the page having arrived`);
   }
 });
+
+test('E3: the vendor failure page is never rendered as the book', () => {
+  // Item 1.6, reproduced from the captured fixture: the exact text Amazon put on screen where
+  // page 79 belonged, under a progress bar still reading 39%. The panel drew it, transcribed it,
+  // and captioned it "Read from the page Amazon drew", which is the sentence that makes a vendor
+  // error page look like a transcription of the book.
+  const AMAZON_FAILURE = 'Oops... Something Went Wrong\n'
+    + 'Please try to open this book from the library again.\n'
+    + 'Back to Library';
+
+  // The detector fires on the fixture. Both halves are required, so a page merely containing the
+  // word "Oops" is not a failure.
+  assert.match(AMAZON_FAILURE, /Oops\b|Something Went Wrong/i);
+  assert.match(AMAZON_FAILURE, /open this book from the library/i);
+
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+
+  // The failure branch: the picture goes, the transcription goes, the failure surface appears.
+  const start = html.indexOf('if (Boolean(d.bookError) !== readerFailed)');
+  assert.ok(start > 0, 'the panel has a bookError branch');
+  const branch = html.slice(start, html.indexOf('} else {', start));
+  assert.match(branch, /setFrameHidden\(true\)/, 'the page picture is hidden');
+  assert.match(branch, /\$\('reader-text'\)\.hidden = true/, 'the transcription is hidden');
+  assert.match(branch, /\$\('reader-failed'\)\.hidden = !readerFailed/, 'the failure surface is shown');
+
+  // And nothing below it runs, which is what stops the caption being written. The early return is
+  // the mechanism, so its absence is the regression this asserts against.
+  //
+  // There are two `if (readerFailed)` in this function: one nested inside the change branch above,
+  // which does the hiding, and one standalone guard that returns. Taking the first match found the
+  // nested one and failed for a reason that had nothing to do with the property. The guard wanted
+  // is the one that returns, so it is located by that rather than by position.
+  const guards = [...html.matchAll(/if \(readerFailed\) \{/g)].map((m) => m.index);
+  const returning = guards.find((i) => html.slice(i, i + 260).includes('return;'));
+  assert.ok(returning, 'the render path has a readerFailed guard that returns');
+
+  // The caption lives in the TEXT rendering function, which sits earlier in the file, so the
+  // mechanism is not textual ordering: it is that the guard returns before that function is
+  // reached and the branch hides the element it writes into. An earlier version of this test
+  // asserted the return came before the caption in the file and failed, because the premise was
+  // wrong rather than the code.
+  const captionFn = html.slice(0, html.indexOf('Read from the page Amazon drew'));
+  assert.match(
+    captionFn.slice(captionFn.lastIndexOf('function ')),
+    /host\.innerHTML|reader-text/,
+    'the caption is written by the transcription renderer, into the element the failure branch hides'
+  );
+});
