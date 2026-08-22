@@ -11,6 +11,7 @@ import {
   Reader,
   displayScript,
   fitViewport,
+  SCRIPT_WATCH,
   arrivedAtSomething,
   readerUrl,
   signedInToReader,
@@ -769,9 +770,16 @@ test('E3: the vendor failure page is never rendered as the book', () => {
   const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
 
   // The failure branch: the picture goes, the transcription goes, the failure surface appears.
-  const start = html.indexOf('if (Boolean(d.bookError) !== readerFailed)');
-  assert.ok(start > 0, 'the panel has a bookError branch');
-  const branch = html.slice(start, html.indexOf('} else {', start));
+  // Located by what the branch DOES, not by the exact text of its condition. Pinning the
+  // condition made this a test of one phrasing: adding a second failure that shares this surface
+  // changed the condition and broke this, while everything asserted below stayed true. The end
+  // marker moved for the same reason, since the arm now has an if/else of its own inside it and
+  // the first `} else {` after the start is no longer the one that closes it.
+  const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  assert.ok(start > 0, 'the panel has a branch that shows the failure surface');
+  const end = html.indexOf('// Back to a real page', start);
+  assert.ok(end > start, 'and a branch for coming back from it');
+  const branch = html.slice(start, end);
   assert.match(branch, /setFrameHidden\(true\)/, 'the page picture is hidden');
   assert.match(branch, /\$\('reader-text'\)\.hidden = true/, 'the transcription is hidden');
   assert.match(branch, /\$\('reader-failed'\)\.hidden = !readerFailed/, 'the failure surface is shown');
@@ -1213,4 +1221,82 @@ test('a text load started before the failure does not un-hide over it', async ()
   assert.ok(start > 0, 'the function is there to guard');
   const head = panel.slice(start, panel.indexOf('readerTextBusy = true;', start));
   assert.match(head, /if \(readerFailed/, `the failure flag is consulted before anything is shown: ${head}`);
+});
+
+test("a script the vendor's own app could not load is reported, not spun over", () => {
+  // Measured live on 2026-08-22. Amazon's reader is code-split, and two of its own chunks began
+  // answering 404 from Amazon's CDN: `curl` with no cookies and no profile gets HTTP 404 and a
+  // nine byte body for both, while a sibling chunk of the same app returns 200. The loader threw
+  // ChunkLoadError, the book pane never mounted, and the loading element spun with no error text
+  // anywhere on screen. Interstice cannot fix a file missing from someone else's servers; what it
+  // must not do is present that as "loading" forever, which reads as our bug.
+  const doc = {
+    body: { innerText: 'Kindle Library' },
+    title: 'Kindle',
+    querySelector: () => null,
+    querySelectorAll: () => [],
+  };
+  const dead = 'https://m.media-amazon.com/images/G/01/kindle/kindlefortheweb/js/725-ca73bf4e63259892d294.chunk.js';
+  // eslint-disable-next-line no-new-func
+  const run = (win) => JSON.parse(new Function('document', 'location', 'window', `return ${PROBE}`)(
+    doc, { href: 'https://read.amazon.com/?asin=B0046LU7H0' }, win
+  ));
+
+  const broken = run({ devicePixelRatio: 2, __interstice_dead_scripts: [dead] });
+  assert.deepEqual(broken.deadScripts, [dead], 'the probe reports the file by name');
+  assert.equal(broken.painted, false, 'and the page it never drew is not painted');
+
+  const fine = run({ devicePixelRatio: 2 });
+  assert.deepEqual(fine.deadScripts, [], 'an ordinary page reports none');
+});
+
+test('the script watcher listens where a failed script can actually be heard', () => {
+  // A `<script>` that 404s fires an error event on the element that does NOT bubble, so a
+  // listener without the capture flag never runs. The resource timeline cannot stand in for it
+  // either: these chunks are cross-origin without Timing-Allow-Origin, so `responseStatus` reads
+  // 0 rather than 404 and a filter on the status finds nothing. Both were tried against the live
+  // failure before this was written, which is why the flag is asserted rather than assumed.
+  assert.match(SCRIPT_WATCH, /addEventListener\('error'[\s\S]*?,\s*true\)/, 'the capture phase is used');
+  assert.match(SCRIPT_WATCH, /__interstice_script_hooked/, 'and it installs only once');
+
+  // Run it against a fake window and prove it records a failed script and ignores other errors.
+  const listeners = [];
+  const win = { addEventListener: (type, fn, capture) => listeners.push({ type, fn, capture }) };
+  // eslint-disable-next-line no-new-func
+  new Function('window', 'addEventListener', `${SCRIPT_WATCH}`)(win, (t, f, c) => listeners.push({ type: t, fn: f, capture: c }));
+  assert.equal(listeners.length, 1, 'exactly one listener is installed');
+  assert.equal(listeners[0].capture, true, 'in the capture phase');
+
+  const fire = (target) => listeners[0].fn({ target });
+  fire({ tagName: 'SCRIPT', src: 'https://cdn.example/a.chunk.js' });
+  fire({ tagName: 'SCRIPT', src: 'https://cdn.example/a.chunk.js' });
+  fire({ tagName: 'IMG', src: 'https://cdn.example/cover.jpg' });
+  fire(win);
+  assert.deepEqual(
+    win.__interstice_dead_scripts,
+    ['https://cdn.example/a.chunk.js'],
+    'the same script once, and nothing that is not a script'
+  );
+});
+
+test('the panel names the vendor outage instead of showing the failure it is not', () => {
+  // The two failures share one surface because from here they are the same situation: no page,
+  // nothing to turn, and a reader owed an explanation. They differ in the copy because the
+  // remedies differ, and one of them has no remedy this program can offer.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  const branch = html.slice(start, html.indexOf('// Back to a real page', start));
+
+  assert.match(branch, /if \(vendorBroken\)/, 'the outage has a branch of its own');
+  assert.match(branch, /reader-failed-detail/, 'and it shows the file, so the claim is checkable');
+  // The remedy must not promise that pressing a button fetches a file off someone else's CDN.
+  const outage = branch.slice(branch.indexOf('if (vendorBroken)'), branch.indexOf('} else {'));
+  assert.ok(
+    !/Try again:/.test(outage),
+    'the outage copy does not promise the retry will fix it'
+  );
+  assert.match(outage, /outage on their side/, 'and it says whose failure it is');
+  // The element it writes into has to exist, or all of the above is writing to null.
+  assert.match(html, /id="reader-failed-detail"/, 'the detail element exists in the markup');
+  assert.match(html, /id="reader-failed-title"/, 'and so does the title it retitles');
 });

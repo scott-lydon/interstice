@@ -661,8 +661,15 @@
           failed. This is that state, named, with the one thing worth pressing.
         -->
         <div class="over" id="reader-failed" hidden style="justify-content:flex-start; gap:10px">
-          <div class="label" style="color:var(--warn)">Amazon could not open this book</div>
+          <div class="label" id="reader-failed-title" style="color:var(--warn)">Amazon could not open this book</div>
           <div class="why" id="reader-failed-why" role="status" aria-live="polite"></div>
+          <!--
+            The file, so the operator can check the claim above rather than take it. It is a URL
+            and it is long, so it wraps and breaks anywhere rather than pushing the overlay wide.
+          -->
+          <div class="why" id="reader-failed-detail" hidden
+            style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px;
+              overflow-wrap:anywhere; opacity:.75"></div>
           <button class="act primary" id="reader-retry" type="button">Try again</button>
           <!--
             Reopening calls revive({ clearFirst: true }), which deletes the device
@@ -1475,8 +1482,18 @@ function renderReader(d) {
   // Amazon opened something that is not the book. Said here, once, rather than left
   // to arrive as a transcription of its error page in the middle of your reading.
   // Everything below this is about a page of a book, and there is not one.
-  if (Boolean(d.bookError) !== readerFailed) {
-    readerFailed = Boolean(d.bookError);
+  // Two different failures share one surface, because from here they are the same situation:
+  // there is no page, turning one cannot work, and the reader needs to be told why rather than
+  // shown a spinner. They are told apart only in the copy, because the remedies differ, and one
+  // of them has no remedy at all.
+  //
+  // The second was measured on 2026-08-22: Amazon's own reader asked for two of its own script
+  // chunks and its CDN answered 404 for both, so the app threw ChunkLoadError and never mounted
+  // the book. Nothing here can fix a file missing from Amazon's servers. Saying so beats an
+  // indefinite spinner, which is what this looked like before and reads as our bug.
+  const vendorBroken = !d.bookError && Array.isArray(d.deadScripts) && d.deadScripts.length > 0;
+  if ((Boolean(d.bookError) || vendorBroken) !== readerFailed) {
+    readerFailed = Boolean(d.bookError) || vendorBroken;
     $('reader-failed').hidden = !readerFailed;
     if (readerFailed) {
       $('reader-over').hidden = true;
@@ -1490,13 +1507,29 @@ function renderReader(d) {
       // Amazon's own wording, is a paragraph to decode at the moment the book failed to
       // open. Three short ones, in the order the reader needs them: what happened, whose
       // fault it is not, and what the button does.
-      $('reader-failed-why').textContent =
-        'Amazon would not open this book here. Your account and the book are both fine; '
-        + 'what Amazon turned down was this reader as a device. Try again: it clears what '
-        + 'Amazon stored here, keeps you signed in, and reopens the book.';
-      // There is no page, so turning one cannot work. Item 1.7 asks for disabled rather than
-      // silently doing nothing.
-      setPagerDisabled(true, 'Amazon would not open this book. Press Read it again.');
+      if (vendorBroken) {
+        // Named, with the file, because the operator can check this one themselves in a
+        // second and nothing else on this surface lets them. Retrying is offered but not
+        // promised: a missing file on Amazon's CDN comes back when Amazon puts it back.
+        $('reader-failed-title').textContent = 'Amazon\u2019s reader failed to load';
+        $('reader-failed-why').textContent =
+          'Amazon\u2019s own reader asked for a file its servers no longer have, so the book '
+          + 'never rendered. This is an outage on their side, not a problem with your account, '
+          + 'your book, or this machine. It clears when Amazon puts the file back.';
+        $('reader-failed-detail').textContent = d.deadScripts[0];
+        $('reader-failed-detail').hidden = false;
+        setPagerDisabled(true, 'Amazon\u2019s reader did not load, so there is no page to turn.');
+      } else {
+        $('reader-failed-title').textContent = 'Amazon could not open this book';
+        $('reader-failed-why').textContent =
+          'Amazon would not open this book here. Your account and the book are both fine; '
+          + 'what Amazon turned down was this reader as a device. Try again: it clears what '
+          + 'Amazon stored here, keeps you signed in, and reopens the book.';
+        $('reader-failed-detail').hidden = true;
+        // There is no page, so turning one cannot work. Item 1.7 asks for disabled rather than
+        // silently doing nothing.
+        setPagerDisabled(true, 'Amazon would not open this book. Press Read it again.');
+      }
     } else {
       // Back to a real page: everything held about the old one is about an error.
       readerSeq = -1;
