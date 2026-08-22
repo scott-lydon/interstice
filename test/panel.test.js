@@ -288,3 +288,35 @@ test('a user action never announces a success it did not establish', () => {
   assert.match(toggle, /box\.checked = !box\.checked/, 'a refused toggle puts the checkbox back');
   assert.match(toggle, /did not save to Notes/, 'and says the write did not land');
 });
+
+test('the progress bars are driven by one mechanism, not two', () => {
+  // A regression I introduced and nearly shipped. UX-ANIM-002 moved the bars off animating width,
+  // a layout property, onto a transform: the element is drawn full width in CSS and squeezed. The
+  // two bars still carried an inline style="width:0%" from before, and an inline style outranks a
+  // stylesheet, so both bars were pinned at zero width and no transform could ever make them
+  // visible. The CSS said one thing, the markup said another, and the markup won.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  // Scoped to the bars. Other elements legitimately carry an inline width: the shimmer skeleton
+  // rows are deliberately uneven and a button is stretched to its container. A blanket assertion
+  // here failed on those and would have been "fixed" by loosening it, which is how a test stops
+  // testing the thing it was written for.
+  const BARS = ['deck-bar', 'book-bar'];
+  const barTags = BARS.map((id) => {
+    const tag = (html.match(new RegExp(`<i id="${id}"[^>]*>`)) || [])[0];
+    assert.ok(tag, `${id} is in the markup`);
+    return tag;
+  });
+  assert.equal(barTags.length, BARS.length, 'every bar named above was found');
+  for (const tag of barTags) {
+    assert.ok(!/style="[^"]*width:/.test(tag), `no inline width on ${tag}`);
+  }
+  assert.match(html, /\.bar > i \{[^}]*width: 100%/, 'the bar is drawn full width');
+  assert.match(html, /transform-origin: left center/, 'and squeezed from the left edge');
+  for (const id of ['deck-bar', 'book-bar']) {
+    assert.match(
+      html,
+      new RegExp(`id="${id}" style="transform:scaleX\\(0\\)"`),
+      `${id} starts empty by the same mechanism that later fills it`
+    );
+  }
+});
