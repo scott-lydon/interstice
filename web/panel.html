@@ -468,6 +468,11 @@
   /* Top aligned and a little looser than the centred overlays, because this one is a title, a
      paragraph, an evidence line and a control: a stack to read in order, not a centred message. */
   .reader .over.failsurface { justify-content: flex-start; gap: 10px; }
+  /* The hint band and the immersive pager pill are siblings of #reader with a higher z-index, so
+     in a short window they paint over this surface's lower edge and the one control that CAN help
+     ends up underneath two that cannot. They are hidden while a failure is showing. */
+  body.reader-failing .reader-hint,
+  body.reader-failing .reader-pager-overlay { display: none !important; }
   /* The per-page note, and the reason it is a class rather than an inline style.
      `hidden` works by way of the user-agent rule `[hidden] { display: none }`, which
      an inline `display: flex` on the same element outranks: the note was therefore
@@ -743,6 +748,14 @@
           -->
           <button class="act" id="reader-recheck" type="button" hidden>Check again</button>
           <!--
+            The only remedy in this panel that has to be carried out somewhere else, so it is the
+            only one that needs a way to get there. It was plain prose naming a web address the
+            reader had to select, copy and paste, at the moment they are least willing to do
+            clerical work.
+          -->
+          <a class="act" id="reader-open-amazon" hidden target="_blank" rel="noopener noreferrer"
+            href="https://read.amazon.com/">Open it on read.amazon.com</a>
+          <!--
             The outcome of a check that found nothing new. Without it the control's only possible
             result is invisible, and it is offered exactly where the answer usually has not
             changed yet: waiting on Amazon to restore a file, or on a question answered elsewhere.
@@ -903,8 +916,14 @@ const $ = (id) => document.getElementById(id);
      each other: `retry` discards the device registration Amazon stored here and reopens the
      book, and `recheck` does nothing but look again. Offering both would ask the reader to tell
      them apart at the moment they are least equipped to. */
-  const setFailAction = (which) => {
+  const setFailAction = (which, opts = {}) => {
     $('reader-recheck-said').hidden = true;
+    // Shown only for the one failure whose remedy is somewhere else.
+    const away = $('reader-open-amazon');
+    if (away) {
+      away.hidden = !opts.elsewhere;
+      if (opts.elsewhere && opts.asin) away.href = `https://read.amazon.com/?asin=${encodeURIComponent(opts.asin)}`;
+    }
     $('reader-retry').hidden = which !== 'retry';
     $('reader-recheck').hidden = which !== 'recheck';
     // A half-answered confirmation must not survive into a failure that does not ask it.
@@ -1649,6 +1668,7 @@ function renderReader(d) {
   if (failing !== readerFailed) {
     readerFailed = failing;
     $('reader-failed').hidden = !readerFailed;
+    document.body.classList.toggle('reader-failing', readerFailed);
     if (readerFailed) {
       // Focus follows the surface, for the reason recorded on the element itself.
       $('reader-failed').focus?.();
@@ -1677,7 +1697,7 @@ function renderReader(d) {
         $('reader-failed-detail').className = 'failwhat isquote';
         $('reader-failed-detail').style.whiteSpace = '';
         $('reader-failed-detail').hidden = false;
-        setFailAction('recheck');
+        setFailAction('recheck', { elsewhere: true, asin: d.asin ?? readerAsin });
         setPagerDisabled(true, 'Amazon is waiting for an answer, so there is no page to turn.');
       } else if (vendorBroken) {
         // Named, with the file, because the operator can check this one themselves in a
@@ -1687,7 +1707,8 @@ function renderReader(d) {
         $('reader-failed-why').textContent =
           'Amazon\u2019s own reader asked for a file its servers no longer have, so the book '
           + 'never rendered. This is an outage on their side, not a problem with your account, '
-          + 'your book, or this machine. It clears when Amazon puts the file back.';
+          + 'your book, or this machine. This panel keeps checking every couple of seconds and '
+          + 'will clear this by itself when Amazon puts the file back.';
         // Both are named when both are missing. Showing one of two and saying nothing about the
         // second invites the reader to check that one file, find it is genuinely gone, and still
         // not know whether it was the whole story.

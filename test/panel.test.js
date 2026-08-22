@@ -425,9 +425,11 @@ test('the destructive control is not offered for a failure it cannot fix', () =>
   // slice: the last is the outer else, the one for a reader that came back.
   const refused = branch.slice(branch.indexOf('} else {', branch.indexOf('} else if (vendorBroken)')));
 
-  assert.match(asked, /setFailAction\('recheck'\)/, 'a question offers only the harmless control');
-  assert.match(outage, /setFailAction\('recheck'\)/, "an outage on Amazon's side offers only the harmless control");
-  assert.match(refused, /setFailAction\('retry'\)/, 'the registration failure offers the one that clears it');
+  // Matched on the choice, not on the whole call: the question arm passes options now, because
+  // its remedy is the only one carried out somewhere else and it ships a link to get there.
+  assert.match(asked, /setFailAction\('recheck'/, 'a question offers only the harmless control');
+  assert.match(outage, /setFailAction\('recheck'/, "an outage on Amazon's side offers only the harmless control");
+  assert.match(refused, /setFailAction\('retry'/, 'the registration failure offers the one that clears it');
 
   // And the helper really is exclusive, or the copy above is decoration.
   const helper = html.slice(html.indexOf('const setFailAction ='), html.indexOf('const setFrameHidden'));
@@ -701,4 +703,51 @@ test('a shortened sentence reads as shortened, not as broken', () => {
   assert.ok(long.split(/\s+/).includes(lastWord), `"${lastWord}" is a whole word`);
   // Something that already fits is returned untouched, mark and all.
   assert.equal(shorten('short one', 80), 'short one', 'a sentence that fits is not marked');
+});
+
+
+test('a failure surface is not painted over by controls that cannot help', () => {
+  // Pass 10 finding 18. The hint band and the immersive pager pill are siblings of #reader with a
+  // higher z-index, so in a short window they paint over this surface's lower edge and the one
+  // control that CAN help ends up underneath two that cannot.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  assert.match(html, /body\.reader-failing \.reader-hint/, 'the hint band is hidden while failing');
+  assert.match(html, /body\.reader-failing \.reader-pager-overlay/, 'and so is the pager pill');
+  const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  const arm = html.slice(start, html.indexOf('if (readerFailed) {', start) + 40);
+  assert.match(arm, /classList\.toggle\('reader-failing', readerFailed\)/, 'the class tracks the state');
+});
+
+test('the remedy that lives elsewhere ships a way to get there', () => {
+  // Pass 10 finding 20. The question arm is the only failure whose remedy is carried out in
+  // another application, and it shipped plain prose naming a web address the reader had to select,
+  // copy and paste, at the moment they are least willing to do clerical work.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const flat = html.replace(/\s+/g, ' ');
+  assert.match(flat, /id="reader-open-amazon"[^>]*target="_blank"/, 'there is a real link');
+  assert.match(flat, /rel="noopener noreferrer"/, 'opened safely');
+
+  // Shown for the question and for nothing else, or it becomes advice on failures it cannot help.
+  const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  const branch = html.slice(start, html.indexOf('// Back to a real page', start));
+  const asked = branch.slice(branch.indexOf('if (askedSomething)'), branch.indexOf('} else if'));
+  assert.match(asked, /elsewhere: true/, 'the question arm asks for it');
+  const outage = branch.slice(branch.indexOf('} else if (vendorBroken)'), branch.indexOf('} else {', branch.indexOf('} else if (vendorBroken)')));
+  assert.ok(!/elsewhere: true/.test(outage), 'the outage arm does not, because going there does not help');
+
+  const helper = html.slice(html.indexOf('const setFailAction ='), html.indexOf('const setFrameHidden'));
+  assert.match(helper, /away\.hidden = !opts\.elsewhere/, 'and it is hidden by default');
+  assert.match(helper, /encodeURIComponent/, 'the book id is escaped into the address');
+});
+
+test('a control does not present itself as the only way forward when a loop is already trying', () => {
+  // Pass 10 finding 14. Check again duplicates what readerTimer does every 1500ms. Offering it as
+  // the path forward, with nothing saying the panel is already doing it, overstates the control
+  // and leaves a reader thinking nothing happens unless they press something.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  const branch = html.slice(start, html.indexOf('// Back to a real page', start));
+  const outage = branch.slice(branch.indexOf('} else if (vendorBroken)'), branch.indexOf('} else {', branch.indexOf('} else if (vendorBroken)')));
+  assert.match(outage, /keeps checking/, 'the copy says the panel is already rechecking');
+  assert.match(outage, /by itself/, 'and that it will clear without being pressed');
 });
