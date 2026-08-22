@@ -508,15 +508,34 @@ test('Amazon\'s failure page IS photographed, because the panel has to show it',
   assert.equal(shots(), 1, 'the failure page is photographed so the panel can show it');
 });
 
-test('a labelled page is still photographed', async () => {
+test('a painted page is still photographed', async () => {
   // The guard must not refuse the ordinary case, which is the mutation most likely to be made
   // by someone tightening it later.
   const { reader, shots } = wiredReader({ label: 'Page 80 of 220', bookError: false, painted: true });
   reader.frame = null;
 
-  await reader.capture({ force: true, probe: { label: 'Page 80 of 220', bookError: false } });
+  await reader.capture({ force: true, probe: { label: 'Page 80 of 220', painted: true, bookError: false } });
 
   assert.equal(shots(), 1, 'a page of the book is photographed');
+});
+
+test('a spinner with a page label beside it is not photographed', async () => {
+  // The case a live read found, after the first version of this guard shipped keyed on the label.
+  // Amazon draws its own toolbar and page number BEFORE the page arrives, so a spinner and a
+  // truthful "Page 219 of 220" are on screen together. The label test passed and the spinner was
+  // photographed anyway: seq advanced 8, 9, 10, 11 across twenty turns with spinner true on every
+  // sample. `painted` already answers this correctly because it requires the spinner's absence,
+  // so the guard asks that instead of a weaker proxy for it.
+  const { reader, shots } = wiredReader({ label: 'Page 219 of 220', spinner: true, painted: false, bookError: false });
+  reader.frame = { seq: 3, jpeg: Buffer.from('the-last-real-page'), at: Date.now() - 5_000 };
+
+  const out = await reader.capture({
+    force: true,
+    probe: { label: 'Page 219 of 220', spinner: true, painted: false, bookError: false },
+  });
+
+  assert.equal(shots(), 0, 'a label is not enough; the page has to have arrived');
+  assert.equal(out.jpeg.toString(), 'the-last-real-page', 'and the last real page is what the panel keeps');
 });
 
 test('a browser showing nothing does not borrow the shelf\'s page number', async () => {
