@@ -724,7 +724,7 @@
         <label class="label" for="box">Queue your next prompt</label>
         <div class="why" id="box-why">Held here until you want it. &#8984;&#9166; saves.</div>
       </div>
-      <textarea id="box" placeholder="What do you want to hand off next?"
+      <textarea id="box" placeholder="Refactor the reader poll so a turn does not re-render the shelf…"
                 aria-describedby="box-why box-err"></textarea>
       <div class="err" id="box-err" role="alert" hidden></div>
       <button class="act primary" id="save" type="button">Save</button>
@@ -1885,7 +1885,7 @@ async function loadQueued() {
     // Every other rung says what nothing looks like; this one says it too.
     $('queued').innerHTML = queued.length
       ? queued.slice(-6).reverse()
-          .map((q) => '<li><label>' + esc(q.text.slice(0, 140)) + '</label></li>').join('')
+          .map((q) => '<li><span>' + esc(q.text.slice(0, 140)) + '</span></li>').join('')
       : '<li><span class="empty">Nothing queued yet. What you write above waits here '
         + 'until you want it.</span></li>';
   } catch {
