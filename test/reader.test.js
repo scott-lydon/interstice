@@ -760,3 +760,47 @@ test('E3: the vendor failure page is never rendered as the book', () => {
     'the caption is written by the transcription renderer, into the element the failure branch hides'
   );
 });
+
+test('capture refuses for every caller, not only the one that passes a probe', async () => {
+  // Adversary finding 1, BLOCKING. The guard was written `if (probe && ...)`, which made the
+  // refusal opt in. Of capture's eight call sites exactly one passed a probe, and `frame()`, the
+  // route that serves the picture the panel renders, was not among them. A guard that protects
+  // only the caller that remembers to ask for protection is not a guard.
+  const { reader, shots } = wiredReader({ label: '', spinner: true, painted: false, bookError: false });
+  reader.frame = { seq: 4, jpeg: Buffer.from('the-last-real-page'), at: Date.now() - 9_000 };
+
+  // No probe argument at all: the shape every other call site uses.
+  const out = await reader.capture({ force: true });
+
+  assert.equal(shots(), 0, 'a caller that passes nothing is still refused');
+  assert.equal(out.jpeg.toString(), 'the-last-real-page');
+
+  // And the source no longer makes the check conditional on being handed one.
+  const src = fs.readFileSync(path.join(ROOT, 'lib', 'reader.js'), 'utf8');
+  const body = src.slice(src.indexOf('async capture('), src.indexOf('async text('));
+  assert.ok(!/if \(probe &&/.test(body), 'the refusal is not conditional on a probe being supplied');
+  assert.match(body, /probe \?\? await this\.#probe\(\)/, 'it takes its own when the caller gives none');
+});
+
+test('capture refuses when the page cannot be asked at all', async () => {
+  // A probe that throws is not evidence that the page arrived. Before this, an unaskable page
+  // fell through to the screenshot because the guard only ran when a probe was handed in.
+  const reader = new Reader({ config: { reading: {} } });
+  Object.defineProperty(reader, 'running', { get: () => true, configurable: true });
+  reader.sessionId = 'test-session';
+  reader.clip = { x: 0, y: 0, width: 512, height: 700 };
+  reader.frontier = reader.pos;
+  reader.frame = { seq: 5, jpeg: Buffer.from('held'), at: Date.now() - 9_000 };
+  let shots = 0;
+  reader.cdp = {
+    async send(method) {
+      if (method === 'Runtime.evaluate') throw new Error('Runtime.evaluate did not answer in 8000ms');
+      if (method === 'Page.captureScreenshot') { shots += 1; return { data: '' }; }
+      return {};
+    },
+  };
+
+  const out = await reader.capture({ force: true });
+  assert.equal(shots, 0, 'a page that cannot answer is not photographed');
+  assert.equal(out.jpeg.toString(), 'held');
+});
