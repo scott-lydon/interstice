@@ -471,7 +471,12 @@ test('the failure surface reads as a heading and its evidence is legible', () =>
   // character by character; Amazon's question is a sentence, and setting a sentence in 11px mono
   // says "machine output" and is harder to read. They shared one presentation with nothing
   // saying which was which.
-  assert.match(html, /\.failwhat\.isurl \{ font-family: var\(--mono\)/, 'a URL is monospaced');
+  // Matched inside the rule rather than on its opening line: the rule went multi-line when the
+  // URL variant gained the same height bound its sibling already had.
+  const urlRule = html.slice(html.indexOf('.failwhat.isurl {'), html.indexOf('}', html.indexOf('.failwhat.isurl {')));
+  assert.match(urlRule, /font-family: var\(--mono\)/, 'a URL is monospaced');
+  assert.match(urlRule, /max-height/, 'and it is bounded, like the quote variant');
+  assert.match(urlRule, /overflow-y: auto/, 'scrolling inside its own box');
   assert.match(html, /\.failwhat\.isquote/, "and a question is not");
   assert.match(html, /id="reader-failed-detail-label"/, 'each is labelled with what it is');
 
@@ -739,7 +744,12 @@ test('a failure surface is not painted over by controls that cannot help', () =>
   assert.match(html, /body\.reader-failing \.reader-pager-overlay/, 'and so is the pager pill');
   const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
   const arm = html.slice(start, html.indexOf('if (readerFailed) {', start) + 40);
-  assert.match(arm, /classList\.toggle\('reader-failing', readerFailed\)/, 'the class tracks the state');
+  // The class covers both overlays. It tracked only `readerFailed`, so a daemon failure that
+  // handed the reader to the sign-in surface lost it on the next poll: failing goes false, this
+  // arm runs on the reasoning that we are back to a real page, and the hint band and pager pill
+  // came back over a sign-in box saying to press the arrow keys.
+  assert.match(arm, /classList\.toggle\('reader-failing', readerFailed \|\| readerSignedOut\)/,
+    'the class tracks both surfaces that own this rectangle');
 });
 
 test('the remedy that lives elsewhere ships a way to get there', () => {
@@ -982,4 +992,27 @@ test('nothing this panel hides can outrank the attribute that hides it', () => {
     unguarded, [],
     `these are hidden by the code and cannot be: ${unguarded.join(', ')}`
   );
+});
+
+
+test('pass 13: coming out of a failure into a sign-in is not coming back to a page', () => {
+  // Pass 13 item 1. The daemon-failure branch can route to the sign-in surface and leave
+  // `readerFailed` true. The next poll that comes back ok and signed out computes failing = false,
+  // runs the "back to a real page" arm, strips the body class and re-enables the pager, while the
+  // sign-in box is still the surface on screen. The repair guard never fires either, because
+  // `readerSignedOut` was already set in the failure branch. So the panel put a hint band saying
+  // to press the arrow keys, and a bright pager, over the one surface where it knows least.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  const arm = html.slice(start, html.indexOf('// Back to a real page', start) + 400);
+
+  assert.match(arm, /readerFailed \|\| readerSignedOut/, 'the furniture stays hidden for both');
+  const back = html.slice(html.indexOf('// Back to a real page'), html.indexOf('// Back to a real page') + 900);
+  assert.match(back, /if \(!readerSignedOut\) setPagerDisabled\(false/, 'and the pager returns only with a page');
+
+  // The premise: the failure branch really can set readerSignedOut without renderSignIn running
+  // again later, which is why the class and the pager cannot be left to that guard.
+  const daemon = html.slice(html.indexOf('if (!d.ok) {'), html.indexOf('return;', html.indexOf('if (!d.ok) {')));
+  assert.match(daemon, /readerSignedOut = true/, 'the failure branch sets it');
+  assert.match(html, /if \(d\.signedOut !== readerSignedOut\)/, 'and the later guard is a change test');
 });

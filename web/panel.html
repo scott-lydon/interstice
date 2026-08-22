@@ -541,7 +541,15 @@
      makes it harder to read, and the two were sharing one presentation with nothing to say which
      was which. The label above each says what it is, because an unlabelled string under an
      explanation is evidence for a claim the reader has to guess at. */
-  .failwhat.isurl { font-family: var(--mono); }
+  /* Bounded like its sibling. The quote variant was capped because unbounded evidence pushes the
+     remedies below the fold on a top-aligned surface that only guarantees 200px, and this variant
+     was left uncapped while being the one filled from a LIST: `deadScripts.join('\n')` is as long
+     as the number of files the vendor's CDN failed to serve, each a full URL wrapping two or three
+     times at 11px in a narrow panel. Two files already put the control near the lower edge. */
+  .failwhat.isurl {
+    font-family: var(--mono);
+    max-height: 7.5em; overflow-y: auto; overscroll-behavior: contain;
+  }
   /* Bounded, and scrollable inside its own box. Amazon's position prompts run to several
      sentences, this surface is top-aligned, and `.reader` only guarantees a 200px minimum, so in
      a short window a long question filled the box and pushed both remedies below the fold with no
@@ -1780,7 +1788,15 @@ function renderReader(d) {
     readerFailKind = failKind;
     readerFailed = failing;
     $('reader-failed').hidden = !readerFailed;
-    document.body.classList.toggle('reader-failing', readerFailed);
+    // The class covers BOTH overlays, not just the failure one. The daemon-failure branch can
+    // hand the reader to the sign-in surface and leave `readerFailed` true; the next poll that
+    // comes back ok and signed out computes failing = false, runs this arm on the reasoning that
+    // we are back to a real page, and strips the class. We are not back to a real page: the
+    // sign-in box is still the surface on screen. The two rules the class carries went with it,
+    // so the hint band returned over the sign-in saying to press the arrow keys, and the pager
+    // pill came back bright with its reason cleared, on the one surface where the panel knows
+    // least about the book.
+    document.body.classList.toggle('reader-failing', readerFailed || readerSignedOut);
     if (readerFailed) {
       // Focus follows the surface, for the reason recorded on the element itself.
       $('reader-failed').focus?.();
@@ -1874,8 +1890,10 @@ function renderReader(d) {
       $('reader-over').hidden = false;
       readerOpenedAt = Date.now();
       readerSay(openingLine(), true);
-      // The pager comes back with the page.
-      setPagerDisabled(false, '');
+      // The pager comes back with the page, and only with a page. Coming out of a failure into a
+      // SIGN-IN is not coming back to a page: turning one there does nothing, and lighting the
+      // controls says otherwise.
+      if (!readerSignedOut) setPagerDisabled(false, '');
     }
   }
   if (readerFailed) {
