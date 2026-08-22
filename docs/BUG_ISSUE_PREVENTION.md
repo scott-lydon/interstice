@@ -196,3 +196,49 @@ was simply behind. **Prevention.** Treat a behavior change as unshipped until th
 would trust has been re-read against it. The cheap check is per-repair rather than per-release: for
 each new or changed test name, grep the README for the noun it is about and confirm the paragraph
 that turns up still describes what the test asserts.
+
+## A vendor sync prompt nobody answered, photographed as the book (2026-08-19, E1)
+**Cause.** Amazon's reader asks "Most Recent Page Read. You're on location 4244. The most recent
+location is 4242. Go to location 4242?" when two devices disagree. Interstice has `SYNC_PROMPT` to
+match that text and `dismissScript` to answer it, and the screenshot proves the dismissal did not
+fire: the prompt was photographed, transcribed, and set in the panel's reading type as though it
+were a page of the book. `dismissScript` searches only `ion-alert`, `ion-modal` and `ion-popover`,
+so a prompt Amazon moves out of those three custom elements is never reached by the regex.
+**Prevention.** Do not key a dismissal on the container. Measured on a healthy reader with no prompt
+on screen, the page already holds four `ion-modal` elements and one `ion-popover`, so their presence
+proves nothing and the text match is carrying the whole decision. Search any element whose own text
+matches and which owns a button with the wanted label, then **assert afterwards that the prompt is
+gone** rather than assuming the click landed. The cheap check that would have caught it: after a
+dismissal, probe again and fail if the pattern is still on screen. Note the instrument, too: looking
+for a dialog with `GET /api/reading/text` cannot work, because that reads text off the captured page
+IMAGE and a dialog can sit outside the capture clip. Query the DOM.
+
+## A spinner is not a painted page (2026-08-21, E2)
+**Cause.** `painted` was `Boolean(label || loc) || media > 2`, and `capture` looked at none of it: it
+photographed whatever was on screen and held it as the current frame. Over a real cold start the
+reader's page sits at `read.amazon.com` with no position label for tens of seconds, and once
+Amazon's shell renders it holds `div.kg-spinner`, one svg, and a body fourteen characters long. The
+panel set that in the reading type as the book, under a progress bar reporting the page you were on
+before the reader went blank, because `state` fell back to the shelf's remembered label whenever the
+browser's own was empty.
+**Prevention.** Three separate rules, because this was three bugs wearing one symptom. The probe
+reports the vendor's loading element by name and `painted` requires its absence. `capture` refuses a
+probe with no position label, letting `bookError` through by name so the failure surface still works.
+And a fallback to a remembered value is gated on the live source having produced one at all: a
+browser showing nothing has no label, which is different from a browser that has run ahead. The
+cheap check: sample the DOM once a second through a cold start and write the node counts down. The
+measurement is what showed `painted` was already right and the other two were not.
+
+## A vendor error page mistaken for content (2026-08-19, E3 and E4)
+**Cause.** Amazon's "Oops... Something Went Wrong. Please try to open this book from the library
+again" is a page like any other, so it was photographed, transcribed and rendered as page 79 under a
+progress bar still reading 39%. Nothing anywhere said the reader had failed. The underlying cause
+was a stale device registration in the profile, not a bad session, which is why reopening the book
+never helped and Amazon's own advice cannot work.
+**Prevention.** Detect the vendor error page explicitly, as its own probe field, so the panel can
+report a failure instead of rendering one. Recover by clearing local storage, indexeddb, cache and
+service workers for the reader origin while KEEPING cookies, then reopening in a fresh tab; clearing
+cookies turns a stuck book into a sign-in page. The cheap check is a test that the detector fires on
+the real failure text, does not fire on a page of the book, and does not fire on prose that merely
+contains the word, plus an assertion that the probe actually reports the field. General rule behind
+all three: a page that loaded is not a page that is what you asked for.
