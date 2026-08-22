@@ -471,3 +471,60 @@ test('the failure surface reads as a heading and its evidence is legible', () =>
     'and not a second one nested inside it, which would announce twice'
   );
 });
+
+
+test('every way of turning a page is stopped when there is no page', () => {
+  // Pass 10 findings 3 and 4, both confirmed against the source. Disabling the pager buttons did
+  // not disable turning. The arrow keys call `turnPage` directly, so a reader could arrow past a
+  // book that had failed to open and watch nothing happen: the silent no-op that item 1.7
+  // replaced for the buttons and left standing for the keyboard. And in immersive mode the main
+  // pager is display:none (the `body.immersive` whitelist does not include it), so the only
+  // pager on screen is the overlay, whose buttons forward by calling .click() on the disabled
+  // ones: the turn was stopped, but the visible control stayed bright and did nothing.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+
+  // One control point, guarded, rather than three call sites each remembering to check.
+  const fn = html.slice(html.indexOf('async function turnPage(direction)'), html.indexOf('const held ='));
+  assert.match(fn, /if \(readerFailed \|\| readerSignedOut\)/, 'turning is refused when there is no page');
+  assert.match(fn, /readerSay\(/, 'and it says why rather than doing nothing');
+
+  // The immersive buttons are disabled too, because in immersive mode they are the only ones seen.
+  const helper = html.slice(html.indexOf('const setPagerDisabled ='), html.indexOf('const setFrameHidden'));
+  for (const id of ['page-prev', 'page-next', 'reader-mode', 'page-prev-imm', 'page-next-imm']) {
+    assert.ok(helper.includes(`'${id}'`), `${id} is disabled with the rest`);
+  }
+
+  // The premise the fix rests on: the main pager really is hidden in immersive mode, so if this
+  // ever stops being true the extra ids become harmless rather than wrong.
+  const whitelist = html.slice(html.indexOf('body.immersive #view-reading >'), html.indexOf('display: none; }', html.indexOf('body.immersive #view-reading >')));
+  assert.ok(!/\.pager|#reader-pager\b/.test(whitelist), 'the main pager is not on the immersive whitelist');
+  assert.match(html, /page-next-imm'\)\?\.addEventListener\('click', \(\) => document\.getElementById\('page-next'\)\?\.click\(\)\)/,
+    'and the immersive buttons forward to the main ones');
+});
+
+
+test('a signed-out reader is never told their account is fine', () => {
+  // Pass 10 finding 1, confirmed against the source. The failure surface returns early, before
+  // the branch that renders the sign-in, so a reader whose session had expired while a failure
+  // was showing got the failure's copy: "Your account and the book are both fine", next to a
+  // button that discards their device registration. The panel had established nothing of the
+  // kind. Not a missing explanation, a confident wrong one attached to an irreversible control.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const decide = html.slice(html.indexOf('const vendorBroken ='), html.indexOf('if (failing !== readerFailed)') + 40);
+
+  assert.match(decide, /const failing = !d\.signedOut &&/, 'signed out is not a failure of this kind');
+  for (const flag of ['vendorBroken', 'askedSomething']) {
+    const line = decide.slice(decide.indexOf(`const ${flag} =`), decide.indexOf(';', decide.indexOf(`const ${flag} =`)));
+    assert.match(line, /!d\.signedOut/, `${flag} defers to a signed-out session`);
+  }
+
+  // The premise: the early return really does sit above the sign-in branch, so if that ever
+  // changes this guard becomes redundant rather than wrong.
+  const guard = html.indexOf('if (readerFailed) {', html.indexOf('const failing ='));
+  const signin = html.indexOf('if (d.signedOut !== readerSignedOut)');
+  assert.ok(guard > 0 && signin > guard, 'the failure surface still returns before the sign-in branch');
+
+  // And the sentence that made it expensive is only ever reached when the session is not the
+  // problem, which is the arm it belongs to.
+  assert.match(html, /account and the book are both fine/, 'the sentence is still there for the case it is true of');
+});
