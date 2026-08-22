@@ -908,6 +908,38 @@ function ankiRemedy(reason) {
     + 'thing again, quit Anki and reopen it.';
 }
 
+/**
+ * The reader's failures, each with the move that clears it.
+ *
+ * Mirrors `ankiRemedy` above, and for the same reason: `d.error` is the daemon's own sentence,
+ * which is accurate and tells you nothing to do. The strings matched here are the ones the reader
+ * actually produces, taken from live failures rather than guessed at, so a new one falls through
+ * to the general case rather than being mismatched into a wrong instruction.
+ */
+function readerRemedy(reason) {
+  const r = String(reason || '');
+  // The wedge: the page is loaded and its main thread has stopped answering, so the probe cannot
+  // run. Measured live, this is the common one, and Read it again is what recovers it.
+  if (/did not answer in \d+ms/i.test(r)) {
+    return 'The book is open but the page has stopped responding, so Interstice cannot see it. '
+      + 'Press Read it again: it clears what Amazon stored here, keeps you signed in, and reopens '
+      + 'the book.';
+  }
+  if (/no Chromium-family browser/i.test(r)) {
+    return 'No browser Interstice can drive is installed. Install Google Chrome, or another '
+      + 'Chromium-family browser, and press Read it again.';
+  }
+  if (/sign|signed out|ap\/signin/i.test(r)) {
+    return 'Amazon wants you to sign in again. Use Sign in to Amazon in Chrome below; the window '
+      + 'closes itself once the session lands.';
+  }
+  if (/profile|user-data-dir|in use/i.test(r)) {
+    return 'Another window is holding the reader profile. Close it, then press Read it again.';
+  }
+  return 'The book did not open. Press Read it again, which clears what Amazon stored here and '
+    + 'reopens it without signing you out.';
+}
+
 async function loadCards() {
   say('reading your collection', true);
   $('cardframe').innerHTML = '<div class="skeleton" style="padding:14px">'
@@ -1374,7 +1406,8 @@ function renderReader(d) {
   if (!d.ok) {
     $('reader-frame').hidden = true;
     $('reader-over').hidden = false;
-    readerSay(d.error || 'the book could not be opened here');
+    // The daemon's own sentence goes to the log, and the reader gets one that names a move.
+    readerSay(readerRemedy(d.error));
     return;
   }
 

@@ -557,3 +557,31 @@ test('a spinner is not a painted page', () => {
     'painted requires the absence of the spinner before it considers anything else'
   );
 });
+
+test('every reader failure the panel can show names a move', () => {
+  // Item UX-COPY-005. `d.error` is the daemon's own sentence: accurate, and no help. The panel
+  // used to print it verbatim. `readerRemedy` maps the failures the reader actually produces onto
+  // the thing that clears each one. The strings below are real: every one was observed from a live
+  // reader during the E2 work, which is why they are matched rather than invented.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const remedy = html.slice(html.indexOf('function readerRemedy'), html.indexOf('async function loadCards'));
+  assert.ok(remedy.length > 200, 'the remedy function is there to read');
+
+  for (const observed of [
+    'Runtime.evaluate did not answer in 8000ms',
+    'Page.navigate did not answer in 20000ms',
+    'Emulation.setDeviceMetricsOverride did not answer in 20000ms',
+  ]) {
+    assert.match(
+      observed,
+      /did not answer in \d+ms/,
+      `the wedge pattern must match the real string "${observed}"`
+    );
+  }
+  assert.ok(/did not answer in/.test(remedy), 'and the function matches that shape');
+  assert.ok(/no Chromium-family browser/.test(remedy), 'the throw the reader raises by name is covered');
+
+  // The general case must not be a restatement of the failure. It has to end in an instruction.
+  const fallthrough = remedy.slice(remedy.lastIndexOf('return'));
+  assert.match(fallthrough, /Read it again/, 'the fallthrough names the button rather than the fault');
+});
