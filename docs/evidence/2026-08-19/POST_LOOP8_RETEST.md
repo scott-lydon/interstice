@@ -10,7 +10,7 @@ reconstruction.
 
 | Mode | Verdict | Probe that proves it | Loop 8 commit |
 |---|---|---|---|
-| E1, the sync prompt | **no verdict yet, not induced** | see below | matcher and dismissal from `e7f55a7` |
+| E1, the sync prompt | **still failing** (verdict added 2026-08-22, see the addendum) | live DOM and a driven dismissal, `docs/evidence/2026-08-21/E1-VERDICT.md` | fixed here, not by loop 8: `f9fb530` finding 9, plus `569e9fb` for item 1.3 |
 | E2, the white page and the spinner | **still failing** | `E2-probe-2026-08-21.json` | none, loop 8 did not classify this cause |
 | E3, Amazon's failure page rendered as the book | **closed by loop 8** | see below | `1157a38` |
 
@@ -100,3 +100,37 @@ Amazon moves the prompt out of those three custom elements, the matcher never ge
 `SYNC_PROMPT` regex itself is tested at `test/reader-shelf.test.js:114-117` against the real dialog
 text and against three things that must not match, and it passes. So the regex is proven and the
 container search is not.
+
+
+---
+
+# Addendum, 2026-08-22: E1 has a verdict
+
+The row above said no verdict because nothing had ever observed the dismissal happen. It has now
+been observed, against the operator's own live reader, and the full measurement is in
+`docs/evidence/2026-08-21/E1-VERDICT.md`.
+
+**Verdict: still failing, and not for the reason item 1.1 supposed.** 1.1 supposes Amazon may have
+moved the prompt out of `ion-alert, ion-modal, ion-popover`. It has not. With the prompt on screen,
+the live DOM holds six matching elements: five permanently mounted at 0x0 and one `ion-alert`,
+shown at 412x520, whose text matches the shipped pattern and whose buttons are labelled exactly
+`No` and `Yes`. Driven by hand through the product's own predicate, the prompt was gone in under a
+second and stayed gone through twenty seconds of polling.
+
+The defect was that a click was REPORTED as an answer with nothing checking, which is adversary
+finding 9. Fixed in `f9fb530`: the document is read again after the click and only prompts that
+actually went away are returned. Verified live under the fixed code at `2026-08-22T06:10:03.004Z`,
+on a process started at `06:09:23`, after the fix deployed at `06:06:35`.
+
+The second half is item 1.3, fixed in `569e9fb`. Nothing in the probe reported a dialog, so a page
+carrying the prompt counted as painted and was photographed with Amazon's question in it. The probe
+reports the prompt, `capture` refuses it, and the panel shows Amazon's own words with the pager
+disabled and a reason.
+
+**The measurement above is superseded, and this is the correction.** This file recorded four
+`ion-modal` and one `ion-popover` with zero `ion-alert` in the healthy state, and read that as the
+containers being present in the normal state. With a prompt actually up there are six, and the
+extra one is the `ion-alert` that carries the question: the alert is created when it is needed
+rather than mounted and reused. The conclusion that mattered survives and is stronger than before,
+because the five that ARE permanently mounted are all 0x0, so presence proves nothing in this DOM
+and only a shown-and-sized test can tell a question from furniture.
