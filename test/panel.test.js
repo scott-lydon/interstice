@@ -349,3 +349,37 @@ test('the page is pressed through a real button, not an image wearing a role', (
   assert.ok(!/reader-frame'\)\.hidden =/.test(html), 'nothing toggles the image on its own');
   assert.match(html, /const setFrameHidden/, 'one helper hides both');
 });
+
+test('a book that failed to open disables the pager instead of ignoring it', () => {
+  // Items 1.6 and 1.7. When Amazon refuses the book there is no page, so turning one cannot work.
+  // The sign-in state already disabled these three by hand; the failed-book state did not, because
+  // its early return happens BEFORE the sign-in branch that was doing it. So Next stayed enabled
+  // and silently did nothing, which is indistinguishable from a broken app.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+
+  // One mechanism for both states, so a third state cannot disable two of the three and forget one.
+  assert.match(html, /const setPagerDisabled = \(disabled, why\) =>/, 'the pager has one control point');
+  const helper = html.slice(html.indexOf('const setPagerDisabled'), html.indexOf('const setFrameHidden'));
+  for (const id of ['page-prev', 'page-next', 'reader-mode']) {
+    assert.ok(helper.includes(id), `${id} goes through it`);
+  }
+
+  // The failure branch disables, and names why in the tooltip rather than leaving it blank.
+  // Sliced FORWARD from the failure block. The first version searched for the next `} else {`
+  // from the start of the file, which is hundreds of lines earlier, so the window never contained
+  // the code under test and the assertion failed for a reason that had nothing to do with it.
+  const failStart = html.indexOf("$('reader-failed-why').textContent");
+  const failed = html.slice(failStart, html.indexOf('} else {', failStart));
+  assert.match(failed, /setPagerDisabled\(true, '[^']+'\)/, 'the failure disables the pager with a reason');
+
+  // And recovery gives them back. A guard that only ever disables is a different bug.
+  const recStart = html.indexOf("// Back to a real page");
+  const recovered = html.slice(recStart, html.indexOf('if (readerFailed) {', recStart));
+  assert.match(recovered, /setPagerDisabled\(false/, 'recovery re-enables the pager');
+
+  // Nothing sets `.disabled` on these by hand any more, or the two mechanisms would drift.
+  assert.ok(
+    !/el\.disabled = readerSignedOut/.test(html),
+    'the sign-in state uses the same helper rather than its own copy'
+  );
+});

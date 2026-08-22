@@ -790,6 +790,22 @@ const $ = (id) => document.getElementById(id);
   /* The page picture and the button around it are hidden together, always. They were one element
      before the button existed, and leaving the button visible over a hidden image gives a screen
      reader and a keyboard a control with nothing behind it, which is worse than either state. */
+  /* The controls that turn a page, and the reason they cannot be used when they cannot.
+     A button that is enabled and does nothing when pressed is worse than one that shows it
+     cannot be pressed: the first is indistinguishable from a broken app. The sign-in state and
+     the book-failed state disable the same three through here, so a new state cannot disable
+     two of them and forget the third, which is how the failed-book case was missed: its early
+     return happens before the sign-in branch that was doing this by hand. */
+  const setPagerDisabled = (disabled, why) => {
+    for (const id of ['page-prev', 'page-next', 'reader-mode']) {
+      const el = $(id);
+      if (!el) continue;
+      el.dataset.title ??= el.title;
+      el.disabled = disabled;
+      el.title = disabled ? why : el.dataset.title;
+    }
+  };
+
   const setFrameHidden = (hidden) => {
     const img = $('reader-frame');
     const tap = $('reader-tap');
@@ -1472,12 +1488,17 @@ function renderReader(d) {
         'Amazon would not open this book here. Your account and the book are both fine; '
         + 'what Amazon turned down was this reader as a device. Try again: it clears what '
         + 'Amazon stored here, keeps you signed in, and reopens the book.';
+      // There is no page, so turning one cannot work. Item 1.7 asks for disabled rather than
+      // silently doing nothing.
+      setPagerDisabled(true, 'Amazon would not open this book. Press Read it again.');
     } else {
       // Back to a real page: everything held about the old one is about an error.
       readerSeq = -1;
       readerTextSeq = -1;
       $('reader-over').hidden = false;
       readerSay('opening your book', true);
+      // The pager comes back with the page.
+      setPagerDisabled(false, '');
     }
   }
   if (readerFailed) {
@@ -1493,12 +1514,7 @@ function renderReader(d) {
     renderSignIn(d);
     // Turning a page of a sign-in form does nothing, and a button that does nothing
     // when pressed is worse than one that shows it cannot be pressed.
-    for (const id of ['page-prev', 'page-next', 'reader-mode']) {
-      const el = $(id);
-      el.dataset.title ??= el.title;
-      el.disabled = readerSignedOut;
-      el.title = readerSignedOut ? 'Sign in to Amazon first' : el.dataset.title;
-    }
+    setPagerDisabled(readerSignedOut, 'Sign in to Amazon first');
   }
 
   // The page, and how much of the book is already in hand behind it. The second half
