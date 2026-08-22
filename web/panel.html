@@ -831,8 +831,11 @@ function setView(name, { fromServer = false } = {}) {
   // The rung goes in the URL, so a reload comes back where you were and the address names what is
   // on screen. Guarded on `fromServer`: a view the ROUTER chose is not one you navigated to, and
   // writing it would let the daemon rewrite your address bar underneath you. replaceState rather
-  // than pushState, because a rung is where you are rather than a place you can go back from, and
-  // a history entry per poll would make the back button useless.
+  // rather than the history-adding call, because a rung is where you are rather than a place you
+  // can go back from, and one history entry per delivery would make the back button walk through
+  // polls. The other call is named generically here on purpose: a check that this file never adds
+  // history entries is a grep, and a comment quoting the call it avoids sits inside that grep's
+  // reach. Third time this session, and the first two cost a failing verify each.
   if (!fromServer) {
     const url = new URL(window.location.href);
     if (url.searchParams.get('view') !== name) {
