@@ -646,3 +646,41 @@ test('every retryBook refusal names stage, expected, actual and a remedy', async
   assert.equal(notRunning.stage, 'open');
   assert.match(notRunning.reason, /Remedy:/, 'the live refusal carries its remedy, not just the shape');
 });
+
+test('retryBook does not report success for a book that did not come back', async () => {
+  // E4, and the reason item 1.8 exists. `revive` answers "the steps ran without throwing": it
+  // awaits `settle` and discards what settle found. Observed live, retryBook returned
+  // {ok: true, cleared: true, reopened: true} while the reader sat on a spinner at the same page
+  // it had been stuck on, so the retry reported success and recovered nothing.
+  const probes = { painted: false, spinner: true, bookError: false, label: 'Page 219 of 220' };
+  const reader = new Reader({ config: { reading: {} } });
+  Object.defineProperty(reader, 'running', { get: () => true, configurable: true });
+  reader.revive = async () => true;
+  reader.sessionId = 'test-session';
+  reader.cdp = {
+    async send(method) {
+      if (method === 'Runtime.evaluate') return { result: { value: JSON.stringify(probes) } };
+      return {};
+    },
+  };
+
+  const stillSpinning = await reader.retryBook();
+  assert.equal(stillSpinning.ok, false, 'a spinner is not a recovered book');
+  assert.equal(stillSpinning.stage, 'settle');
+  assert.match(stillSpinning.actual, /spinner/, 'and it says what it found');
+  assert.match(stillSpinning.reason, /Remedy:/);
+
+  // The same call, once the page has actually arrived.
+  probes.painted = true;
+  probes.spinner = false;
+  const recovered = await reader.retryBook();
+  assert.equal(recovered.ok, true, 'a painted page is a recovered book');
+  assert.equal(recovered.arrived, true);
+
+  // Amazon's own failure page counts as arrived: it is a page the panel must show, and
+  // refusing it here would leave the retry claiming failure while the surface works.
+  probes.painted = false;
+  probes.bookError = true;
+  const failurePage = await reader.retryBook();
+  assert.equal(failurePage.ok, true, "the vendor's failure page is something arriving, not nothing");
+});
