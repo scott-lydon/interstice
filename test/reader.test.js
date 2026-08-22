@@ -102,7 +102,13 @@ test('the retry is a route out that reopening the book cannot be', async () => {
     revive.indexOf('#openTab') < revive.indexOf('clearSiteData'),
     'and after a fresh tab exists, because the call is only answered on a page session'
   );
-  assert.match(src, /retryBook[\s\S]{0,400}revive\(\{ clearFirst: true \}\)/);
+  // Scoped to the function body rather than measured in characters from its name. The distance
+  // version broke the moment retryBook grew a guard that names a remedy, which is a change that
+  // does not touch the property being asserted: a test that fails when unrelated lines are added
+  // near it is measuring the wrong thing.
+  const retry = src.slice(src.indexOf('async retryBook()'), src.indexOf('async #applyViewport'));
+  assert.ok(retry.length > 0, 'retryBook is found');
+  assert.match(retry, /revive\(\{ clearFirst: true \}\)/, 'the retry clears before it reloads');
   // And it answers rather than throwing when there is no reader to retry.
   const reader = new Reader({ config: { reading: {} } });
   assert.equal((await reader.retryBook()).ok, false);
@@ -603,4 +609,40 @@ test('every reader failure the panel can show names a move', () => {
   // The general case must not be a restatement of the failure. It has to end in an instruction.
   const fallthrough = remedy.slice(remedy.lastIndexOf('return'));
   assert.match(fallthrough, /Read it again/, 'the fallthrough names the button rather than the fault');
+});
+
+test('every retryBook refusal names stage, expected, actual and a remedy', async () => {
+  // Item 1.8. retryBook IS the remedy the panel offers, so a refusal that says only what went
+  // wrong leaves a person pressing the one button on screen and being told no. Observed live: it
+  // answered "the reader is not open" and nothing else, at the moment the reader had wedged and
+  // been closed underneath it.
+  const src = fs.readFileSync(path.join(ROOT, 'lib', 'reader.js'), 'utf8');
+  const retry = src.slice(src.indexOf('async retryBook()'), src.indexOf('async #applyViewport'));
+
+  // Indentation-agnostic: these returns sit inside an if, so the closing brace is not at the
+  // method's own indent. The first version of this pattern assumed it was and matched nothing,
+  // which the non-empty guard below turned into a loud failure instead of a green vacuous pass.
+  const refusals = [...retry.matchAll(/ok: false,([\s\S]*?)\n\s*\};/g)].map((m) => m[1]);
+  assert.ok(refusals.length >= 2, `retryBook has refusal paths to check, found ${refusals.length}`);
+  for (const refusal of refusals) {
+    for (const field of ['stage:', 'expected:', 'actual:', 'reason:']) {
+      assert.ok(refusal.includes(field), `a refusal is missing ${field}`);
+    }
+    assert.match(refusal, /Remedy:/, 'and every refusal names a remedy');
+  }
+
+  // The remedy string is what the panel renders, so it has to survive the trip to the surface
+  // that shows it. #reader-failed-why is that surface.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  assert.match(html, /id="reader-failed-why"/, 'the surface the remedy lands on exists');
+
+  // The success path is not allowed to claim success it did not reach.
+  const notRunning = await (async () => {
+    const reader = new Reader({ config: { reading: {} } });
+    Object.defineProperty(reader, 'running', { get: () => false, configurable: true });
+    return reader.retryBook();
+  })();
+  assert.equal(notRunning.ok, false);
+  assert.equal(notRunning.stage, 'open');
+  assert.match(notRunning.reason, /Remedy:/, 'the live refusal carries its remedy, not just the shape');
 });
