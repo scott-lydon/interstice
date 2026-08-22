@@ -867,7 +867,7 @@ transcript; the tests are in the tree.
 | --- | --- | --- | --- |
 | 1 | BLOCKING | `cdd8a9e` | capture refuses for every caller, not only the one that passes a probe |
 | 2 | BLOCKING | `2e250e5` | the seed path does not publish a page that has not arrived |
-| 3 | BLOCKING | `c464707` | the panel shows what the retry actually answered |
+| 3 | BLOCKING | `c464707` | a refused retry says why, instead of clearing the line |
 | 4 | MAJOR | `f9fb530` | a retry whose probe never answered does not report on the page |
 | 5 | MAJOR | `f9fb530` | ensure does not answer ok over a settle that found nothing |
 | 6 | MAJOR | `f9fb530` | the shelf label is not printed over a spinner; the panel does not promise turns over a page that is not there |
