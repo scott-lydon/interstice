@@ -1727,6 +1727,10 @@ function startReader(asin) {
   // picking another book off the shelf while signed out, or leaving the reading view and coming
   // back, left it floating over the loading overlay it is drawn after.
   tearDownSignIn();
+  // Derived here as well. Everything else the surface holds is reset above; the class was the one
+  // piece of state a recovery could inherit, and inheriting it is what left a working book with no
+  // visible pager.
+  syncFailingClass();
   setFrameHidden(true);
   $('reader-text').hidden = readerMode() !== 'text';
   $('reader-text').innerHTML = '';
@@ -1814,7 +1818,7 @@ function renderReader(d) {
     $('reader-over').hidden = true;
     readerFailed = true;
     readerFailKind = `daemon:${daemonRemedy}`;
-    document.body.classList.add('reader-failing');
+    syncFailingClass();
     // The poll keeps the state true; only an arrival composes it.
     if (enteringDaemonFailure) {
       $('reader-failed').hidden = false;
@@ -1841,7 +1845,7 @@ function renderReader(d) {
         // switch surfaces, so the missing teardown never showed. `reader-failing` goes back on
         // after, because the teardown takes it off on its way out.
         tearDownSignIn();
-        document.body.classList.add('reader-failing');
+        syncFailingClass();
         $('reader-failed').hidden = false;
         // A note about a page that is gone, offering to transcribe it again, is the silent no-op
         // this file has removed everywhere else: `loadReaderText` early-returns while a failure is
@@ -1851,7 +1855,15 @@ function renderReader(d) {
         $('reader-failed').focus?.();
       }
     }
-    setPagerDisabled(true, 'The reader is not answering, so there is no page to turn.');
+    // Worded for the surface the arm actually chose. It ran unconditionally after the sign-in
+    // branch had already hidden the failure surface and put the sign-in box up, so the disabled
+    // pager carried "the reader is not answering" underneath a screen asking for a password: the
+    // framing this arm discarded three lines earlier. The ok path reaching the same visible state
+    // words it correctly, so one surface had two explanations depending on which arm produced it.
+    setPagerDisabled(
+      true,
+      readerSignedOut ? 'Sign in to Amazon first' : 'The reader is not answering, so there is no page to turn.'
+    );
     return;
   }
 
@@ -1902,7 +1914,7 @@ function renderReader(d) {
     // so the hint band returned over the sign-in saying to press the arrow keys, and the pager
     // pill came back bright with its reason cleared, on the one surface where the panel knows
     // least about the book.
-    document.body.classList.toggle('reader-failing', readerFailed || readerSignedOut);
+    syncFailingClass();
     if (readerFailed) {
       // Focus follows the surface, for the reason recorded on the element itself.
       $('reader-failed').focus?.();
@@ -1913,7 +1925,7 @@ function renderReader(d) {
       // computes failing = true, composes this surface, and returns before the reconciliation that
       // would have cleared the flag, leaving the sign-in box up behind it.
       tearDownSignIn();
-      document.body.classList.add('reader-failing');
+      syncFailingClass();
       readerNote('');
       // A new failure asks the question again rather than arriving mid-answer.
       $('reader-retry').hidden = false;
@@ -2120,18 +2132,39 @@ function tearDownSignIn() {
   renderSignIn({});
 }
 
+/**
+ * Set from what is actually on screen, never maintained by hand.
+ *
+ * This class hides the hint band, the immersive pager pill and the per-page note, and it was added
+ * by four call sites and removed by two, both of which were conditional on state `startReader` had
+ * already cleared. So it survived a recovery: the next book opened correctly and the class was
+ * still on, which in immersive mode is fatal, because the main pager is displaced into the
+ * ellipsis menu and the overlay pill it hides is the only one on screen. A working book, no
+ * visible way to turn a page, and the hint that would have named the arrow keys hidden by the same
+ * rule. It also took out the whole per-page note channel for the life of that open.
+ *
+ * Six sites maintaining one boolean is what drifted. One derivation from the two surfaces the class
+ * is about cannot: if neither is up, the panel is not failing, whatever anyone forgot to reset.
+ */
+function syncFailingClass() {
+  document.body.classList.toggle(
+    'reader-failing',
+    !$('reader-failed').hidden || !$('reader-signin').hidden
+  );
+}
+
 function renderSignIn(d) {
   const host = $('reader-signin');
   if (!readerSignedOut) {
     signinBox()?.remove();
     host.hidden = true;
-    document.body.classList.remove('reader-failing');
+    syncFailingClass();
     return;
   }
   host.hidden = false;
   // Same reason the failure surface hides them: the hint band and the pager pill paint over this
   // one's lower edge, and neither can do anything while Amazon is asking for a sign-in.
-  document.body.classList.add('reader-failing');
+  syncFailingClass();
   if (signinBox()) return;
   const box = document.createElement('div');
   box.className = 'signin';

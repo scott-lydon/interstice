@@ -753,8 +753,10 @@ test('a failure surface is not painted over by controls that cannot help', () =>
   // handed the reader to the sign-in surface lost it on the next poll: failing goes false, this
   // arm runs on the reasoning that we are back to a real page, and the hint band and pager pill
   // came back over a sign-in box saying to press the arrow keys.
-  assert.match(arm, /classList\.toggle\('reader-failing', readerFailed \|\| readerSignedOut\)/,
-    'the class tracks both surfaces that own this rectangle');
+  // Derived, not maintained. Six hand-maintained sites are what drifted: the class survived a
+  // recovery and, in immersive mode where the main pager is displaced into the ellipsis menu,
+  // hid the only pager on screen along with the hint that would have named the arrow keys.
+  assert.match(arm, /syncFailingClass\(\)/, 'the class is derived from what is on screen');
 });
 
 test('the remedy that lives elsewhere ships a way to get there', () => {
@@ -891,7 +893,7 @@ test('pass 11: the surface that prints a remedy carries the control it names', (
   assert.match(branch, /reader-failed'\)\.hidden = false/, 'the failure surface is shown');
   assert.match(branch, /readerRemedy\(d\.error\)/, "with the daemon's remedy on it");
   assert.match(branch, /setFailAction\('retry'\)/, 'and the control that remedy names');
-  assert.match(branch, /setPagerDisabled\(true/, 'and the pager goes with the page');
+  assert.match(branch, /setPagerDisabled\(\s*true/, 'and the pager goes with the page');
   assert.ok(!/reader-over-act/.test(html), 'the invented control is gone rather than left unused');
   // The one remedy the reopen cannot stand in for gets the control it actually names.
   assert.match(branch, /wantsSignIn/, 'a signed-out remedy routes to the sign-in instead');
@@ -1011,7 +1013,7 @@ test('pass 13: coming out of a failure into a sign-in is not coming back to a pa
   const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
   const arm = html.slice(start, html.indexOf('// Back to a real page', start) + 400);
 
-  assert.match(arm, /readerFailed \|\| readerSignedOut/, 'the furniture stays hidden for both');
+  assert.match(arm, /syncFailingClass\(\)/, 'the furniture is hidden from what is on screen');
   const back = html.slice(html.indexOf('// Back to a real page'), html.indexOf('// Back to a real page') + 900);
   assert.match(back, /if \(!readerSignedOut\) setPagerDisabled\(false/, 'and the pager returns only with a page');
 
@@ -1228,7 +1230,7 @@ test('pass 19: leaving the sign-in state takes the sign-in surface with it', () 
   // has to put the class back or the furniture returns over the surface.
   for (const [slice, where] of [[daemon, 'the daemon arm'], [ok, 'the ok-path arm']]) {
     const i = slice.indexOf('tearDownSignIn()');
-    assert.match(slice.slice(i), /classList\.add\('reader-failing'\)/, `${where} re-adds the class after`);
+    assert.match(slice.slice(i), /syncFailingClass\(\)/, `${where} re-derives the class after`);
   }
 });
 
@@ -1245,4 +1247,47 @@ test('pass 19: a stale page note does not ride over a failure surface', () => {
   const daemonAt = html.indexOf('  if (!d.ok) {');
   const daemon = html.slice(daemonAt, html.indexOf('    return;\n  }', daemonAt));
   assert.match(daemon, /readerNote\(''\)/, 'and the daemon arm clears it rather than leaving it true');
+});
+
+
+test('pass 20: the failing class is derived, so a recovery cannot inherit it', () => {
+  // Pass 20, and the worst consequence in the whole run. The class hides the hint band, the
+  // immersive pager pill and the per-page note. It was added by four sites and removed by two,
+  // both conditional on state startReader had already cleared, so it survived a recovery: the next
+  // book opened correctly with the class still on. The reading view is always immersive, and there
+  // the main pager is displaced into the unlabelled ellipsis menu, so the overlay pill this rule
+  // hides is the ONLY pager on screen. A working book, no visible way to turn a page, and the hint
+  // that would have named the arrow keys hidden by the same rule.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+
+  assert.match(html, /function syncFailingClass\(\)/, 'there is one derivation');
+  const fn = html.slice(html.indexOf('function syncFailingClass()'), html.indexOf('function renderSignIn'));
+  assert.match(fn, /!\$\('reader-failed'\)\.hidden \|\| !\$\('reader-signin'\)\.hidden/,
+    'and it reads the two surfaces the class is about');
+
+  // Nothing maintains it by hand any more, which is the property that cannot drift.
+  assert.equal(
+    (html.match(/classList\.(add|remove|toggle)\('reader-failing'/g) || []).length,
+    0,
+    'no site sets the class by hand'
+  );
+
+  // A new open derives it, which is the route that was broken: startReader resets everything else
+  // the surface holds and used to leave this one behind.
+  const startAt = html.indexOf('function startReader(asin)');
+  const start = html.slice(startAt, html.indexOf('tickReader();', startAt));
+  assert.match(start, /syncFailingClass\(\)/, 'a new open derives it too');
+});
+
+test('pass 20: the pager reason matches the surface the arm chose', () => {
+  // Pass 20. The daemon arm ran setPagerDisabled unconditionally at its foot, after the sign-in
+  // branch had already hidden the failure surface and put the sign-in box up, so a disabled pager
+  // carried "the reader is not answering" underneath a screen asking for a password: the framing
+  // the arm discarded three lines earlier. The ok path reaching the same visible state words it
+  // correctly, so one surface had two explanations depending on which arm produced it.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const at = html.indexOf('  if (!d.ok) {');
+  const arm = html.slice(at, html.indexOf('    return;\n  }', at));
+  assert.match(arm, /readerSignedOut \? 'Sign in to Amazon first'/, 'the sign-in path says sign in');
+  assert.match(arm, /reader is not answering/, 'and the other keeps its own wording');
 });
