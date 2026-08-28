@@ -1137,8 +1137,11 @@ test('pass 17: the daemon failure surface is composed once, not on every poll', 
   const at = html.indexOf('  if (!d.ok) {');
   const arm = html.slice(at, html.indexOf('    return;\n  }', at));
 
-  assert.match(arm, /const enteringDaemonFailure = !readerFailed \|\| readerFailKind !== 'daemon'/,
-    'the arm knows whether this is an arrival or a repeat');
+  // Keyed on the remedy rather than the literal "daemon". A literal made this a boolean wearing a
+  // kind guard's clothes: nothing else assigns the kind while d.ok is false, so it was false on
+  // every poll after the first and the arm held its first sentence for the life of the failure.
+  assert.match(arm, /const enteringDaemonFailure = !readerFailed \|\| readerFailKind !== `daemon:\$\{daemonRemedy\}`/,
+    'the arm knows whether this is an arrival, a repeat, or a DIFFERENT daemon failure');
   assert.match(arm, /if \(enteringDaemonFailure\) \{/, 'and composes only on arrival');
 
   // The three things that must sit inside the guard, because each is what a repeat destroyed.
@@ -1154,8 +1157,40 @@ test('pass 17: the daemon failure surface is composed once, not on every poll', 
   // The state itself still has to be kept true by every poll, or the surface would flicker off.
   const beforeGuard = arm.slice(0, arm.indexOf('if (enteringDaemonFailure) {'));
   assert.match(beforeGuard, /readerFailed = true/, 'the poll keeps the state true');
-  assert.match(beforeGuard, /readerFailKind = 'daemon'/, 'and keeps the kind true');
+  assert.match(beforeGuard, /readerFailKind = `daemon:\$\{daemonRemedy\}`/, 'and keeps the kind true');
 
   // On the sign-in path the focus goes to the surface that is actually on screen.
   assert.match(guarded, /reader-signin'\)\.focus/, 'the sign-in path focuses the sign-in surface');
+});
+
+
+test('pass 18: a daemon failure that changes character redraws', () => {
+  // Pass 18. The guard added one pass earlier keyed on the literal "daemon", and nothing else can
+  // assign the kind while d.ok is false, so it was false on every poll after the first: the arm
+  // held whatever sentence it wrote first for as long as the daemon stayed down. readerRemedy
+  // words five situations from d.error, and d.error is a fresh message every poll, so one stuck
+  // reader really does produce a browser that has not launched, then a held profile, then a wedged
+  // page, then an expired session.
+  //
+  // The costly one is the sign-in path: that decision is made from the composed sentence, so a
+  // reader whose session expired after the first compose never got the sign-in box, and the only
+  // control left offered to discard the device registration. An irreversible repair proposed for a
+  // state that needs a password is the defect this loop exists to remove.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const at = html.indexOf('  if (!d.ok) {');
+  const arm = html.slice(at, html.indexOf('    return;\n  }', at));
+
+  assert.match(arm, /const daemonRemedy = readerRemedy\(d\.error\)/, 'the remedy is computed first');
+  assert.match(arm, /daemon:\$\{daemonRemedy\}/, 'and the kind carries it');
+  // Two occurrences: the comparison and the assignment. One of either would be a half fix.
+  assert.equal(
+    (arm.match(/daemon:\$\{daemonRemedy\}/g) || []).length, 2,
+    'both the comparison and the assignment use it'
+  );
+  // The composed sentence is the one that was compared, not a second call that could differ.
+  assert.match(arm, /reader-failed-why'\)\.textContent = daemonRemedy/, 'and the surface shows that same remedy');
+  assert.ok(
+    !/readerFailKind = 'daemon'/.test(arm),
+    'the literal kind is gone, so the guard is not a boolean in disguise'
+  );
 });

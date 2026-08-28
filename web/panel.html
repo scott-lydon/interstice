@@ -1774,12 +1774,28 @@ function renderReader(d) {
     // the confirmation when the half-answered-confirmation problem was closed on the ok path, and
     // that line is what turned a harmless repaint into a control that could not be used. The
     // repaint was the defect; the guard is the fix.
-    const enteringDaemonFailure = !readerFailed || readerFailKind !== 'daemon';
+    // Keyed on the REMEDY, not on the word "daemon". Keying it on a literal made it a boolean
+    // wearing a kind guard's clothes: nothing else can assign the kind while `d.ok` is false, so
+    // the condition was false on every poll after the first and the arm held whatever sentence it
+    // wrote first for as long as the daemon stayed down. `readerRemedy` words five different
+    // situations from `d.error`, and `d.error` is a fresh message on every poll, so one stuck
+    // reader really does produce a browser that has not launched, then a profile another window is
+    // holding, then a wedged page, then an expired session, in sequence.
+    //
+    // The costly one is the sign-in path, because that decision is made from the composed
+    // sentence: a reader whose session expires after the first compose never gets the sign-in box,
+    // and the only control left offers to discard the device registration Amazon stored here. An
+    // irreversible repair proposed for a state that needs a password is precisely the defect this
+    // loop exists to remove, and the guard I added one pass ago reintroduced it.
+    //
+    // Identical errors still compose once, which is all the guard was ever for.
+    const daemonRemedy = readerRemedy(d.error);
+    const enteringDaemonFailure = !readerFailed || readerFailKind !== `daemon:${daemonRemedy}`;
     setFrameHidden(true);
     $('reader-text').hidden = true;
     $('reader-over').hidden = true;
     readerFailed = true;
-    readerFailKind = 'daemon';
+    readerFailKind = `daemon:${daemonRemedy}`;
     document.body.classList.add('reader-failing');
     // The poll keeps the state true; only an arrival composes it.
     if (enteringDaemonFailure) {
@@ -1787,7 +1803,7 @@ function renderReader(d) {
       $('reader-failed-title').textContent = 'The reader is not answering';
       // The daemon's own sentence, mapped to one that names a move. Its remedies name the control
       // that is now on screen beside them.
-      $('reader-failed-why').textContent = readerRemedy(d.error);
+      $('reader-failed-why').textContent = daemonRemedy;
       $('reader-failed-detail').hidden = true;
       $('reader-failed-detail-label').hidden = true;
       // A signed-out daemon needs the sign-in box, not the reopen: its remedy is the one of the
