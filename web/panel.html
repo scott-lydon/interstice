@@ -746,7 +746,12 @@
           <img id="reader-frame" alt="" hidden>
         </button>
         <div class="text" id="reader-text" hidden></div>
-        <div class="over" id="reader-over">
+        <!--
+          Focusable, like the two overlays that share this rectangle. A sign-in that succeeds
+          removes the box the caret was in, and this is the surface that replaces it, so without
+          this the one transition that ends in success is the only one that leaves focus nowhere.
+        -->
+        <div class="over" id="reader-over" tabindex="-1">
           <div class="skeleton">
             <i class="shimmer" style="width:80%"></i>
             <i class="shimmer" style="width:95%"></i>
@@ -2126,6 +2131,36 @@ function signinSay(text, spin) {
  * false, and the reconciliation that would clear the flag sits after the failure surface's early
  * return. So the teardown has to be explicit and it has to happen before composing anything else.
  */
+/**
+ * A sign-in that worked. This is a new open by every measure that matters, so it resets everything
+ * a new open resets.
+ *
+ * It exists because the two success paths were the same six lines written twice, and one of them
+ * was missing the clock: after a successful carry the loading line measured from the ORIGINAL
+ * open, which includes however long the sign-in surface stood there while the reader went to their
+ * own browser. Routinely minutes. So the surface that replaced the box read "still opening after
+ * 312s. This is longer than usual." at second zero of the reopen, advising the reader to give up
+ * at the exact moment the repair succeeded.
+ *
+ * The dedup key was missing from both. `readerSaidLast` still held the line from the first open,
+ * so the announcement was suppressed and a screen reader heard nothing at all from the success
+ * through to the page arriving, which is itself not announced.
+ *
+ * And focus: both handlers disable the button under the caret, which drops focus to the body, and
+ * the box is then removed entirely, so the one transition that ends in SUCCESS was the only one
+ * that left the caret nowhere. Every failing teardown here hands focus to a named surface.
+ */
+function signInRecovered() {
+  readerSeq = -1;
+  readerSignedOut = false;
+  renderSignIn({});
+  $('reader-over').hidden = false;
+  readerOpenedAt = Date.now();
+  readerSaidLast = '';
+  readerSay(openingLine(), true);
+  $('reader-over').focus?.();
+}
+
 function tearDownSignIn() {
   if (!readerSignedOut && $('reader-signin').hidden) return;
   readerSignedOut = false;
@@ -2225,11 +2260,7 @@ function renderSignIn(d) {
       const r = await (await fetch('/api/reading/session', { method: 'POST' })).json();
       signinSay(r.reason || (r.ok ? 'signed in' : 'could not carry the session'));
       if (r.ok) {
-        readerSeq = -1;
-        readerSignedOut = false;
-        renderSignIn({});
-        $('reader-over').hidden = false;
-        readerSay(openingLine(), true);
+        signInRecovered();
         return;
       }
       // The OUTCOME goes where every other outcome of this control goes, and the button stays a
@@ -2273,12 +2304,7 @@ function watchSignIn() {
     clearInterval(signinPoll);
     signinPoll = null;
     if (s.ok) {
-      readerSeq = -1;
-      readerSignedOut = false;
-      renderSignIn({});
-      $('reader-over').hidden = false;
-      readerOpenedAt = Date.now();
-      readerSay(openingLine(), true);
+      signInRecovered();
       return;
     }
     signinSay(s.reason || 'the sign-in did not finish');

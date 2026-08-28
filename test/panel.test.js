@@ -1291,3 +1291,43 @@ test('pass 20: the pager reason matches the surface the arm chose', () => {
   assert.match(arm, /readerSignedOut \? 'Sign in to Amazon first'/, 'the sign-in path says sign in');
   assert.match(arm, /reader is not answering/, 'and the other keeps its own wording');
 });
+
+
+test('pass 21: a sign-in that worked is a new open, on both paths', () => {
+  // Pass 21, and the last instance of the pattern the previous four passes kept finding: state
+  // written by hand at several sites and correct at all but one. The two success paths were the
+  // same six lines written twice.
+  //
+  // The carry path was missing the clock, so the loading line measured from the ORIGINAL open,
+  // which includes however long the sign-in surface stood there while the reader went to their own
+  // browser. Routinely minutes. The surface that replaced the box read "still opening after 312s.
+  // This is longer than usual." at second zero of the reopen, which is the panel advising someone
+  // to give up at the moment its own repair succeeded.
+  //
+  // Both were missing the dedup key, so the announcement was suppressed and a screen reader heard
+  // nothing from the success through to the page arriving, which is itself not announced. And both
+  // disable the button under the caret, dropping focus to the body, so the one transition ending in
+  // success was the only one leaving focus nowhere.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+
+  assert.match(html, /function signInRecovered\(\)/, 'there is one recovery');
+  const fn = html.slice(html.indexOf('function signInRecovered()'), html.indexOf('function tearDownSignIn'));
+  for (const [needle, why] of [
+    [/readerOpenedAt = Date\.now\(\)/, 'the clock restarts, so the wait is measured from the reopen'],
+    [/readerSaidLast = ''/, 'the dedup key clears, so the reopen is announced'],
+    [/readerSeq = -1/, 'the frame sequence resets'],
+    [/readerSignedOut = false/, 'the flag clears'],
+    [/reader-over'\)\.focus/, 'and focus lands on the surface that replaced the box'],
+  ]) {
+    assert.match(fn, needle, why);
+  }
+
+  // Both paths go through it, which is the property that stops one drifting from the other.
+  assert.equal(
+    (html.match(/signInRecovered\(\);/g) || []).length, 2,
+    'both the watched sign-in and the carried session use it'
+  );
+
+  // The surface it focuses has to be able to hold focus.
+  assert.match(html.replace(/\s+/g, ' '), /id="reader-over" tabindex="-1"/, 'the overlay is focusable');
+});
