@@ -551,3 +551,29 @@ I do not think this surface has converged, but I want to be precise about where 
 ### Verdict
 
 The surface has not quite converged, but it is close, and the two items above are the same defect the last four passes found rather than anything new: state that is written by hand at several sites and is correct at all but one of them. Neither is a new class. `readerOpenedAt` is maintained at four sites and one of two identical recovery branches forgets it; `readerSaidLast` is cleared at one site and the two recovery paths that are new opens in every other respect do not clear it; focus is handed to a named surface at three teardown sites and dropped at the two that end in success. All three cluster in one place, the sign-in recovery paths, which is the one lifecycle corner the derivation of `body.reader-failing` did not reach: `syncFailingClass()` fixed the class because the class describes what is on screen and can be read back off the DOM, and none of these three can be, since a clock, a dedup key and the focus ring have no on-screen state to derive them from. That is the residual risk and it is bounded: the remaining hand-maintained state on these surfaces is `readerFailed`, `readerFailKind`, `readerSignedOut`, `readerShelf`, `pagerWhy`, `readerOpenedAt` and `readerSaidLast`, and of those the first five are now either derived from the poll's own answer on every tick or reconciled by a guard that reads the DOM, so a drift in them self-corrects within one 1500ms poll. The last two do not self-correct, because nothing polls a clock or a dedup key. If a twelfth pass finds something, I would expect it there, on a path that restores the reading view without going through `startReader`, and not on the failure surface itself, which I read closely and found sound.
+
+## The residual risk pass 21 named, checked directly (2026-08-27)
+
+Pass 21's verdict said that if a twelfth pass found anything, it would be "on a path that restores
+the reading view without going through `startReader`". That is a specific, checkable claim, so it
+was checked rather than reviewed for.
+
+There is no such path. `setView` calls `stopReader()` whenever it leaves the reading view
+(panel.html:1079), `stopReader` sets `readerTimer = null` unconditionally, `setView('reading')`
+always runs its loader (`LOADERS.reading = loadBook`, panel.html:1093-1094 and 2725-2729), and
+`loadBook` calls `startReader(target)` whenever `readerAsin !== target || !readerTimer`
+(panel.html:2491). Coming back into the view always satisfies the second half of that test, so the
+per-open reset always runs.
+
+The one way through `loadBook` that does not reach `startReader` is its own `catch`, which puts
+"Your book did not load" on screen. That leaves the previous per-open state in place, but no poll
+is running to act on it and the surface is honest about there being no page, so it is not the hole
+the verdict was pointing at.
+
+**Convergence, stated plainly.** Twelve passes, 60 findings, all fixed. The last five all found one
+class, hand-maintained state drifting from what is on screen, and it has been addressed structurally
+twice rather than patched: derived where the state is derivable (`syncFailingClass` reads the two
+surfaces the class describes, and no site sets it by hand), and written once where it is not
+(`signInRecovered` holds the clock and the dedup key that nothing can poll back). Of the seven
+pieces of state on these surfaces, five self-correct inside one 1500ms poll and the two that cannot
+are now single-sited. The named residual is closed by construction.
