@@ -1038,7 +1038,7 @@ test('pass 15: the loading line is not announced twice a second forever', () => 
   const say = src.slice(sayAt, src.indexOf('\n}', sayAt));
   // The COMPARISON, not the variable. Asserting the name appears passed happily when the guard
   // was changed to announce on every tick regardless, because the assignment still mentions it.
-  assert.match(say, /spoken !== readerSaidLast/, 'it announces only when the sentence changed');
+  assert.match(say, /key !== readerSaidLast/, 'it announces only when the sentence changed');
   assert.match(say, /\\b\\\\d\+s\\b|\\d\+s/, 'and strips the elapsed seconds before comparing');
 
   // Run the comparison the way the function does: two ticks of the same sentence with different
@@ -1065,4 +1065,61 @@ test('pass 15: the question arm claims no more than the others do', () => {
   assert.ok(!/will not be asked again/.test(asked), 'and does not predict what Amazon will do next');
   assert.match(asked, /usually clears it here too/, 'it says what is worth trying instead');
   assert.match(asked, /keeps checking/, 'and that the panel is still working');
+});
+
+
+test('pass 16: a check that could not run does not report one', () => {
+  // Pass 16, and the defect this whole loop is about, in the one control whose entire purpose is
+  // to make an invisible outcome visible. `tickReader` opens with an early return when a poll is
+  // already in flight, so pressing the button mid-poll resolved instantly, found the surface
+  // unchanged for the obvious reason, and said a check had just happened. None had. The window is
+  // widest exactly where the control is offered, since every poll is a screenshot round trip.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const tickAt = html.indexOf('async function tickReader()');
+  const tick = html.slice(tickAt, html.indexOf('\n}', tickAt));
+  assert.match(tick, /if \(readerBusy\) return false/, 'the poll reports that it did not ask');
+
+  const at = html.indexOf("$('reader-recheck').addEventListener");
+  const handler = html.slice(at, html.indexOf('\n});', at));
+  assert.match(handler, /asked = \(await tickReader\(\)\) !== false/, 'the control reads that answer');
+  assert.match(handler, /if \(!asked\)/, 'and branches on it');
+  assert.match(handler, /busy right now/, 'saying what happened instead of claiming a check');
+});
+
+test('pass 16: what is announced is a sentence, not the deduplication key', () => {
+  // Pass 16. The stripped string was doing both jobs, so the long-wait line was read aloud with a
+  // hole where its number had been, and the number is the one fact that copy exists to deliver.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const at = html.indexOf('function readerSay(text, spin)');
+  const say = html.slice(at, html.indexOf('\n}', at));
+  const body = say.slice(say.indexOf('const key ='), say.indexOf('const live ='));
+  // eslint-disable-next-line no-new-func
+  const run = new Function('text', `${body} return { key, spoken };`);
+
+  const long = run('still opening after 45s. This is longer than usual.');
+  assert.ok(!/after\s*\./.test(long.spoken), `the clause is not left dangling: ${long.spoken}`);
+  assert.match(long.spoken, /^still opening\. This is longer than usual\.$/, 'it is a whole sentence');
+
+  const short = run('opening your book, 11s');
+  assert.equal(short.spoken, 'opening your book', 'and the short form loses its trailing comma');
+
+  // The key still deduplicates across ticks, which is what it is for.
+  assert.equal(run('opening your book, 9s').key, run('opening your book, 11s').key);
+  assert.notEqual(run('opening your book, 9s').key, long.key);
+
+  // And the SPOKEN one is what reaches the live region. Computing both and announcing the key
+  // is the defect this fixed, and a test that only checks the two strings cannot see it.
+  assert.match(say, /live\.textContent = spoken/, 'the sentence is announced, not the key');
+  assert.match(say, /readerSaidLast = key/, 'and the key is what is remembered');
+});
+
+test('pass 16: a new open announces itself', () => {
+  // Pass 16. `readerSaidLast` survived a new open, so picking a second book off the shelf matched
+  // the last line of the previous open, the dedup suppressed it, and the only channel a screen
+  // reader has stayed silent from the press until the page arrived, which is itself not announced.
+  // A regression the dedup introduced, so it belongs with the other per-open resets.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const at = html.indexOf('function startReader(asin)');
+  const start = html.slice(at, html.indexOf('tickReader();', at));
+  assert.match(start, /readerSaidLast = ''/, 'a new open forgets what the last one said');
 });

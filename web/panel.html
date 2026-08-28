@@ -1537,10 +1537,22 @@ function readerSay(text, spin) {
   // The elapsed seconds are stripped before comparing, so "opening your book, 9s" and
   // "opening your book, 11s" are one announcement rather than one every poll. The two threshold
   // sentences differ in their words, so each is announced once when it arrives.
-  const spoken = String(text ?? '').replace(/\b\d+s\b/g, '').replace(/\s+/g, ' ').trim();
+  // Two strings, two jobs. The KEY exists only to tell one announcement from the next, so
+  // stripping the seconds out of it is right. Announcing that same stripped string is not: the
+  // long-wait line became "still opening after ." read aloud, a clause with a hole where its
+  // object was, and that number is the one fact the threshold copy exists to deliver. The sighted
+  // reader gets the count on screen; the listener gets a sentence that finishes.
+  const key = String(text ?? '').replace(/\b\d+s\b/g, '').replace(/\s+/g, ' ').trim();
+  const spoken = String(text ?? '')
+    .replace(/\s*\bafter\s+\d+s\b/g, '')
+    .replace(/,?\s*\b\d+s\b/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([.,])/g, '$1')
+    .replace(/,\s*$/, '')
+    .trim();
   const live = $('reader-status-live');
-  if (live && spoken !== readerSaidLast) {
-    readerSaidLast = spoken;
+  if (live && key !== readerSaidLast) {
+    readerSaidLast = key;
     live.textContent = spoken;
   }
   // The shimmer is this panel's signal for "still working", and it kept animating underneath a
@@ -1691,6 +1703,11 @@ function startReader(asin) {
   readerSignedOut = false;
   readerFailed = false;
   readerFailKind = '';
+  // Cleared with the rest. It survived a new open, so picking a second book off the shelf
+  // announced nothing: the first line of the new open matches the last line of the old one, the
+  // dedup suppressed it, and the only channel a screen reader has stayed silent from the press
+  // until the page arrived, which is itself not announced. A regression the dedup introduced.
+  readerSaidLast = '';
   readerShelf = null;
   readerNote('');
   readerOpenedAt = Date.now();
@@ -1714,9 +1731,16 @@ function startReader(asin) {
   readerTimer = setInterval(tickReader, 1500);
 }
 
+/**
+ * Returns whether it actually ASKED the daemon. It answers false when a poll is already in
+ * flight, and the recheck control needs that difference: it used to await this, get an instant
+ * early return, find the surface unchanged for the obvious reason, and report a check about a
+ * request that was never made. The window is widest exactly where that control is offered,
+ * because every poll is a screenshot round trip through a headless browser.
+ */
 async function tickReader() {
   if (currentView !== 'reading') return stopReader();
-  if (readerBusy) return;
+  if (readerBusy) return false;
   readerBusy = true;
   try {
     const res = await fetch('/api/reading/view', {
@@ -2724,12 +2748,24 @@ $('reader-recheck').addEventListener('click', async () => {
   // A control whose only outcome is invisible is indistinguishable from one that is broken, and
   // this one is offered precisely in the cases where the answer usually has NOT changed yet.
   const before = $('reader-failed-why').textContent;
+  let asked = false;
   try {
-    await tickReader();
+    // One wait for an in-flight poll to land, then our own. Without this the press could resolve
+    // against a poll that was already running and report a check that never happened.
+    asked = (await tickReader()) !== false;
+    if (!asked) {
+      await new Promise((r) => setTimeout(r, 1600));
+      asked = (await tickReader()) !== false;
+    }
   } finally {
     b.disabled = false;
     b.textContent = 'Check again';
-    if (!$('reader-failed').hidden && $('reader-failed-why').textContent === before) {
+    if (!asked) {
+      // Says what happened, which is that it could not get a word in. The alternative was
+      // claiming an outcome from a request that was never sent.
+      $('reader-recheck-said').textContent = 'The reader is busy right now. Try that again.';
+      $('reader-recheck-said').hidden = false;
+    } else if (!$('reader-failed').hidden && $('reader-failed-why').textContent === before) {
       // Said on the surface itself rather than in the footer line, because the reader is looking
       // at this overlay and the footer is behind it.
       $('reader-recheck-said').textContent = 'Checked just now. Still the same.';
