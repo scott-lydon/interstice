@@ -503,7 +503,13 @@
      in a short window they paint over this surface's lower edge and the one control that CAN help
      ends up underneath two that cannot. They are hidden while a failure is showing. */
   body.reader-failing .reader-hint,
-  body.reader-failing .reader-pager-overlay { display: none !important; }
+  body.reader-failing .reader-pager-overlay,
+  /* The third sibling in this stack, and it was left out. In immersive mode the note is absolute
+     at z-index 26 over a `#reader` with none, so a stale "3 of 28 lines read poorly" rode on top
+     of the failure surface offering to transcribe a page that is no longer there, and pressing it
+     hit `loadReaderText`'s early return: a silent no-op on the one control these surfaces leave
+     live. */
+  body.reader-failing #reader-note { display: none !important; }
   /* The per-page note, and the reason it is a class rather than an inline style.
      `hidden` works by way of the user-agent rule `[hidden] { display: none }`, which
      an inline `display: flex` on the same element outranks: the note was therefore
@@ -1717,6 +1723,10 @@ function startReader(asin) {
   // failure states were fixed for, in the state that comes before them.
   setPagerDisabled(true, 'The book is still opening.');
   $('reader-failed').hidden = true;
+  // A new open inherits nothing. `startReader` cleared the flag but never removed the box, so
+  // picking another book off the shelf while signed out, or leaving the reading view and coming
+  // back, left it floating over the loading overlay it is drawn after.
+  tearDownSignIn();
   setFrameHidden(true);
   $('reader-text').hidden = readerMode() !== 'text';
   $('reader-text').innerHTML = '';
@@ -1790,7 +1800,15 @@ function renderReader(d) {
     //
     // Identical errors still compose once, which is all the guard was ever for.
     const daemonRemedy = readerRemedy(d.error);
-    const enteringDaemonFailure = !readerFailed || readerFailKind !== `daemon:${daemonRemedy}`;
+    // The last clause is about what is ON SCREEN, not about what was last composed. Everything
+    // that hides things runs unconditionally below, while everything that puts words up sits
+    // inside this guard, so a surface torn down by something else (a sign-in succeeding, which
+    // removes the box and restores the loading overlay) was never rebuilt: the next poll re-hid
+    // the overlay, the guard said nothing had changed, and the reading area was left bare, with no
+    // title, no sentence and no spinner, on the reader who has just typed a password.
+    const enteringDaemonFailure = !readerFailed
+      || readerFailKind !== `daemon:${daemonRemedy}`
+      || ($('reader-failed').hidden && $('reader-signin').hidden);
     setFrameHidden(true);
     $('reader-text').hidden = true;
     $('reader-over').hidden = true;
@@ -1818,6 +1836,17 @@ function renderReader(d) {
         // the tabindex on it exists to prevent.
         $('reader-signin').focus?.();
       } else {
+        // Leaving the sign-in state for a different daemon failure. Keying the guard on the remedy
+        // made this reachable: under the old literal guard the arm composed once and could not
+        // switch surfaces, so the missing teardown never showed. `reader-failing` goes back on
+        // after, because the teardown takes it off on its way out.
+        tearDownSignIn();
+        document.body.classList.add('reader-failing');
+        $('reader-failed').hidden = false;
+        // A note about a page that is gone, offering to transcribe it again, is the silent no-op
+        // this file has removed everywhere else: `loadReaderText` early-returns while a failure is
+        // up, so the one control these surfaces leave live does nothing when pressed.
+        readerNote('');
         setFailAction('retry');
         $('reader-failed').focus?.();
       }
@@ -1880,6 +1909,11 @@ function renderReader(d) {
       $('reader-over').hidden = true;
       setFrameHidden(true);
       $('reader-text').hidden = true;
+      // Same teardown as the daemon arm: signed-out plus a book error, dead scripts or a prompt
+      // computes failing = true, composes this surface, and returns before the reconciliation that
+      // would have cleared the flag, leaving the sign-in box up behind it.
+      tearDownSignIn();
+      document.body.classList.add('reader-failing');
       readerNote('');
       // A new failure asks the question again rather than arriving mid-answer.
       $('reader-retry').hidden = false;
@@ -2063,6 +2097,27 @@ function signinSay(text, spin) {
   const el = signinBox()?.querySelector('.signin-status');
   if (!el) return;
   el.innerHTML = (spin ? '<span class="spinner"></span> ' : '') + esc(text);
+}
+
+/**
+ * Take the sign-in surface down, wherever we are going next.
+ *
+ * The two overlays are siblings with no z-index, both `inset: 0` and opaque, so the later one in
+ * the document simply paints over the earlier: a sign-in box left up behind a failure surface is
+ * invisible and still THERE. A screen reader walking the region meets "Amazon is asking you to
+ * sign in" before the real title, and Shift-Tab off the failure's control lands on an enabled
+ * button with no visible focus ring that posts a request and writes its outcome somewhere nobody
+ * can see. `readerSignedOut` also stays true, so the pager and turnPage stay keyed to a state the
+ * panel has left.
+ *
+ * `renderSignIn` is the only thing that can remove the box, and only when the flag is already
+ * false, and the reconciliation that would clear the flag sits after the failure surface's early
+ * return. So the teardown has to be explicit and it has to happen before composing anything else.
+ */
+function tearDownSignIn() {
+  if (!readerSignedOut && $('reader-signin').hidden) return;
+  readerSignedOut = false;
+  renderSignIn({});
 }
 
 function renderSignIn(d) {

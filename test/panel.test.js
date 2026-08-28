@@ -1140,8 +1140,12 @@ test('pass 17: the daemon failure surface is composed once, not on every poll', 
   // Keyed on the remedy rather than the literal "daemon". A literal made this a boolean wearing a
   // kind guard's clothes: nothing else assigns the kind while d.ok is false, so it was false on
   // every poll after the first and the arm held its first sentence for the life of the failure.
-  assert.match(arm, /const enteringDaemonFailure = !readerFailed \|\| readerFailKind !== `daemon:\$\{daemonRemedy\}`/,
-    'the arm knows whether this is an arrival, a repeat, or a DIFFERENT daemon failure');
+  // The condition gained a third clause about what is on screen, so it is matched in parts rather
+  // than as one line: a surface torn down by something else has to be rebuilt, not assumed present.
+  assert.match(arm, /const enteringDaemonFailure = !readerFailed/, 'an arrival composes');
+  assert.match(arm, /readerFailKind !== `daemon:\$\{daemonRemedy\}`/, 'a different daemon failure composes');
+  assert.match(arm, /\$\('reader-failed'\)\.hidden && \$\('reader-signin'\)\.hidden/,
+    'and so does a state where neither surface is actually up');
   assert.match(arm, /if \(enteringDaemonFailure\) \{/, 'and composes only on arrival');
 
   // The three things that must sit inside the guard, because each is what a repeat destroyed.
@@ -1193,4 +1197,52 @@ test('pass 18: a daemon failure that changes character redraws', () => {
     !/readerFailKind = 'daemon'/.test(arm),
     'the literal kind is gone, so the guard is not a boolean in disguise'
   );
+});
+
+
+test('pass 19: leaving the sign-in state takes the sign-in surface with it', () => {
+  // Pass 19. The two overlays are siblings, both inset:0 and opaque, neither carrying a z-index,
+  // so the later one paints over the earlier: a sign-in box left up behind a failure surface is
+  // invisible and still there. A screen reader meets its heading before the real title, and
+  // Shift-Tab off the failure's control lands on an enabled button with no visible focus ring.
+  // Only renderSignIn can remove the box, and only when the flag is already false, and the
+  // reconciliation that clears the flag sits after the failure surface's early return. So the
+  // teardown has to be explicit.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  assert.match(html, /function tearDownSignIn\(\)/, 'there is one teardown');
+
+  // Every route that leaves the sign-in state for something else must use it.
+  const daemonAt = html.indexOf('  if (!d.ok) {');
+  const daemon = html.slice(daemonAt, html.indexOf('    return;\n  }', daemonAt));
+  assert.match(daemon, /tearDownSignIn\(\)/, 'the daemon arm tears it down before composing');
+
+  const okAt = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  const ok = html.slice(okAt, html.indexOf('// Back to a real page', okAt));
+  assert.match(ok, /tearDownSignIn\(\)/, 'the ok-path failure arm does too');
+
+  const startAt = html.indexOf('function startReader(asin)');
+  const start = html.slice(startAt, html.indexOf('tickReader();', startAt));
+  assert.match(start, /tearDownSignIn\(\)/, 'and a new open inherits nothing');
+
+  // The teardown removes the body class on its way out, so anything composing a failure after it
+  // has to put the class back or the furniture returns over the surface.
+  for (const [slice, where] of [[daemon, 'the daemon arm'], [ok, 'the ok-path arm']]) {
+    const i = slice.indexOf('tearDownSignIn()');
+    assert.match(slice.slice(i), /classList\.add\('reader-failing'\)/, `${where} re-adds the class after`);
+  }
+});
+
+test('pass 19: a stale page note does not ride over a failure surface', () => {
+  // Pass 19. The note is the third floating sibling in this stack and was left out of the rule
+  // that hides the other two. In immersive mode it is absolute at z-index 26 over a #reader with
+  // none, so a stale "lines read poorly" note rode on top of the failure surface offering to
+  // transcribe a page that is gone, and pressing it hit loadReaderText's early return: a silent
+  // no-op on the one control these surfaces leave live.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  assert.match(html, /body\.reader-failing #reader-note \{ display: none !important; \}/,
+    'the note is hidden with the hint band and the pager pill');
+
+  const daemonAt = html.indexOf('  if (!d.ok) {');
+  const daemon = html.slice(daemonAt, html.indexOf('    return;\n  }', daemonAt));
+  assert.match(daemon, /readerNote\(''\)/, 'and the daemon arm clears it rather than leaving it true');
 });
