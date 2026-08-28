@@ -747,7 +747,17 @@
             <i class="shimmer" style="width:62%"></i>
             <i class="shimmer" style="width:88%"></i>
           </div>
-          <div class="mono" id="reader-status" role="status" aria-live="polite">opening your book</div>
+          <!--
+            The visible line is NOT the live region any more. It is rewritten on every 1500ms
+            poll, and past eight seconds it folds a seconds counter into the text, so a polite
+            live region here queued a fresh announcement every 1.5 seconds for as long as the open
+            lasted, forever, on exactly the slow open where someone is waiting longest. The
+            counter earns its place on screen, where the shimmer and the spinner say the same
+            thing silently; it does not earn being read aloud twice a second.
+          -->
+          <div class="mono" id="reader-status" aria-hidden="true">opening your book</div>
+          <!-- Announced only when the WORDING changes, which is twice in an open. -->
+          <div id="reader-status-live" class="visually-hidden" role="status" aria-live="polite"></div>
 
         </div>
         <!--
@@ -1518,9 +1528,21 @@ function shorten(text, max) {
   return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[,;:.\s]+$/, '')}\u2026`;
 }
 
+/** The last sentence actually announced, so the same one is never queued twice. */
+let readerSaidLast = '';
+
 function readerSay(text, spin) {
   const el = $('reader-status');
   if (el) el.innerHTML = (spin ? '<span class="spinner"></span> ' : '') + esc(text);
+  // The elapsed seconds are stripped before comparing, so "opening your book, 9s" and
+  // "opening your book, 11s" are one announcement rather than one every poll. The two threshold
+  // sentences differ in their words, so each is announced once when it arrives.
+  const spoken = String(text ?? '').replace(/\b\d+s\b/g, '').replace(/\s+/g, ' ').trim();
+  const live = $('reader-status-live');
+  if (live && spoken !== readerSaidLast) {
+    readerSaidLast = spoken;
+    live.textContent = spoken;
+  }
   // The shimmer is this panel's signal for "still working", and it kept animating underneath a
   // hard, named failure: the daemon's remedy went into an 11px line below four bars still saying
   // the opposite. On a slow link a reader reads the animation, not the line, and waits for
@@ -1816,9 +1838,20 @@ function renderReader(d) {
         // position in this book, and the operator is the only one who can answer it.
         $('reader-failed-title').textContent = 'Amazon is asking about your place in the book';
         $('reader-failed-why').textContent =
+          // Hedged to what is actually seen, like its two siblings. This arm was never put
+          // through the same pass they were, and it still carried two claims nothing here
+          // supports. One reassured the reader about their book and their position, when all
+          // this arm has is that a prompt string is on screen: the same shape as the account
+          // reassurance struck from the arm ten lines below. "It will not be asked
+          // again here" is stronger still, a prediction about what Amazon does in THIS browser
+          // profile after the reader answers in a different app on a different device, and the
+          // panel has no cross-device signal at all. It matters more here
+          // than anywhere else on this surface, because this is the only arm whose remedy is
+          // carried out somewhere else: the sentence sends someone into another app on a
+          // guarantee, and if Amazon asks again there is no move left.
           'Amazon put a question over the book and it is still there after Amazon\u2019s own '
-          + 'reader tried to answer it. Nothing is lost. Open the book in the Kindle app or on '
-          + 'read.amazon.com, answer it once there, and it will not be asked again here.';
+          + 'reader tried to answer it. Open the book in the Kindle app or on read.amazon.com and '
+          + 'answer it there; that usually clears it here too, and this panel keeps checking.';
         $('reader-failed-detail-label').textContent = 'What Amazon is asking';
         $('reader-failed-detail-label').hidden = false;
         $('reader-failed-detail').textContent = d.prompt;

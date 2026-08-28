@@ -590,7 +590,12 @@ test('the loading state ages, and does not animate under a failure', () => {
   // an identical string, so five seconds and five minutes were pixel-identical.
   const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
 
-  const say = html.slice(html.indexOf('function readerSay(text, spin)'), html.indexOf('function readerSay(text, spin)') + 900);
+  // Sliced to the end of the function, not to a fixed 900 characters. Splitting the visible line
+  // from the announced one grew readerSay past that window and dropped the skeleton assertion out
+  // of it, failing a test whose subject had not changed. A character count is a guess about how
+  // long the code will stay; this is the fourth time that guess has cost a false failure here.
+  const sayAt = html.indexOf('function readerSay(text, spin)');
+  const say = html.slice(sayAt, html.indexOf('\n}', sayAt));
   assert.match(say, /\.skeleton/, 'the skeleton is governed by the same call that sets the words');
   assert.match(say, /hidden = !spin/, 'and it is only shown while something is actually in progress');
 
@@ -1015,4 +1020,49 @@ test('pass 13: coming out of a failure into a sign-in is not coming back to a pa
   const daemon = html.slice(html.indexOf('if (!d.ok) {'), html.indexOf('return;', html.indexOf('if (!d.ok) {')));
   assert.match(daemon, /readerSignedOut = true/, 'the failure branch sets it');
   assert.match(html, /if \(d\.signedOut !== readerSignedOut\)/, 'and the later guard is a change test');
+});
+
+
+test('pass 15: the loading line is not announced twice a second forever', () => {
+  // Pass 15. `#reader-status` is rewritten on every 1500ms poll, and past eight seconds it folds
+  // a seconds counter into the text, so a polite live region on it queued a fresh announcement
+  // every 1.5 seconds for as long as the open lasted, with no end, on exactly the slow open where
+  // someone is waiting longest. The counter earns its place on screen, where the shimmer and the
+  // spinner already say the same thing silently. It does not earn being read aloud twice a second.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8').replace(/\s+/g, ' ');
+  assert.match(html, /id="reader-status"[^>]*aria-hidden="true"/, 'the visible line is not the live region');
+  assert.match(html, /id="reader-status-live"[^>]*aria-live="polite"/, 'a quiet one carries the announcement');
+
+  const src = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const sayAt = src.indexOf('function readerSay(text, spin)');
+  const say = src.slice(sayAt, src.indexOf('\n}', sayAt));
+  // The COMPARISON, not the variable. Asserting the name appears passed happily when the guard
+  // was changed to announce on every tick regardless, because the assignment still mentions it.
+  assert.match(say, /spoken !== readerSaidLast/, 'it announces only when the sentence changed');
+  assert.match(say, /\\b\\\\d\+s\\b|\\d\+s/, 'and strips the elapsed seconds before comparing');
+
+  // Run the comparison the way the function does: two ticks of the same sentence with different
+  // seconds must reduce to one announcement, and a threshold change must produce a new one.
+  const strip = (t) => String(t ?? '').replace(/\b\d+s\b/g, '').replace(/\s+/g, ' ').trim();
+  assert.equal(strip('opening your book, 9s'), strip('opening your book, 11s'), 'same sentence, one announcement');
+  assert.notEqual(strip('opening your book, 11s'), strip('still opening after 31s. This is longer than usual.'),
+    'a change of wording is announced');
+});
+
+test('pass 15: the question arm claims no more than the others do', () => {
+  // Pass 15. This arm was never put through the pass that struck unfounded reassurance from the
+  // other two. "Nothing is lost" is a claim about the book and the position, from an arm whose
+  // only evidence is that a prompt string is on screen. "It will not be asked again here" is a
+  // prediction about what Amazon does in this browser profile after the reader answers in another
+  // app on another device, and the panel has no cross-device signal at all. It matters most here,
+  // because this is the only arm whose remedy is carried out somewhere else.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const start = html.indexOf("$('reader-failed').hidden = !readerFailed;");
+  const branch = html.slice(start, html.indexOf('// Back to a real page', start));
+  const asked = branch.slice(branch.indexOf('if (askedSomething)'), branch.indexOf('} else if'));
+
+  assert.ok(!/Nothing is lost/.test(asked), 'it does not vouch for the book from a prompt string');
+  assert.ok(!/will not be asked again/.test(asked), 'and does not predict what Amazon will do next');
+  assert.match(asked, /usually clears it here too/, 'it says what is worth trying instead');
+  assert.match(asked, /keeps checking/, 'and that the panel is still working');
 });
