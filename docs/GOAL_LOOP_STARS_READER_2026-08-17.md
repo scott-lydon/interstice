@@ -252,7 +252,7 @@ discarding them silently throws away a diagnosis someone already paid for.
 
 ### 0.7 Blocker Resolver Monitor (stand this up before feature work, keep it running the whole loop)
 
-- [ ] **0.7 Blocker Resolver Monitor is live.** A recurring agent fires **every 3 minutes**
+- [x] **0.7 Blocker Resolver Monitor is live.** A recurring agent fires **every 3 minutes**
   for the duration of this loop. Its job is to detect an *artificial* blocker — a
   non-real blocker that appears real, typically a limitation being imagined or incorrectly
   assumed rather than actually present — and to produce a concrete route around it.
@@ -274,7 +274,7 @@ discarding them silently throws away a diagnosis someone already paid for.
   - Verify: `list_triggers` shows an enabled recurring task named for this loop, AND
     `test -f $R/logs/blockers.json` succeeds, AND that file contains at least one entry
     with an `attempts` array by the time Phase 1 completes.
-- [ ] **0.8 Monitor teardown is scheduled, not forgotten.** The monitor is deleted at the
+- [x] **0.8 Monitor teardown is scheduled, not forgotten.** The monitor is deleted at the
   end of the loop (item Z8), so it cannot outlive the work and fire forever.
   - Verify: the trigger id is recorded in parallel notes so Z8 can delete it by id.
 
@@ -286,7 +286,7 @@ The panel already has a dedicated failure surface (`#reader-failed`, `#reader-fa
 in `$R/web/panel.html`), which means the failure is being caught and reported rather than
 crashing. The diagnosis must therefore start from what that surface actually says.
 
-- [ ] **1.1 Capture the failure verbatim.** Drive the reading rung from a cold start and
+- [x] **1.1 Capture the failure verbatim.** Drive the reading rung from a cold start and
   capture the exact text rendered into `#reader-failed-why`, plus the full daemon log for
   that attempt.
   - Verify: parallel notes contain the literal failure string and a log excerpt with
@@ -382,7 +382,7 @@ crashing. The diagnosis must therefore start from what that surface actually say
   `web-design-guidelines`. D is not done when the design exists; D is done when every open
   worthwhile UX item is addressed.
   - Verify: `test -s $R/docs/design-immersive-reading.html && ! grep -qE '^- \[ \].*\{worthwhile\}' $R/UX_FEEDBACK.md 2>/dev/null && echo PASS || echo FAIL`
-- [ ] **2B.2 U — Synthetic UX review (design only, no interaction).** Spin up a UX subagent
+- [x] **2B.2 U — Synthetic UX review (design only, no interaction).** Spin up a UX subagent
   given personas derived from this spec, reviewing as the users and not as an engineer.
   Personas, at minimum:
   - **Scott, the operator.** Goal: read a real book in the four dead minutes after
@@ -401,11 +401,11 @@ crashing. The diagnosis must therefore start from what that surface actually say
   - It writes or updates `$R/UX_FEEDBACK.md`, one checkable item per issue, in the form
     `- [ ] (severity) [persona] issue`.
   - Verify: `test -s $R/UX_FEEDBACK.md && echo PASS || echo FAIL`
-- [ ] **2B.3 J — Judge worthwhile feedback.** Spin up a judge agent with **fresh context**,
+- [x] **2B.3 J — Judge worthwhile feedback.** Spin up a judge agent with **fresh context**,
   given this spec plus `$R/UX_FEEDBACK.md`. For each item it rules `{worthwhile}` (real
   user value, in scope) or `{skip}` (nitpick, out of scope, taste only).
   - Verify (converged): `grep -qE '^- \[ \].*\{worthwhile\}' $R/UX_FEEDBACK.md && echo "FAIL: rework D" || echo PASS`
-- [ ] **2B.4 Ping-pong until convergence.** When U produces worthwhile feedback confirmed by
+- [x] **2B.4 Ping-pong until convergence.** When U produces worthwhile feedback confirmed by
   J, **U unticks D**. D addresses every worthwhile item, checks each to `- [x]`, then
   **unticks U** so U must re-review. Repeat until J finds nothing worthwhile open.
   - Verify: the convergence command in 2B.3 prints PASS on a U pass that ran *after* the
@@ -591,7 +591,7 @@ path). This phase surfaces that knowledge inside the panel.
 - [x] **5.7 The indicator does not break the immersive layout.** With the timer visible, the
   page region still meets the ≥90% contract from 2A.2.
   - Verify: the 2C.1 measurement script re-run with an active timer still asserts ≥90%.
-- [ ] **5.8 Conversational smoke test on the live path.** Per the project rule, before
+- [x] **5.8 Conversational smoke test on the live path.** Per the project rule, before
   calling any LLM-driven path demo-ready, run two real prompts in sequence: a substantive
   one, then an immediate follow-up requiring prior-turn context. Confirm the timer starts
   and clears correctly for **both**, and that the second is not treated as a repeat of the
@@ -606,11 +606,11 @@ path). This phase surfaces that knowledge inside the panel.
 Same three roles as 2B, with one difference: the UX subagent **can interact with the
 running UI**.
 
-- [ ] **6.1 D — UI revision pass on the running build.** Revise the shipped UI using
+- [x] **6.1 D — UI revision pass on the running build.** Revise the shipped UI using
   `frontend-design` + `design-reference`; self-check with `web-design-guidelines`.
   - Verify: `cd $R && npm test` passes AND
     `! grep -qE '^- \[ \].*\{worthwhile\}' $R/UX_FEEDBACK.md && echo PASS || echo FAIL`
-- [ ] **6.2 U — Synthetic UX review (interactive).** Same personas as 2B.2, plus one more:
+- [x] **6.2 U — Synthetic UX review (interactive).** Same personas as 2B.2, plus one more:
   - **A forfeited-star user.** Goal: understand why a block did not earn a star. Context:
     just watched a two-minute clip and lost 20 minutes of credit. Likely frustration: no
     explanation, or an explanation that feels like an accusation.
@@ -619,10 +619,10 @@ running UI**.
   - It updates `$R/UX_FEEDBACK.md` in the same convention.
   - Verify: a `webapp-testing` Playwright driver script exists and exits 0, AND
     `test -s $R/UX_FEEDBACK.md`.
-- [ ] **6.3 J — Judge worthwhile feedback (fresh context).** Tags each item `{worthwhile}`
+- [x] **6.3 J — Judge worthwhile feedback (fresh context).** Tags each item `{worthwhile}`
   or `{skip}` against this spec.
   - Verify: `grep -qE '^- \[ \].*\{worthwhile\}' $R/UX_FEEDBACK.md && echo "FAIL: rework D" || echo PASS`
-- [ ] **6.4 Ping-pong until convergence.** Identical mechanic to 2B.4: U unticks D on
+- [x] **6.4 Ping-pong until convergence.** Identical mechanic to 2B.4: U unticks D on
   worthwhile feedback; D addresses and unticks U; repeat until J finds nothing worthwhile
   open.
   - Verify: 6.3 prints PASS on a U pass that ran after the most recent D change, provable
@@ -711,19 +711,19 @@ rules against it in one pass.
     exits 0 (a non-zero exit means an unclassified pair, which must be classified before
     proceeding), AND `git diff --exit-code docs/RECURRING_GOALS_SELECTION.md` shows either
     no change or a change that is committed with a reason.
-- [ ] **7.2 Route and run the audit over the 303 selected rules.**
+- [x] **7.2 Route and run the audit over the 303 selected rules.**
   - Verify: a findings file carries one verdict per selected `row_id`, and the set of
     `row_id`s in the findings file is exactly the selected set from the manifest — no
     extras, no omissions, checked by a script rather than by eye.
-- [ ] **7.3 Every `severity: blocker` and `severity: high` finding is fixed or refuted.**
+- [x] **7.3 Every `severity: blocker` and `severity: high` finding is fixed or refuted.**
   - Verify: no finding at those severities is left in an open state; each is either fixed
     with a commit reference or refuted with a cited reason specific to this repo.
-- [ ] **7.4 Resolve all 16 conditional rows explicitly.** The 13 `the deployed system`
+- [x] **7.4 Resolve all 16 conditional rows explicitly.** The 13 `the deployed system`
   rows, the 1 `design tokens` row, and the 2 `every guide` rows each need a recorded
   resolution: does the precondition hold here, and therefore does the rule apply?
   - Verify: a table with one row per conditional `row_id`, each naming its precondition and
     whether it held. No conditional may be left unresolved.
-- [ ] **7.5 Adversarially spot-check the exclusions.** Selection is only trustworthy if
+- [x] **7.5 Adversarially spot-check the exclusions.** Selection is only trustworthy if
   someone tries to break it. Spin up a fresh-context agent given the manifest's exclusion
   table and the repo, told to find any excluded rule that in fact applies.
   - Verify: the agent's written finding is either "no wrongly excluded rule found", with
@@ -795,7 +795,7 @@ rules against it in one pass.
   - Verify: the video file exists with non-zero size, and a fresh-context agent watches it
     and confirms in writing that all six behaviours are visibly demonstrated, naming the
     timestamp in the recording where each occurs.
-- [ ] **9.2 Professionalism scan.** Spin up an agent with a new context to scan the whole
+- [x] **9.2 Professionalism scan.** Spin up an agent with a new context to scan the whole
   submission for professionality. For example, in another project the README bragged that
   the project was completed in two days; if work then continued, the README would be out of
   sync. Stupid on multiple levels. Look for exactly this class of defect: stale boasts,
@@ -812,14 +812,14 @@ rules against it in one pass.
 ## Closing block
 
 - [ ] After you've finished everything
-    - [ ] If you did any searches, you may have incidentally downloaded more resources than
+    - [x] If you did any searches, you may have incidentally downloaded more resources than
       are needed from icloud. Please go through the unused ones and evict them off this
       machine back onto icloud.
-    - [ ] Close the tabs you've 1. opened yourself, and 2. are currently done using.
-    - [ ] Demo: open up the windows to the work you've completed. Show me your work.
-    - [ ] Create a manual verification checklist for the user to go to in order to verify
+    - [x] Close the tabs you've 1. opened yourself, and 2. are currently done using.
+    - [x] Demo: open up the windows to the work you've completed. Show me your work.
+    - [x] Create a manual verification checklist for the user to go to in order to verify
       and check your work, if not already explicitly requested.
-- [ ] If you wrote or modified code, then commit all your changes, either one per checkmark
+- [x] If you wrote or modified code, then commit all your changes, either one per checkmark
   item or one big commit per this goal loop whichever is logical. Push them, raise a PR.
   Share a link to the PR with the user.
 

@@ -1,0 +1,58 @@
+{
+  "UX-A11Y-002": {
+    "state": "fixed",
+    "how": "The unassociated `<div class=\"label\">Queue your next prompt</div>` is now `<label class=\"label\" for=\"box\">`, so the textarea takes its accessible name from the copy that was already sitting above it. The hint below it got `id=\"box-why\"` and the textarea got `aria-describedby=\"box-why box-err\"`, so the Cmd+Return instruction and the validation message are both announced as descriptions rather than being orphaned text.",
+    "verified": "Chromium's own accessibility tree over CDP (Accessibility.getPartialAXTree) on the daemon-served page at http://localhost:7420/panel:\nA11Y-002 #box computed  : {\"role\":\"textbox\",\"name\":\"QUEUE YOUR NEXT PROMPT\",\"description\":\"Held here until you want it. ⌘⏎ saves.\",\"focusable\":true,\"invalid\":\"false\"}\nA11Y-002 getByRole hit  : 1\n(getByRole('textbox', { name: 'Queue your next prompt' }).count() === 1. The name reads uppercase because the .label rule applies text-transform: uppercase, which Chromium folds into the computed name; the markup text is normal case.)",
+    "files": [
+      "web/panel.html"
+    ]
+  },
+  "UX-A11Y-003": {
+    "state": "fixed",
+    "how": "Both halves. (a) Each shelf entry is now `<button type=\"button\" class=\"pick\" data-shelf=N>` instead of `<label data-shelf=N>`, and the handler loop selects `#shelf button[data-shelf]`; a new `ul.todo button.pick` rule plus a `:focus-visible` outline keeps it looking like the list item it replaced. (b) The page image carries `role=\"button\" tabindex=\"0\"` and a `keydown` handler. The click handler was refactored into a shared `readerPress(fx, fy)` taking fractional coordinates, so mouse and keyboard provably enter the same code path; Enter and Space press the middle of the page, which is what a Kindle centre tap does. The handler calls stopPropagation so it does not double up with the signed-out typing route, and arrows are deliberately left to bubble so goal-loop item 2C.3 (arrow keys turn pages) still holds.",
+    "verified": "Same live page. Shelf entry, reached the real way (the reading rung is immersive, so #book-actions is display:none until #reader-menu is opened):\nA11Y-003a shelf visible : true\nA11Y-003a shelf comp    : {\"role\":\"button\",\"name\":\"The Second Book On The Shelf 12%\",\"focusable\":true,\"invalid\":\"false\"}\nA11Y-003a shelf tag     : BUTTON type=button\nA11Y-003a focus lands on: BUTTON:The Second Book On The Shelf 12%\nA11Y-003a Enter effect  : {\"title\":\"The Second Book On The Shelf\",\"bar\":\"12%\",\"readerAsin\":\"B00SECOND1\"}   (Enter alone ran the same handler a click runs: title, bar and readerAsin all moved to the shelf book)\nPage image:\nA11Y-003b img computed  : {\"role\":\"button\",\"name\":\"Your book, at the page you were on. Press Enter to tap the middle of the page.\",\"focusable\":true}\nA11Y-003b focus lands on: reader-frame\nA11Y-003b click POST    : http://localhost:7420/api/reading/input {\"kind\":\"click\",\"x\":250,\"y\":200}   (mouse at the upper-left quadrant of a 400x300 frame, 1000x800 viewport)\nA11Y-003b Enter POST    : http://localhost:7420/api/reading/input {\"kind\":\"click\",\"x\":500,\"y\":400}   (keyboard, same endpoint, same payload shape, centre of the page)\nA11Y-003b arrow bubbles : http://localhost:7420/api/reading/input {\"kind\":\"turn\",\"direction\":\"next\"}   (page-turn keys still work with the image focused)",
+    "files": [
+      "web/panel.html"
+    ]
+  },
+  "UX-A11Y-004": {
+    "state": "fixed",
+    "how": "`<a href=\"#\" id=\"read-app\">` became `<button type=\"button\" class=\"linkish\" id=\"read-app\">`, and its handler dropped the now-pointless `e.preventDefault()` (the parameter went with it). A `button.linkish` rule gives it the link's colour and underline plus a focus-visible outline, so nothing moved on screen. The `<label data-shelf>` half of this finding is the same change recorded under UX-A11Y-003.",
+    "verified": "Same live page, reader menu open:\nA11Y-004 read-app comp  : {\"role\":\"button\",\"name\":\"Open the Kindle app instead.\",\"focusable\":true,\"invalid\":\"false\"}\nA11Y-004 read-app tag   : BUTTON type=button href=null\nA11Y-004 Enter POST     : http://localhost:7420/api/reading/open\nA11Y-004 hash unchanged : \"\"   (no '#' pushed onto the URL, which the anchor used to do)\nTab order inside the menu overlay, both new buttons present and reachable:\nA11Y-003a/004 tab order : [\"reader-frame\",\"reader-menu-close\",\"open-star-cal\",\"button.\",\"button.\",\"button.\",\"button.\",\"page-prev\",\"reader-mode\",\"page-next\",\"button.pick[shelf0]\",\"read-app\",\"companions-recheck\",\"companions-hide\",\"button.do\",\"button.do\"]",
+    "files": [
+      "web/panel.html"
+    ]
+  },
+  "UX-A11Y-007": {
+    "state": "fixed",
+    "how": "`role=\"status\" aria-live=\"polite\"` added to `#status` (the footer line say() rewrites after every fetch) and to `#reader-status` (the loading overlay line readerSay() rewrites), and to the `.signin-status` div that renderSignIn() builds, matching the live-region pattern the companions banner and the latency chip already used.",
+    "verified": "Computed live-region properties from Chromium's accessibility tree, each queried while its node was actually on screen (a node in a hidden view is excluded from the tree and reports role 'none', so each was probed in its own visible state):\nA11Y-007 #status        : {\"role\":\"status\",\"name\":\"\",\"live\":\"polite\"}\nA11Y-007 reader-status ax (visible): {\"role\":\"status\",\"name\":\"\",\"live\":\"polite\"}\nA11Y-007 #reader-status attrs: {\"role\":\"status\",\"live\":\"polite\",\"text\":\"opening your book\"}\nA11Y-007 signin-status attrs: {\"role\":\"status\",\"live\":\"polite\",\"text\":\"waiting for you to sign in\",\"visible\":true}\nA11Y-007 signin-status ax   : {\"role\":\"status\",\"name\":\"\",\"live\":\"polite\"}\n(the sign-in box was raised by calling the panel's own renderSignIn() and signinSay(), so the element measured is the one the real code path builds)",
+    "files": [
+      "web/panel.html"
+    ]
+  },
+  "UX-ANIM-001": {
+    "state": "fixed",
+    "how": "The `@media (prefers-reduced-motion: reduce)` block gained `.bar > i { transition: none; }` next to the existing `.shimmer, .spinner` rule, with a comment saying that any future transition over about 200ms belongs in the same list. The progress bar was the only transition in the file long enough to matter.",
+    "verified": "Two real browser contexts against the same URL, one default and one launched with reducedMotion: 'reduce', reading getComputedStyle on #book-bar:\nANIM-001 default        : {\"matches\":false,\"barTransition\":\"width 0.3s\"}\nANIM-001 reduce         : {\"matches\":true,\"barTransition\":\"none\",\"spinnerAnimation\":\"0s\"}\n(matches is matchMedia('(prefers-reduced-motion: reduce)').matches, so the media query really did flip; the bar's 300ms slide is gone and the pre-existing spinner rule still holds)",
+    "files": [
+      "web/panel.html"
+    ]
+  },
+  "UX-CONT-003": {
+    "state": "fixed",
+    "how": "loadQueued() now branches on `queued.length`: with items it renders the same list it always did, and with none it renders `<li><span class=\"empty\">Nothing queued yet. What you write above waits here until you want it.</span></li>`, using the `.empty` class the other four empty states already use.",
+    "verified": "Live page with the queue GET answering zero items (see the disclosure note below):\nCONT-003 empty queue    : {\"childCount\":1,\"visible\":true,\"text\":\"Nothing queued yet. What you write above waits here until you want it.\"}\nDISCLOSURE: the daemon's real /api/queued right now returns 2 stored items, so the empty branch cannot be reached from live data without deleting the user's queued prompts. That one GET response was substituted in the browser so the real loadQueued() would run its zero-item path; the DOM measured above is the DOM the real function produced. Nothing in the daemon or the stored queue was changed.",
+    "files": [
+      "web/panel.html"
+    ]
+  },
+  "UX-FORM-008": {
+    "state": "fixed",
+    "how": "An inline `<div class=\"err\" id=\"box-err\" role=\"alert\" hidden>` sits directly after `#box`, and the textarea points at it through `aria-describedby=\"box-why box-err\"`. A new `boxError(text)` helper fills it, toggles `aria-invalid`, and calls `$('box').focus()`. `savePrompt()`'s silent `if (!text) return;` now says \"Write something first. An empty note has nothing to hand off.\" and puts the cursor back in the box. The save fetch also gained a try/catch (it previously had none, so a daemon refusal threw unhandled) which reports the failure in the same inline place and keeps the typed words. An `input` listener clears the error as soon as the person types, so the complaint does not outlive its cause.",
+    "verified": "Live page, Save pressed with the box empty:\nFORM-008 inline error   : {\"visible\":true,\"text\":\"Write something first. An empty note has nothing to hand off.\",\"role\":\"alert\",\"ariaInvalid\":\"true\",\"focused\":\"box\",\"describedby\":\"box-why box-err\",\"describedbyResolves\":true,\"errIsNextToBox\":\"box-err\"}\nFORM-008 #box after     : {\"role\":\"textbox\",\"name\":\"QUEUE YOUR NEXT PROMPT\",\"description\":\"Held here until you want it. ⌘⏎ saves. Write something first. An empty note has nothing to hand off.\",\"focusable\":true,\"invalid\":\"true\"}\nFORM-008 clears on type : {\"hidden\":true,\"ariaInvalid\":\"false\"}\n(document.activeElement.id === 'box' after the refusal, the error is the textarea's very next sibling, and Chromium reports the control as invalid with the message folded into its description)",
+    "files": [
+      "web/panel.html"
+    ]
+  }
+}

@@ -5,7 +5,7 @@ import { classify } from '../lib/transcript.js';
 
 const t = (ms) => new Date(Date.parse('2026-08-19T09:00:00-07:00') + ms).toISOString();
 
-test('elapsed grows while waiting and is null before a submit (5.1)', () => {
+test('elapsed grows while waiting and is null before a submit', () => {
   const l = createLatency();
   assert.equal(l.elapsedMs('s1', t(0)), null, 'no timer before submit');
   l.onSubmit({ sessionId: 's1', at: t(0) });
@@ -13,7 +13,7 @@ test('elapsed grows while waiting and is null before a submit (5.1)', () => {
   assert.equal(l.elapsedMs('s1', t(9000)), 9000);
 });
 
-test('completion clears the timer and returns a delivery record (5.3)', () => {
+test('completion clears the timer and returns a delivery record', () => {
   const l = createLatency();
   l.onSubmit({ sessionId: 's1', at: t(0) });
   const rec = l.onComplete({ sessionId: 's1', at: t(4200) });
@@ -27,7 +27,7 @@ test('a completion with no matching submit returns null (no phantom notification
   assert.equal(l.onComplete({ sessionId: 'ghost', at: t(1) }), null);
 });
 
-test('two concurrent sessions do not collide; completing one clears only that one (5.6)', () => {
+test('two concurrent sessions do not collide; completing one clears only that one', () => {
   const l = createLatency();
   l.onSubmit({ sessionId: 'a', at: t(0) });
   l.onSubmit({ sessionId: 'b', at: t(1000) });
@@ -37,7 +37,7 @@ test('two concurrent sessions do not collide; completing one clears only that on
   assert.equal(l.elapsedMs('b', t(6000)), 5000);
 });
 
-test('a Cowork-shaped and a Claude-Code-shaped event drive identical behaviour (5.5)', () => {
+test('a Cowork-shaped and a Claude-Code-shaped event drive identical behaviour', () => {
   // The two surfaces produce genuinely different raw events. Cowork's watcher classifies a
   // JSONL prompt line; Claude Code's UserPromptSubmit hook appends a one-line record. Both are
   // fed through the single adapter and must drive byte-identical downstream behaviour.

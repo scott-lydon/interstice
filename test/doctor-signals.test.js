@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { frontmostSignalDiagnosis, lockSignalDiagnosis, videoProbeDiagnosis } from '../lib/doctor.js';
 
-// 8.4: each new dependency's signal has a doctor check that fails with a remedy-bearing message
+// Each new dependency's signal has a doctor check that fails with a remedy-bearing message
 // when the dependency is induced to fail.
 
 test('the frontmost signal fails with a remedy when unreadable', () => {

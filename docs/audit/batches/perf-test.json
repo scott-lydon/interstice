@@ -1,0 +1,266 @@
+{
+ "batch": "perf-test",
+ "target": "every source and page file in the repo: bin/interstice.js; lib/ (24 files); lib/actuators/index.js; lib/focus/blocks.js, lib/focus/stars-routes.js, lib/focus/store.js, lib/focus/tracker.js; lib/focus/breakers/display.js, lib/focus/breakers/frontmost.js, lib/focus/breakers/video.js; lib/state/ (8 files); lib/video/probe.js, lib/video/whitelist.js; scripts/literal-detector.mjs; test/ (44 files); web/dashboard.html, web/debug.html, web/panel.html",
+ "rules": [
+  {
+   "row_id": "RN-ASYNC-DEPENDENCIES",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Dependency-Based Parallelization",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Dependency-Based Parallelization. For operations with partial dependencies, use `better-all` to maximize parallelism. It automatically starts each task at the earliest possible moment. (section: Eliminating Waterfalls, impact: CRITICAL, 2-10\u00d7 improvement)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/async-dependencies.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-ASYNC-PARALLEL",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Promise.all() for Independent Operations",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Promise.all() for Independent Operations. When async operations have no interdependencies, execute them concurrently using `Promise.all()`. (section: Eliminating Waterfalls, impact: CRITICAL, 2-10\u00d7 improvement)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/async-parallel.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-CLIENT-LOCALSTORAGE-SCHEMA",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Version and Minimize localStorage Data",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Version and Minimize localStorage Data. Add version prefix to keys and store only needed fields. Prevents schema conflicts and accidental storage of sensitive data. (section: Client-Side Data Fetching, impact: MEDIUM, prevents schema conflicts, reduces storage size)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/client-localstorage-schema.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-JS-BATCH-DOM-CSS",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Avoid Layout Thrashing",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Avoid Layout Thrashing. Avoid interleaving style writes with layout reads. When you read a layout property (like `offsetWidth`, `getBoundingClientRect()`, or `getComputedStyle()`) between style changes, the browser is forced to trigger a synchronous reflow. (section: JavaScript Performance, impact: MEDIUM, prevents forced synchronous layouts and reduces performance bottlenecks)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/js-batch-dom-css.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-JS-CACHE-FUNCTION-RESULTS",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Cache Repeated Function Calls",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Cache Repeated Function Calls. Use a module-level Map to cache function results when the same function is called repeatedly with the same inputs during render. (section: JavaScript Performance, impact: MEDIUM, avoid redundant computation)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/js-cache-function-results.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-JS-CACHE-PROPERTY-ACCESS",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Cache Property Access in Loops",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Cache Property Access in Loops. Cache object property lookups in hot paths. (section: JavaScript Performance, impact: LOW-MEDIUM, reduces lookups)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/js-cache-property-access.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-JS-CACHE-STORAGE",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Cache Storage API Calls",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Cache Storage API Calls. `localStorage`, `sessionStorage`, and `document.cookie` are synchronous and expensive. Cache reads in memory. (section: JavaScript Performance, impact: LOW-MEDIUM, reduces expensive I/O)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/js-cache-storage.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-JS-COMBINE-ITERATIONS",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Combine Multiple Array Iterations",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Combine Multiple Array Iterations. Multiple `.filter()` or `.map()` calls iterate the array multiple times. Combine into one loop. (section: JavaScript Performance, impact: LOW-MEDIUM, reduces iterations)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/js-combine-iterations.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-JS-EARLY-EXIT",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Early Return from Functions",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Early Return from Functions. Return early when result is determined to skip unnecessary processing. (section: JavaScript Performance, impact: LOW-MEDIUM, avoids unnecessary computation)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/js-early-exit.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-JS-FLATMAP-FILTER",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Use flatMap to Map and Filter in One Pass",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use flatMap to Map and Filter in One Pass. **Impact: LOW-MEDIUM (eliminates intermediate array)** (section: JavaScript Performance, impact: LOW-MEDIUM, eliminates intermediate array)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/js-flatmap-filter.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-JS-INDEX-MAPS",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Build Index Maps for Repeated Lookups",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Build Index Maps for Repeated Lookups. Multiple `.find()` calls by the same key should use a Map. (section: JavaScript Performance, impact: LOW-MEDIUM, 1M ops to 2K ops)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/js-index-maps.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-JS-LENGTH-CHECK-FIRST",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Early Length Check for Array Comparisons",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Early Length Check for Array Comparisons. When comparing arrays with expensive operations (sorting, deep equality, serialization), check lengths first. If lengths differ, the arrays cannot be equal. (section: JavaScript Performance, impact: MEDIUM-HIGH, avoids expensive operations when lengths differ)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/js-length-check-first.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-JS-MIN-MAX-LOOP",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Use Loop for Min/Max Instead of Sort",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use Loop for Min/Max Instead of Sort. Finding the smallest or largest element only requires a single pass through the array. Sorting is wasteful and slower. (section: JavaScript Performance, impact: LOW, O(n) instead of O(n log n))\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/js-min-max-loop.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-JS-REQUEST-IDLE-CALLBACK",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Defer Non-Critical Work with requestIdleCallback",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Defer Non-Critical Work with requestIdleCallback. **Impact: MEDIUM (keeps UI responsive during background tasks)** (section: JavaScript Performance, impact: MEDIUM, keeps UI responsive during background tasks)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/js-request-idle-callback.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-JS-SET-MAP-LOOKUPS",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Use Set/Map for O(1) Lookups",
+   "severity": "low",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use Set/Map for O(1) Lookups. Convert arrays to Set/Map for repeated membership checks. (section: JavaScript Performance, impact: LOW-MEDIUM, O(n) to O(1))\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/js-set-map-lookups.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-RENDERING-ANIMATE-SVG-WRAPPER",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Animate SVG Wrapper Instead of SVG Element",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Animate SVG Wrapper Instead of SVG Element. Many browsers don't have hardware acceleration for CSS3 animations on SVG elements. Wrap SVG in a `<div>` and animate the wrapper instead. (section: Rendering Performance, impact: LOW, enables hardware acceleration)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/rendering-animate-svg-wrapper.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-RENDERING-CONTENT-VISIBILITY",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "CSS content-visibility for Long Lists",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: CSS content-visibility for Long Lists. Apply `content-visibility: auto` to defer off-screen rendering. (section: Rendering Performance, impact: HIGH, faster initial render)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/rendering-content-visibility.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-RENDERING-SCRIPT-DEFER-ASYNC",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Use defer or async on Script Tags",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Use defer or async on Script Tags. **Impact: HIGH (eliminates render-blocking)** (section: Rendering Performance, impact: HIGH, eliminates render-blocking)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/rendering-script-defer-async.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-RENDERING-SVG-PRECISION",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Optimize SVG Precision",
+   "severity": "medium",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Optimize SVG Precision. Reduce SVG coordinate precision to decrease file size. The optimal precision depends on the viewBox size, but in general reducing precision should be considered. (section: Rendering Performance, impact: LOW, reduces file size)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/rendering-svg-precision.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "RN-SERVER-HOIST-STATIC-IO",
+   "sheet": "Code/React_NextJS_Development",
+   "title": "Hoist Static I/O to Module Level",
+   "severity": "high",
+   "applies_to": "**/*.{ts,tsx,js,jsx}",
+   "verdict": "include",
+   "reason": "plain-JavaScript or plain-web rule: its rule sentence names no React construct and its applies_to glob matches this repo's .js and .html files",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Hoist Static I/O to Module Level. **Impact: HIGH (avoids repeated file/network I/O per request)** (section: Server-Side Performance, impact: HIGH, avoids repeated file/network I/O per request)\n\nHOW TO DETECT: Open /Users/scottlydon/.claude/skills/react-best-practices/rules/server-hoist-static-io.md and read its Incorrect and Correct code pair, which is the normative definition of this rule. Then scan the target for the Incorrect shape. Report each match with the Correct-shape rewrite adapted to the surrounding code. Do not report a match where the Correct shape is already in use under a different spelling.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TC-005",
+   "sheet": "Code/Testing_and_Coverage",
+   "title": "UI tests carry a timeout, longer on continuous integration",
+   "severity": "medium",
+   "applies_to": "**/*UITests*/**, **/e2e/**",
+   "verdict": "include",
+   "reason": "five Playwright UI specs live in test/*.pw.mjs with no playwright.config.js and no CI timeout branch, so the rule has a real target here",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Give UI tests a timeout, and a longer one on continuous integration than locally. An indefinite wait turns a failure into a hang.\n\nHOW TO DETECT: Find every wait, expectation, and poll in the UI test suite. Flag those with no timeout and those with a fixed timeout and no CI branch.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TC-006",
+   "sheet": "Code/Testing_and_Coverage",
+   "title": "Coverage gaps are enumerated per uncovered body, not per file percentage",
+   "severity": "medium",
+   "applies_to": "coverage campaigns",
+   "verdict": "include",
+   "reason": "phase 8.2 is a per-file coverage campaign",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: A coverage campaign works from a nested checklist of every uncovered function and computed-property body (file, then type, then signature with line ranges), not from a per-file percentage. The percentage hides which bodies are actually unreached.\n\nHOW TO DETECT: Generate the checklist from the current coverage report and report the uncovered bodies, grouped by file and type, with their line ranges. Report the count still below the project's per-file bar.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TC-007",
+   "sheet": "Code/Testing_and_Coverage",
+   "title": "Test filters are proven to have matched something",
+   "severity": "blocker",
+   "applies_to": "filtered test runs",
+   "verdict": "include",
+   "reason": "node --test is run filtered during iteration",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: A test filter that matches nothing passes silently. File names are not class names, so -only-testing and equivalent filters can select zero tests and report success. Always assert on the executed test count.\n\nHOW TO DETECT: For each filtered test invocation, report the executed test count. A run with zero executed tests is a FAIL, not a pass.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TC-008",
+   "sheet": "Code/Testing_and_Coverage",
+   "title": "Spec, fixture, and oracle assertions carry no bare literals",
+   "severity": "high",
+   "applies_to": "**/tests/**, **/*test*",
+   "verdict": "include",
+   "reason": "test/ holds 20 suites",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Spec, fixture, and oracle assertions ship with a pre-commit literal-detector that BLOCKS bare counts, dates, and identifiers. A hardcoded count in an assertion becomes brittle the moment the fixture grows.\n\nHOW TO DETECT: Flag assertions comparing against a bare integer count, a hardcoded date, or a literal identifier where the value should be derived from the fixture.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TC-009",
+   "sheet": "Code/Testing_and_Coverage",
+   "title": "Correctness proofs ship with a solution-finding UI",
+   "severity": "high",
+   "applies_to": "solution-finding features",
+   "verdict": "include",
+   "reason": "the reader failure classifier in phase 1.2 is exactly this",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Any \"find a solution\" or \"find a valid X\" user interface ships with an enumerator-based proof in the commit message, so the claim that a solution exists is verifiable rather than asserted.\n\nHOW TO DETECT: For each solution-finding surface, report whether an enumerator-based proof exists and whether it is referenced in the commit that shipped it.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "TC-010",
+   "sheet": "Code/Testing_and_Coverage",
+   "title": "A verify line must be able to fail and to pass",
+   "severity": "high",
+   "applies_to": "checklists, goal loops, gate scripts, and any Verify line a person or an agent is expected to trust",
+   "verdict": "include",
+   "reason": "this goal loop is the artifact the rule describes",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Every automated check in a checklist or gate can both pass on a correct result and fail on an incorrect one. A check that cannot pass when the thing it guards is correct, or cannot fail when it is broken, is worse than no check, because it is read as evidence.\n\nHOW TO DETECT: The verbatim triggers, 2026-08-17, all from one goal loop. `rg -c 'X' file | grep -qx 0` can never pass: ripgrep prints nothing and exits 1 when there is no match, so the pipeline succeeds only when the count is printed and is zero, which cannot happen. `! rg -q 'unresolved' report.md` against a report whose own success line reads \"Zero unresolved flags\" fails on a clean run and passes on an empty file. `rg -n ... | rg -v '^\\\\s*//'` never filters comments, because `rg -n` prefixes each line with its filename so the `//` is not at the start. `map(.tier) | . == (. | unique)` requires alphabetical order, because jq's `unique` sorts, so it fails on a correctly ordered escalation ladder. Two more from the same loop: `| wc -l | grep -qx 0` can never match on macOS, because `wc -l` pads with leading spaces and `grep -qx` anchors both ends, so six checks failed on correct results; and `rg -q 'foo(\"bar'` exits with a regex parse error rather than searching, because the unescaped parenthesis opens a group that never closes. Run every check rather than reading it. Flag any check whose success condition is unreachable, whose failure condition is unreachable, or which greps a report for a word the report's own success line contains.\n\nSCOPE: every Verify line, gate script, and pre-commit check in the project, read as a shell pipeline rather than as a description of intent\n\nOUTPUT: For each offense emit one line as `<file>:<location> - \"<the offending thing, quoted verbatim>\" -> <the actual fix>`. A fix line that only says \"make it better\" is not a fix. If the rule applied and the surface complied, emit exactly `PASS`. If there is nothing this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  }
+ ]
+}

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readingRungDiagnosis } from '../lib/doctor.js';
 
-// 1.6: the reading-rung check must fail loudly and specifically for each of the three silent
+// The reading-rung check must fail loudly and specifically for each of the three silent
 // failure modes. These induce each one and assert the message names that mode's remedy.
 
 test('a missing browser fails the reading rung with a specific remedy', () => {

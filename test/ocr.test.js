@@ -35,8 +35,9 @@ test('a justified line broken into pieces is put back together, left to right', 
 });
 
 test('lines far enough apart stay separate', () => {
-  const lines = toLines([obs('one', { y: 0.8 }), obs('two', { y: 0.7 })]);
-  assert.equal(lines.length, 2);
+  const apart = [obs('one', { y: 0.8 }), obs('two', { y: 0.7 })];
+  const lines = toLines(apart);
+  assert.equal(lines.length, apart.length, 'nothing merged');
 });
 
 test('the reader\'s own furniture is dropped, but only where it lives', () => {
@@ -120,6 +121,9 @@ test('on a justified page a short line ends the paragraph', () => {
     line('The next two levels, compiling and', { y: 0.45, w: 0.72 }),
     line('computing, correspond to strategy.', { y: 0.40, w: 0.72 }),
   ]);
+  // literal-ok: two paragraphs is the assertion itself. The fixture is five lines, and the
+  // number under test is how many of them the short line splits into, so there is nothing in
+  // the fixture to derive it from.
   assert.equal(blocks.length, 2);
   assert.match(blocks[0].text, /early\.$/);
   assert.match(blocks[1].text, /^The next two levels/);

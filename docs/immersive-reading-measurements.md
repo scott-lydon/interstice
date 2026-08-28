@@ -1,6 +1,11 @@
-# Immersive reading: what competes with the page (2A.1), and the target contract (2A.2)
+# Immersive reading: what competed with the page, and the contract that replaced it
 
-## 2A.1 — measured inventory at the default 640x900 panel
+Design record from 2026-08-19, kept for the reasoning. The shortfall measured below was the
+reason for the immersive layout; it has since been closed. `test/immersive-layout.pw.mjs`
+measures `#reader` in the shipped panel and requires at least 90% of both dimensions, so the
+figures in the first table describe the layout that was replaced, not the one that ships.
+
+## The inventory that was measured, at the default 640x900 panel
 
 Panel usable area = 640 x 900 (body is full-bleed, `overflow:hidden`). Figures are computed from the
 CSS in `web/panel.html`: box heights are padding + content + border for the fixed-height chrome.
@@ -20,17 +25,17 @@ Vertical chrome total ≈ 33 + 28 + 40 + 12 + 3 + 12 + 24 + 12 + 27 = **~191 px*
 Page vertical = 900 - 191 = **~709 px = 78.8% of 900**.
 Page horizontal = 640 - 28 = **612 px = 95.6% of 640**.
 
-**The page gets ~78.8% of the usable vertical and ~95.6% of the usable horizontal.** The immersive
-target is >=90% of BOTH, so the current build fails on the vertical axis by ~11 points. The vertical
-chrome that must move to reach >=90% is the header/rungs, the title block, the progress bar, the
-visible pager buttons, and the footer.
+**In that layout the page got about 78.8% of the usable vertical and about 95.6% of the usable
+horizontal.** The immersive target is at least 90% of both, so that layout fell short on the
+vertical axis by about 11 points. The vertical chrome that had to move was the header and rungs,
+the title block, the progress bar, the visible pager buttons, and the footer.
 
-## 2A.2 — target layout contract
+## The target layout contract, which the shipped panel now meets
 
 - While `#view-reading` is active, `#reader` occupies **>= 90% of both usable panel dimensions**.
 - Everything displaced is reachable behind **exactly one menu affordance** (a single button, e.g.
-  a top-corner "..." that opens one overlay). No second menu is ever introduced; the Phase 3 star
-  calendar lives behind this same menu (see 2A.4).
+  a top-corner "..." that opens one overlay). No second menu is ever introduced; the star calendar
+  lives behind this same menu.
 - **Page-turn stays reachable without opening the menu.** Arrow keys already bind (Left/Right ->
   prev/next); the visible pager buttons may move into an auto-hiding overlay that appears on hover
   or key focus, so the page can still be turned by mouse without the menu.

@@ -1,0 +1,23 @@
+# The formatting half of the style guides named in CLAUDE.md, in the one file every editor reads
+# without a plugin. It records what the repo is already written to rather than proposing a change:
+# reformatting the tree would bury the next real diff.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+# Trailing whitespace is a line break in Markdown, so stripping it would edit the prose.
+trim_trailing_whitespace = false
+
+[*.py]
+# docs/ ships a small Python pipeline; PEP 8 indent, not the JavaScript one.
+indent_size = 4
+
+[Makefile]
+indent_style = tab

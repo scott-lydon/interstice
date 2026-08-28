@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { DatabaseSync } from 'node:sqlite';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -73,4 +74,25 @@ test('a missing source is a reason, never a crash', async () => {
 test('the source is your ordinary Chrome profile, not a guess', () => {
   const p = defaultChromeCookies({ home: '/Users/someone' });
   assert.equal(p, '/Users/someone/Library/Application Support/Google/Chrome/Default/Cookies');
+});
+
+test('the cookie filter matches the amazon.com domain, not merely that suffix', () => {
+  // The regression: the clause was `host_key LIKE '%amazon.com' OR host_key LIKE '%.amazon.com'`,
+  // documented as matching the registrable domain. `LIKE '%amazon.com'` is unanchored, so it also
+  // selected notamazon.com and fakeamazon.com. Those rows were copied into the reader profile and
+  // then spared by the prune, which deletes everything the same clause does not match.
+  const src = fs.readFileSync(new URL('../lib/amazon-session.js', import.meta.url), 'utf8');
+  const clause = src.match(/const AMAZON = "([^"]+)"/);
+  assert.ok(clause, 'the filter clause must be findable');
+
+  const db = new DatabaseSync(':memory:');
+  db.exec('CREATE TABLE cookies (host_key TEXT)');
+  const belongs = ['amazon.com', '.amazon.com', 'read.amazon.com', 'www.amazon.com'];
+  const doesNot = ['notamazon.com', 'fakeamazon.com', 'myamazon.com', 'evil.com'];
+  for (const h of [...belongs, ...doesNot]) db.exec(`INSERT INTO cookies VALUES ('${h}')`);
+
+  const matched = db.prepare(`SELECT host_key FROM cookies WHERE ${clause[1]}`).all().map((r) => r.host_key);
+  for (const h of belongs) assert.ok(matched.includes(h), `${h} is part of the session and must be carried`);
+  for (const h of doesNot) assert.ok(!matched.includes(h), `${h} is a lookalike and must not be carried`);
+  db.close();
 });

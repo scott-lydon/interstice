@@ -1,0 +1,36 @@
+{
+  "ok": true,
+  "ready": false,
+  "running": true,
+  "seq": 0,
+  "frameAt": null,
+  "asin": "B0046LU7H0",
+  "viewport": {
+    "width": 412,
+    "height": 520
+  },
+  "error": null,
+  "href": "https://read.amazon.com/?asin=B0046LU7H0",
+  "title": "Early Retirement Extreme: A philosophical and practical guide to financial independence",
+  "label": "",
+  "signedOut": false,
+  "bookError": false,
+  "clip": {
+    "x": 41,
+    "y": 60,
+    "width": 330,
+    "height": 373
+  },
+  "spinner": true,
+  "painted": false,
+  "dpr": 2,
+  "passkey": false,
+  "shelf": {
+    "pos": 0,
+    "frontier": 0,
+    "ahead": 0,
+    "held": 0,
+    "readAhead": 2
+  },
+  "percent": 39
+}

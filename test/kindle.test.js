@@ -188,6 +188,9 @@ test('a book opened but never advanced is not "in progress"', { skip: !installed
 test('an unreadable store leaves the rung available but bookless', { skip: !installed }, async () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'interstice-kindle-empty-'));
   const state = await kindleState({}, { home });
-  // No visibility is not evidence of no books, but there is still nothing to open.
+  // No visibility is not evidence of no books, but there is still nothing to open. Both halves
+  // of this test's name are asserted: the title used to claim the rung stays available and only
+  // the bookless half was checked.
+  assert.equal(state.available, true, 'the rung stays available: an unreadable store is not a missing app');
   assert.equal(state.book, null);
 });

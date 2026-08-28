@@ -1,0 +1,9 @@
+{
+  "ok": false,
+  "stage": "reopen",
+  "expected": "the book to come back after its site data was cleared",
+  "actual": "the reopen did not reach a page",
+  "cleared": true,
+  "reopened": false,
+  "reason": "Amazon did not reopen the book after its stored data here was cleared. Remedy: sign in to Amazon below, which replaces the session this reader holds, then press Read it again."
+}

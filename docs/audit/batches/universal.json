@@ -1,0 +1,356 @@
+{
+ "batch": "universal",
+ "target": "the whole repo",
+ "rules": [
+  {
+   "row_id": "UC-CUPID-001",
+   "sheet": "Code/Universal",
+   "title": "Composable: plays well with others",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: CUPID, Composable. A unit is composable when it has a small surface area, minimal dependencies, and an intention-revealing interface, so it can be combined with things its author never anticipated.\n\nHOW TO DETECT: For each module, count its public surface and its dependencies. Flag units with a wide public API, units that pull in a heavy dependency for one call, and units whose interface names describe the implementation rather than the intent.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-CUPID-002",
+   "sheet": "Code/Universal",
+   "title": "Unix philosophy: does one thing well",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: CUPID, Unix philosophy. A unit does one thing well. If you cannot state its job in one sentence with no \"and\", it does more than one thing.\n\nHOW TO DETECT: State each module's and each function's job in one sentence. Flag every one whose sentence needs an \"and\", and propose the split.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-CUPID-003",
+   "sheet": "Code/Universal",
+   "title": "Predictable: does what you expect",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: CUPID, Predictable. A unit behaves as expected, is deterministic where it can be, and is observable. Hidden side effects, hidden global reads, and behavior that depends on call order break predictability.\n\nHOW TO DETECT: Flag functions with side effects not implied by their name, functions reading mutable global or ambient state, and functions whose result depends on being called in a particular order.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-CUPID-004",
+   "sheet": "Code/Universal",
+   "title": "Idiomatic: feels natural",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: CUPID, Idiomatic. Code feels natural to someone fluent in the language and the local codebase. It follows the language's idioms and the project's existing conventions.\n\nHOW TO DETECT: Compare the new code against the language's idioms and the surrounding files. Flag constructs transliterated from another language and patterns that no other file in the project uses.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-CUPID-005",
+   "sheet": "Code/Universal",
+   "title": "Domain-based: models the problem domain",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: CUPID, Domain-based. The code models the problem domain in its language and its structure. Names, types, and module boundaries come from the domain, not from the framework or the storage layer.\n\nHOW TO DETECT: List the domain concepts in the requirements, then list the types and modules in the code. Report every domain concept with no corresponding type, and every type named after a technical layer (Manager, Helper, Util, Data, Service) rather than a domain concept.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-PRIN-001",
+   "sheet": "Code/Universal",
+   "title": "DRY: one representation of each piece of knowledge",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: DRY. Do not repeat yourself. Every piece of knowledge has a single unambiguous representation in the system.\n\nHOW TO DETECT: Find duplicated logic, duplicated constants, duplicated validation rules, and duplicated shape definitions across files. Report each cluster with the single place it should live. Do not report incidental similarity that happens to look alike but changes for different reasons.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-PRIN-002",
+   "sheet": "Code/Universal",
+   "title": "YAGNI: build only what is needed now",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: YAGNI. You are not gonna need it. Do not build for a requirement that has not been stated.\n\nHOW TO DETECT: For each abstraction, extension point, config flag, and parameter, name the current caller that needs it. Report every one with no current caller.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-PRIN-003",
+   "sheet": "Code/Universal",
+   "title": "KISS: the simplest thing that works",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: KISS. Keep it simple. Prefer the simplest construct that solves the problem correctly.\n\nHOW TO DETECT: For each non-trivial construct (a generic, a metaprogramming trick, a state machine, a deep hierarchy) propose the simplest alternative. Report every case where the simpler alternative is correct.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-PRIN-004",
+   "sheet": "Code/Universal",
+   "title": "SPOT: single point of truth",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: SPOT. Single point of truth. Any given fact, value, schema, or configuration lives in exactly one place, and every consumer reads it from there.\n\nHOW TO DETECT: Find values duplicated between code and config, between frontend and backend, between a schema and its validators, and between docs and implementation. Report each with the one place it should live and the derivation for the rest.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-PRIN-005",
+   "sheet": "Code/Universal",
+   "title": "SOI: SOLID without L and D, protocols over polymorphism",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: SOI. The user's variant of SOLID: Single responsibility, Open-closed, Interface segregation. L and D are dropped because polymorphism should be avoided in favor of protocols wherever the language allows.\n\nHOW TO DETECT: Check each type against single responsibility and interface segregation, and check each extension point is open for extension without modification. Separately flag inheritance used where a protocol or interface would do.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-MOD-001",
+   "sheet": "Code/Universal",
+   "title": "A bug is fixable by reading one module and its direct contracts",
+   "severity": "blocker",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Make the code modular so a bug in one module can be fixed by reading only that module and the contracts of its direct dependencies, not the whole codebase. Modules talk to each other only through small protocols and plain data types, never by reaching into each other's internals.\n\nHOW TO DETECT: Pick three recent bugs or three representative modules. For each, list every file a developer would have to read to fix a bug there. Report every case where that list exceeds the module plus its direct dependency contracts, and name the coupling that caused it.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-ERR-001",
+   "sheet": "Code/Universal",
+   "title": "Every failure case throws a clear, comprehensive, specific error",
+   "severity": "blocker",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: When writing code, make sure every failure case throws as clear, comprehensive and specific an error as possible, so that diagnosing and even fixing the problem is immediately obvious in every case.\n\nHOW TO DETECT: Enumerate every failure path. For each, report whether the error names what failed, the offending value or path, the reason, and the next action. Flag generic errors (unknown, failed, invalid, something went wrong), errors with no context, and swallowed errors.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-ERR-002",
+   "sheet": "Code/Universal",
+   "title": "Catch, log, and continue only at long-lived loop boundaries",
+   "severity": "blocker",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Bare catch-and-return-null and catch-log-continue are banned in network, decode, and persistence boundaries. The one carveout is a long-lived event-loop boundary (cron tick, websocket onmessage, queue consumer), where errors MUST be caught, logged, and the loop continued so one bad item cannot kill the loop.\n\nHOW TO DETECT: Classify every catch block as a boundary catch or a loop catch. Report boundary catches that swallow, and loop boundaries that do not catch.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-CMT-001",
+   "sheet": "Code/Universal",
+   "title": "Comment anything that could cause a WTF moment",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Every function that could create a WTF moment gets a comment, or the code is cleared up so a WTF moment cannot arise in the first place.\n\nHOW TO DETECT: For each function, ask whether a competent reader who did not write it could be surprised: non-obvious ordering, hidden side effects, unit conversions, retained references, threading assumptions, a workaround for an upstream bug. Report each candidate and say whether the fix is a comment or a rewrite.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-CMT-002",
+   "sheet": "Code/Universal",
+   "title": "Use the language's equivalent style guide",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: For whatever language is chosen, use the equivalent style guide, in terms of popularity and excellence, that https://google.github.io/swift/ is for Swift. For Swift use that guide.\n\nHOW TO DETECT: Identify every language in the target. For each, name the style guide in use and confirm a spreadsheet exists for it under Recurring_goals/Code/. Report every language with no named guide and no spreadsheet, and propose the guide to adopt.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-DEAD-001",
+   "sheet": "Code/Universal",
+   "title": "Report dead code; delete only what your change orphaned",
+   "severity": "medium",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Remove unused code. If you notice unrelated dead code, mention it, do not delete it. Remove only the imports, variables, and functions that YOUR changes made unused.\n\nHOW TO DETECT: Run the dead-code scan and produce two separate lists: symbols this diff orphaned (delete these) and pre-existing dead code (report only).\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-ENC-001",
+   "sheet": "Code/Universal",
+   "title": "Standardized encodings use a vetted library",
+   "severity": "high",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Standardized encodings (base58, base64, JWT, CBOR, varint, percent-encoding) use a vetted library. A hand-rolled implementation requires a fuzz test covering empty input, leading zeros, maximum length, and round trip.\n\nHOW TO DETECT: Find hand-rolled encoders and decoders for any standardized format. Report each with either the library to use or the four fuzz cases it is missing.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "UC-NUM-001",
+   "sheet": "Code/Universal",
+   "title": "No magic numbers in user-visible or financial paths",
+   "severity": "medium",
+   "applies_to": "**/* (any language)",
+   "verdict": "include",
+   "reason": "language-neutral by construction",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: A numeric literal in a user-visible, financial, or measurement path is either a named constant with a stated origin, or a real measurement. See the Data_Integrity spreadsheet for the aggregate-specific rule.\n\nHOW TO DETECT: Flag numeric literals in pricing, quantity, threshold, timeout, and retry positions with no named constant and no comment stating where the number came from.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DI-001",
+   "sheet": "Process/Data_Integrity",
+   "title": "Never use mock, stub, fake, or reused data",
+   "severity": "blocker",
+   "applies_to": "the whole project and every response",
+   "verdict": "include",
+   "reason": "project-wide integrity rule",
+   "prompt": "You are a single-rule compliance auditor. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: NO MOCK / STUB / FAKE / REUSED DATA. In any project and any interaction, never use mock, stub, placeholder, dummy, synthetic, or reused/stale data, and never present reconstructed, replayed, cached, or simulated output as a real fresh result. The ONLY exception is when the user EXPLICITLY asks for fake or sample data in that specific request. Build, test, and demo against real live data and real current runs.\n\nHOW TO DETECT: Search the work product for placeholder values: lorem ipsum, foo/bar, TODO strings in user-visible fields, demo-*, sample-*, test-*, hardcoded example emails and names, and fixture files wired into a user-facing path. Separately check every result presented to the user this session came from a run that actually executed in this session. Report each with the real-data path that should have been used.\n\nSUBJECT: the work product produced this session.\n\nOUTPUT: For each violation emit one line as `<where> - <what was done> -> <what the rule required instead>`. If there are zero violations, emit exactly `PASS`. A rule that did not apply this session is `N/A: <one clause why>`, which is not the same as PASS and must not be reported as one. Never soften a real violation into a suggestion. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DI-002",
+   "sheet": "Process/Data_Integrity",
+   "title": "Stop and say so when a real result is unavailable",
+   "severity": "blocker",
+   "applies_to": "the session's work product",
+   "verdict": "include",
+   "reason": "star records and measured coverage must be real",
+   "prompt": "You are a single-rule compliance auditor. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: If a real result is genuinely unavailable (missing credentials, service down, would take too long), STOP and tell the user. Do not substitute fake or old data and do not paper over the gap.\n\nHOW TO DETECT: For each result presented, confirm the underlying run actually happened this session and succeeded. Report every result that was inferred, filled in, or carried over from an earlier run, and every gap that was papered over instead of surfaced.\n\nSUBJECT: the work product produced this session.\n\nOUTPUT: For each violation emit one line as `<where> - <what was done> -> <what the rule required instead>`. If there are zero violations, emit exactly `PASS`. A rule that did not apply this session is `N/A: <one clause why>`, which is not the same as PASS and must not be reported as one. Never soften a real violation into a suggestion. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DI-003",
+   "sheet": "Process/Data_Integrity",
+   "title": "Disclose replayed, cached, or reconstructed output up front and unprompted",
+   "severity": "blocker",
+   "applies_to": "the session's work product",
+   "verdict": "include",
+   "reason": "star records and measured coverage must be real",
+   "prompt": "You are a single-rule compliance auditor. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: DISCLOSE up front and UNPROMPTED any time output is reconstructed, replayed, cached, simulated, regenerated from a prior capture, or otherwise not a fresh real result. Waiting to be asked, or only admitting it when challenged, is itself a violation. Real but stale or reused still requires disclosure: reusing a previously-captured artifact and presenting it as a fresh capture is prohibited.\n\nHOW TO DETECT: For each artifact shown to the user (screenshot, log, metric, transcript, chart), compare its creation time to the session start. Report every one older than the session that was presented without a disclosure sentence.\n\nSUBJECT: the work product produced this session.\n\nOUTPUT: For each violation emit one line as `<where> - <what was done> -> <what the rule required instead>`. If there are zero violations, emit exactly `PASS`. A rule that did not apply this session is `N/A: <one clause why>`, which is not the same as PASS and must not be reported as one. Never soften a real violation into a suggestion. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DI-004",
+   "sheet": "Process/Data_Integrity",
+   "title": "Numbers in user-facing aggregates are real measurements, never defaults",
+   "severity": "blocker",
+   "applies_to": "**/*.{py,swift,ts,tsx,js,jsx,rb,go}",
+   "verdict": "include",
+   "reason": "the .js arm of the glob matches",
+   "prompt": "You are a single-rule compliance auditor. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Any number that ends up in a user-facing aggregate (cost, count, latency, score, percent, rating, anything summed, averaged, charted, or surfaced as total/avg/spent/duration) MUST be the actual measurement. Zero is acceptable ONLY when zero is what was measured, never as a fallback. Zero-as-default, 0.001-as-placeholder, 999.99-as-sentinel, and -1-as-not-set are all the same crime; the magnitude does not matter. Before writing any numeric literal landing in such a column, ask what was actually measured. If the answer is \"nothing yet\", the field is the wrong shape: use a boolean, a timestamp, a model-name string, or None with an aggregator that excludes nulls.\n\nHOW TO DETECT: Find every numeric literal assigned to a field named cost, dollars, latency, tokens, count, score, percent, duration, total, avg, spent, or rating. For each, state what was actually measured. Report every one that is a fallback rather than a measurement, and trace whether it propagates into an aggregate.\n\nSUBJECT: the work product produced this session.\n\nOUTPUT: For each violation emit one line as `<where> - <what was done> -> <what the rule required instead>`. If there are zero violations, emit exactly `PASS`. A rule that did not apply this session is `N/A: <one clause why>`, which is not the same as PASS and must not be reported as one. Never soften a real violation into a suggestion. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DI-005",
+   "sheet": "Process/Data_Integrity",
+   "title": "Aggregators treat None as absent, not as zero",
+   "severity": "blocker",
+   "applies_to": "**/*.{py,swift,ts,tsx,js,jsx,sql}",
+   "verdict": "include",
+   "reason": "the .js arm of the glob matches",
+   "prompt": "You are a single-rule compliance auditor. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: An aggregator treats None as absent (skip it), not as zero (counted as a real zero measurement). The difference between \"12 of 12 attacks cost $0\" and \"0 of 12 attacks were measured for cost\" is huge for the operator reading the dashboard.\n\nHOW TO DETECT: Find every sum, average, min, max, and percent computation over a nullable field. Report each that coerces null to zero (or 0 or '' via a default) rather than excluding it, and each display that does not distinguish measured-zero from unmeasured.\n\nSUBJECT: the work product produced this session.\n\nOUTPUT: For each violation emit one line as `<where> - <what was done> -> <what the rule required instead>`. If there are zero violations, emit exactly `PASS`. A rule that did not apply this session is `N/A: <one clause why>`, which is not the same as PASS and must not be reported as one. Never soften a real violation into a suggestion. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DI-006",
+   "sheet": "Process/Data_Integrity",
+   "title": "Every stub provider carries a contract test pinning its aggregate to the real value",
+   "severity": "high",
+   "applies_to": "**/tests/**",
+   "verdict": "include",
+   "reason": "test/ holds 20 suites",
+   "prompt": "You are a single-rule compliance auditor. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Add a contract test for any stub, mock, fake, or scripted provider that asserts the provider's total billable work aggregates to exactly the real value, usually zero. Example shape: a full scripted scan asserting summary.total_dollar_cost == 0.0.\n\nHOW TO DETECT: List every stub, mock, fake, and scripted provider in the project. Report each with no contract test asserting its aggregate against the known-real value.\n\nSUBJECT: the work product produced this session.\n\nOUTPUT: For each violation emit one line as `<where> - <what was done> -> <what the rule required instead>`. If there are zero violations, emit exactly `PASS`. A rule that did not apply this session is `N/A: <one clause why>`, which is not the same as PASS and must not be reported as one. Never soften a real violation into a suggestion. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DI-007",
+   "sheet": "Process/Data_Integrity",
+   "title": "Projects are internally consistent: the product never contradicts its spec",
+   "severity": "blocker",
+   "applies_to": "the whole project",
+   "verdict": "include",
+   "reason": "project-wide integrity rule",
+   "prompt": "You are a single-rule compliance auditor. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: The expectation is for projects to be consistent within themselves. If a spec doc says one thing, the product must not go against it.\n\nHOW TO DETECT: Read the project's spec.md, README, and design bundle. For each stated behavior, check the implementation matches. Report every divergence with the spec line and the code line side by side.\n\nSUBJECT: the work product produced this session.\n\nOUTPUT: For each violation emit one line as `<where> - <what was done> -> <what the rule required instead>`. If there are zero violations, emit exactly `PASS`. A rule that did not apply this session is `N/A: <one clause why>`, which is not the same as PASS and must not be reported as one. Never soften a real violation into a suggestion. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DI-008",
+   "sheet": "Process/Data_Integrity",
+   "title": "Flag fishy repository state instead of working through it",
+   "severity": "high",
+   "applies_to": "every git repository touched",
+   "verdict": "include",
+   "reason": "this repo is touched",
+   "prompt": "You are a single-rule compliance auditor. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: When the repository state looks wrong (unexpected untracked files, a detached HEAD, a branch far behind, stashed work you did not create, a lock file), surface it to the user rather than quietly working around it.\n\nHOW TO DETECT: Report the repository state at session start and at each commit point: branch, ahead/behind counts, untracked files, stashes, and lock files. Flag every anomaly that was worked through without being surfaced.\n\nSUBJECT: the work product produced this session.\n\nOUTPUT: For each violation emit one line as `<where> - <what was done> -> <what the rule required instead>`. If there are zero violations, emit exactly `PASS`. A rule that did not apply this session is `N/A: <one clause why>`, which is not the same as PASS and must not be reported as one. Never soften a real violation into a suggestion. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DI-009",
+   "sheet": "Process/Data_Integrity",
+   "title": "Never let git stash silently eat untracked work",
+   "severity": "blocker",
+   "applies_to": "every git stash",
+   "verdict": "include",
+   "reason": "phase 1.3 stashes to prove a test fails on main",
+   "prompt": "You are a single-rule compliance auditor. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: git stash --include-untracked silently removes untracked files, which has already cost a goal-loop doc, its screenshots, and six test files. Before any stash that includes untracked files, list exactly what will be removed and confirm none of it is unversioned work product.\n\nHOW TO DETECT: Find every git stash in the session. Report each that included untracked files, and whether the file list was enumerated first.\n\nSUBJECT: the response or transcript under review.\n\nOUTPUT: For each violation emit one line as `<where> - <what was done> -> <what the rule required instead>`. If there are zero violations, emit exactly `PASS`. A rule that did not apply this session is `N/A: <one clause why>`, which is not the same as PASS and must not be reported as one. Never soften a real violation into a suggestion. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "DI-010",
+   "sheet": "Process/Data_Integrity",
+   "title": "A document that quotes shipped copy is generated, not written",
+   "severity": "high",
+   "applies_to": "**/*.md carrying quoted product copy or file:line citations",
+   "verdict": "include",
+   "reason": "this goal loop cites file:line throughout",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Any document that quotes user-facing strings, or cites their line numbers, is produced from the source rather than typed. A quote written by hand is true on the day it is written and silently false afterwards.\n\nHOW TO DETECT: The verbatim trigger, 2026-08-17: a referent audit and a design reference both quoted copy the product no longer carried, twice over, once when the copy was rewritten and again when it was shortened, and the second drift happened inside the same working session as the first correction. The same document's citations had also drifted by roughly forty lines. Flag any document containing a quoted user-facing string or a `file:line` citation where no script regenerates it. Check for a generator by name: a `sync`, `gen` or `build` script that reads the source and rewrites the document. Its absence is the offense. Two exceptions: a dated review record or log is a record of what was true when written and must NOT be regenerated, and a document quoting a string under a test that pins that exact string is already guarded.\n\nSCOPE: every document in the repository that quotes a user-facing string or cites a source line, excluding dated review records and logs\n\nOUTPUT: For each offense emit one line as `<file>:<location> - \"<the offending thing, quoted verbatim>\" -> <the actual fix>`. A fix line that only says \"make it better\" is not a fix. If the rule applied and the surface complied, emit exactly `PASS`. If there is nothing this rule can apply to, emit `N/A: <why>`. `N/A` is not `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "PS-001",
+   "sheet": "Project_Structure",
+   "title": "Code projects live under ~/Developer",
+   "severity": "high",
+   "applies_to": "project locations",
+   "verdict": "include",
+   "reason": "the repo's location is load bearing for the LaunchAgent",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Always put any code related project in ~/Developer, meaning anything that can compile or run. ~/Developer is excluded from iCloud sync; iCloud-managed folders evict binaries and sources as dataless files, which silently breaks builds and MCP servers.\n\nHOW TO DETECT: Report every project path created this session that is not under ~/Developer, and every build whose scratch or DerivedData path sits inside an iCloud-managed folder.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "PS-002",
+   "sheet": "Project_Structure",
+   "title": "Every project is registered in Atlas",
+   "severity": "high",
+   "applies_to": "new projects",
+   "verdict": "include",
+   "reason": "the detect clause asks whether the project appears in the Atlas index, which is answerable for an existing project too",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Atlas at ~/Developer/atlas indexes every project and every document on the machine, and is the thing to query before sweeping the filesystem. A new project that Atlas does not know about is a project the user cannot find later. Append to data/summaries.json for a project with no README, and to data/groups.json to place it in a function family; a refresh never overwrites either.\n\nHOW TO DETECT: Run the Atlas refresh and report whether the project appears in data/projects.json, whether it has a summary (quoted from its own README, or curated), and whether it is assigned to a function group.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "PS-003",
+   "sheet": "Project_Structure",
+   "title": "Every project has a README that states what it is and how to run it",
+   "severity": "medium",
+   "applies_to": "every project",
+   "verdict": "include",
+   "reason": "structural rules apply to any repo",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: A project's README states what the project is, how to run it, and what its honest gaps are. Atlas quotes it verbatim as the project's summary, so a missing or vague README means the project shows up unidentifiable.\n\nHOW TO DETECT: Report projects with no README, READMEs whose first paragraph does not say what the project is, and READMEs with no run instructions.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "PS-004",
+   "sheet": "Project_Structure",
+   "title": "Every project has a graphify knowledge graph with auto-update installed",
+   "severity": "medium",
+   "applies_to": "every project",
+   "verdict": "include",
+   "reason": "structural rules apply to any repo",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: A graphified project gets the hybrid auto-update system installed once: a git post-commit hook as the durable backstop plus a per-project live watcher LaunchAgent that rebuilds on save and survives reboot. It is idempotent and target agnostic.\n\nHOW TO DETECT: Report whether graphify-out/ exists, whether the post-commit hook is installed, and whether the LaunchAgent is loaded.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "PS-005",
+   "sheet": "Project_Structure",
+   "title": "The four spec artifacts exist before implementation begins",
+   "severity": "high",
+   "applies_to": "every project",
+   "verdict": "include",
+   "reason": "structural rules apply to any repo",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Spec-driven work produces four artifacts before code: what is being built, how it is structured, what correct behavior is, and the slice list. See the CATA rows in the Assignments spreadsheet for the assignment-specific naming. For non-assignment projects the same four roles must be filled by something, even if the filenames differ.\n\nHOW TO DETECT: Name the document filling each of the four roles. Report every role with no document, and every document written after the first code commit.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "PS-006",
+   "sheet": "Project_Structure",
+   "title": "A goal loop file exists and its path is cited in every message about it",
+   "severity": "high",
+   "applies_to": "active goal loops",
+   "verdict": "include",
+   "reason": "this loop is active",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: While a goal loop is active, its file path is cited in every message about it, so the reader can always open the authoritative state. The loop file records where the work is parked, the gotchas that will bite again, and what to resume with.\n\nHOW TO DETECT: Report every message about the goal loop that did not cite the loop file's absolute path, and every state change not written back to the file.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  },
+  {
+   "row_id": "PS-007",
+   "sheet": "Project_Structure",
+   "title": "Anything touching another project is target agnostic",
+   "severity": "high",
+   "applies_to": "tools, skills, scripts, and pipelines",
+   "verdict": "include",
+   "reason": "Interstice is a tool",
+   "prompt": "You are a single-rule conformance agent. Your ONLY job is the rule below. Do not report anything else, however tempting.\n\nRULE: Whenever you make a process, platform, or project that has any interaction with another project, default to making it target agnostic: every project-specific value (paths, names, ports, schemes, bundle identifiers, credential keys) is derived at runtime from the repo it operates on, not hardcoded.\n\nHOW TO DETECT: List the hardcoded project-specific values in every tool, script, skill, and pipeline produced. Report each with the runtime-derived replacement.\n\nSCOPE: the target codebase.\n\nOUTPUT: For each offense emit one line as `path/to/file.ext:LINE - <quoted offending text> -> <specific fix>`. If there are zero offenses, emit exactly `PASS`. Never soften a real offense into a suggestion, and never invent an offense to look productive. Report to the orchestrator and stop."
+  }
+ ]
+}

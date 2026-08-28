@@ -27,9 +27,10 @@ test('Anki is put away by bundle identifier, never by the name "Anki"', () => {
   const hide = src.slice(src.indexOf('export async function hideApp'), src.indexOf('export async function openUrl'));
   assert.match(hide, /bundle identifier is/, 'processes are matched by bundle id');
   assert.ok(!/whose name is/.test(hide), 'and never by name');
-  // This is the same trap `isRunning` documents directly above it, which is why it
+  // This is the same trap the frontmost probe documents: lsappinfo reads the display name where
+  // System Events reads the process name, which is why it
   // is worth a test rather than a comment.
-  assert.match(src, /lsappinfo/, 'the running check already knew this');
+  assert.match(src, /lsappinfo/, 'the frontmost probe already knew this');
 });
 
 test('both of the ids Anki ships under are tried', () => {
