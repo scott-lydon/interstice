@@ -1761,35 +1761,50 @@ function renderReader(d) {
   if (d.shelf) readerShelf = d.shelf;
 
   if (!d.ok) {
-    // Routed to the FAILURE surface, which is where the controls the remedies name already live,
-    // rather than printed into the loading overlay with a control invented for it. That invented
-    // control called the note's re-transcribe, so the reader read a specific promise about
-    // clearing Amazon's stored data, pressed the button carrying its name, and got a page
-    // re-transcription whose only visible surface was painted over. One label had come to mean
-    // three different actions.
+    // Composed ONCE per failure, then left alone. This arm had no transition guard while every
+    // arm on the ok path has one, so it ran top to bottom on every 1500ms poll for as long as the
+    // daemon stayed down, and it destroyed its own surface three ways: `setFailAction` closes the
+    // retry confirmation, so an operator who pressed the button lost the confirmation and the
+    // focus inside 1.5 seconds and could never reach "Discard it and reopen"; the focus call
+    // dropped focus to the body on the sign-in path, where the element it focuses is hidden a few
+    // lines later; and `#reader-failed` is a live region, so reassigning the identical title and
+    // paragraph queued the whole remedy to be spoken twice a second, forever.
+    //
+    // The worst of those is a consequence of a correct fix: `setFailAction` only started closing
+    // the confirmation when the half-answered-confirmation problem was closed on the ok path, and
+    // that line is what turned a harmless repaint into a control that could not be used. The
+    // repaint was the defect; the guard is the fix.
+    const enteringDaemonFailure = !readerFailed || readerFailKind !== 'daemon';
     setFrameHidden(true);
     $('reader-text').hidden = true;
     $('reader-over').hidden = true;
     readerFailed = true;
     readerFailKind = 'daemon';
     document.body.classList.add('reader-failing');
-    $('reader-failed').hidden = false;
-    $('reader-failed').focus?.();
-    $('reader-failed-title').textContent = 'The reader is not answering';
-    // The daemon's own sentence, mapped to one that names a move. Its remedies name the control
-    // that is now on screen beside them.
-    $('reader-failed-why').textContent = readerRemedy(d.error);
-    $('reader-failed-detail').hidden = true;
-    $('reader-failed-detail-label').hidden = true;
-    // A signed-out daemon needs the sign-in box, not the reopen: its remedy is the one of the five
-    // that names a control the reopen cannot stand in for.
-    const wantsSignIn = /sign in to amazon in chrome/i.test($('reader-failed-why').textContent);
-    if (wantsSignIn) {
-      readerSignedOut = true;
-      renderSignIn(d);
-      $('reader-failed').hidden = true;
-    } else {
-      setFailAction('retry');
+    // The poll keeps the state true; only an arrival composes it.
+    if (enteringDaemonFailure) {
+      $('reader-failed').hidden = false;
+      $('reader-failed-title').textContent = 'The reader is not answering';
+      // The daemon's own sentence, mapped to one that names a move. Its remedies name the control
+      // that is now on screen beside them.
+      $('reader-failed-why').textContent = readerRemedy(d.error);
+      $('reader-failed-detail').hidden = true;
+      $('reader-failed-detail-label').hidden = true;
+      // A signed-out daemon needs the sign-in box, not the reopen: its remedy is the one of the
+      // five that names a control the reopen cannot stand in for.
+      const wantsSignIn = /sign in to amazon in chrome/i.test($('reader-failed-why').textContent);
+      if (wantsSignIn) {
+        readerSignedOut = true;
+        renderSignIn(d);
+        $('reader-failed').hidden = true;
+        // The surface that is actually on screen takes the focus. Focusing the failure surface
+        // here focused an element hidden three lines later, which is the very drop to <body> that
+        // the tabindex on it exists to prevent.
+        $('reader-signin').focus?.();
+      } else {
+        setFailAction('retry');
+        $('reader-failed').focus?.();
+      }
     }
     setPagerDisabled(true, 'The reader is not answering, so there is no page to turn.');
     return;

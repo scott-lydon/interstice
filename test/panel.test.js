@@ -1123,3 +1123,39 @@ test('pass 16: a new open announces itself', () => {
   const start = html.slice(at, html.indexOf('tickReader();', at));
   assert.match(start, /readerSaidLast = ''/, 'a new open forgets what the last one said');
 });
+
+
+test('pass 17: the daemon failure surface is composed once, not on every poll', () => {
+  // Pass 17, three findings with one root. This arm had no transition guard while every arm on the
+  // ok path has one, so it ran top to bottom on every 1500ms tick for as long as the daemon stayed
+  // down, and destroyed its own surface three ways: setFailAction closes the retry confirmation, so
+  // an operator who pressed the button lost it and the focus inside 1.5 seconds and could never
+  // reach the destructive answer; the focus call dropped focus to the body on the sign-in path,
+  // where the focused element is hidden a few lines later; and #reader-failed is a live region, so
+  // reassigning the same title and paragraph queued the whole remedy twice a second forever.
+  const html = fs.readFileSync(path.join(ROOT, 'web', 'panel.html'), 'utf8');
+  const at = html.indexOf('  if (!d.ok) {');
+  const arm = html.slice(at, html.indexOf('    return;\n  }', at));
+
+  assert.match(arm, /const enteringDaemonFailure = !readerFailed \|\| readerFailKind !== 'daemon'/,
+    'the arm knows whether this is an arrival or a repeat');
+  assert.match(arm, /if \(enteringDaemonFailure\) \{/, 'and composes only on arrival');
+
+  // The three things that must sit inside the guard, because each is what a repeat destroyed.
+  const guarded = arm.slice(arm.indexOf('if (enteringDaemonFailure) {'));
+  for (const [needle, why] of [
+    ["reader-failed-title'\\).textContent", 'the live region is not re-announced every poll'],
+    ["setFailAction\\('retry'\\)", 'the retry confirmation is not closed under the operator'],
+    ['focus', 'focus is not taken away every 1.5 seconds'],
+  ]) {
+    assert.match(guarded, new RegExp(needle), why);
+  }
+
+  // The state itself still has to be kept true by every poll, or the surface would flicker off.
+  const beforeGuard = arm.slice(0, arm.indexOf('if (enteringDaemonFailure) {'));
+  assert.match(beforeGuard, /readerFailed = true/, 'the poll keeps the state true');
+  assert.match(beforeGuard, /readerFailKind = 'daemon'/, 'and keeps the kind true');
+
+  // On the sign-in path the focus goes to the surface that is actually on screen.
+  assert.match(guarded, /reader-signin'\)\.focus/, 'the sign-in path focuses the sign-in surface');
+});
